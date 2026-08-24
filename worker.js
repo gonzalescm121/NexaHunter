@@ -1,4 +1,4 @@
-const APP_HTML = `<!doctype html>
+const APP_HTML = String.raw`<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -16,7 +16,7 @@ const APP_HTML = `<!doctype html>
   --accent:#66e3b4;
   --red:#ff6b7a;
   --blue:#75a7ff;
-  --orange:#ffb454;
+  --orange:#ffb454
 }
 
 *{box-sizing:border-box}
@@ -25,15 +25,14 @@ html,body{
   margin:0;
   background:var(--bg);
   color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",
-    "Segoe UI",sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif
 }
 
 body{padding:24px}
 
 .wrap{
   max-width:1100px;
-  margin:auto;
+  margin:auto
 }
 
 header{
@@ -41,16 +40,16 @@ header{
   justify-content:space-between;
   align-items:center;
   padding:18px 0 30px;
-  gap:20px;
+  gap:20px
 }
 
 h1{
   font-size:32px;
-  margin:0;
+  margin:0
 }
 
 h2{
-  margin-top:0;
+  margin-top:0
 }
 
 .badge{
@@ -58,31 +57,31 @@ h2{
   border:1px solid #2b3542;
   border-radius:999px;
   color:var(--accent);
-  white-space:nowrap;
+  white-space:nowrap
 }
 
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:14px;
+  gap:14px
 }
 
 .card{
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:18px;
-  padding:20px;
+  padding:20px
 }
 
 .label{
   color:var(--muted);
-  font-size:14px;
+  font-size:14px
 }
 
 .value{
   font-size:27px;
   font-weight:700;
-  margin-top:8px;
+  margin-top:8px
 }
 
 .up{color:var(--accent)}
@@ -96,24 +95,24 @@ h2{
   gap:12px;
   align-items:center;
   padding:14px 0;
-  border-bottom:1px solid var(--line);
+  border-bottom:1px solid var(--line)
 }
 
 .row:last-child{
-  border-bottom:0;
+  border-bottom:0
 }
 
 .mini{
   display:block;
   color:var(--muted);
   font-size:12px;
-  margin-top:3px;
+  margin-top:3px
 }
 
 .coin{
   display:flex;
   gap:10px;
-  align-items:center;
+  align-items:center
 }
 
 .coin-badge{
@@ -124,7 +123,7 @@ h2{
   place-items:center;
   background:#182331;
   color:var(--blue);
-  font-weight:700;
+  font-weight:700
 }
 
 .right{text-align:right}
@@ -136,21 +135,21 @@ input,select,button{
   border:1px solid #2a3542;
   background:#101720;
   color:var(--text);
-  font-size:15px;
+  font-size:15px
 }
 
 button{
-  cursor:pointer;
+  cursor:pointer
 }
 
 .primary{
   background:#315fe8;
-  border-color:#4674ff;
+  border-color:#4674ff
 }
 
 .primary:disabled{
   opacity:.55;
-  cursor:not-allowed;
+  cursor:not-allowed
 }
 
 .status-box{
@@ -159,11 +158,11 @@ button{
   gap:12px;
   align-items:center;
   padding:12px 0;
-  border-bottom:1px solid var(--line);
+  border-bottom:1px solid var(--line)
 }
 
 .status-box:last-child{
-  border-bottom:0;
+  border-bottom:0
 }
 
 .toast{
@@ -175,12 +174,12 @@ button{
   padding:12px 18px;
   border-radius:999px;
   display:none;
-  z-index:100;
+  z-index:100
 }
 
 @media(max-width:800px){
   .grid{
-    grid-template-columns:repeat(2,1fr);
+    grid-template-columns:repeat(2,1fr)
   }
 }
 
@@ -188,19 +187,23 @@ button{
   body{padding:14px}
 
   .grid{
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:1fr 1fr
   }
 
   h1{
-    font-size:25px;
+    font-size:25px
   }
 
   header{
-    align-items:flex-start;
+    align-items:flex-start
   }
 
   .badge{
-    font-size:12px;
+    font-size:12px
+  }
+
+  .row{
+    grid-template-columns:1.6fr 1fr 1fr
   }
 }
 </style>
@@ -378,37 +381,7 @@ const assets = [
 
 const market = document.getElementById("market");
 
-market.innerHTML = assets.map(a => {
-
-  const cls = a[3][0] === "-" ? "down" : "up";
-
-  return `
-    <div class="row">
-      <div class="coin">
-        <span class="coin-badge">
-          ${escapeHtml(a[0].replace("/", "").slice(0,3))}
-        </span>
-
-        <span>
-          <b>${escapeHtml(a[1])}</b>
-          <span class="mini">${escapeHtml(a[0])}</span>
-        </span>
-      </div>
-
-      <span class="right">
-        ${escapeHtml(a[2])}
-      </span>
-
-      <b class="right ${cls}">
-        ${escapeHtml(a[3])}
-      </b>
-    </div>
-  `;
-
-}).join("");
-
 function escapeHtml(value){
-
   return String(value)
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
@@ -417,6 +390,38 @@ function escapeHtml(value){
     .replaceAll("'","&#039;");
 }
 
+market.innerHTML = assets.map(function(a){
+
+  const cls = a[3][0] === "-" ? "down" : "up";
+
+  return "<div class=\"row\">" +
+
+    "<div class=\"coin\">" +
+      "<span class=\"coin-badge\">" +
+        escapeHtml(a[0].replace("/","").slice(0,3)) +
+      "</span>" +
+
+      "<span>" +
+        "<b>" + escapeHtml(a[1]) + "</b>" +
+        "<span class=\"mini\">" +
+          escapeHtml(a[0]) +
+        "</span>" +
+      "</span>" +
+
+    "</div>" +
+
+    "<span class=\"right\">" +
+      escapeHtml(a[2]) +
+    "</span>" +
+
+    "<b class=\"right " + cls + "\">" +
+      escapeHtml(a[3]) +
+    "</b>" +
+
+  "</div>";
+
+}).join("");
+
 function toast(message){
 
   const element = document.getElementById("toast");
@@ -424,16 +429,16 @@ function toast(message){
   element.textContent = message;
   element.style.display = "block";
 
-  setTimeout(() => {
+  setTimeout(function(){
     element.style.display = "none";
-  }, 2500);
+  },2500);
 }
 
 async function checkHealth(){
 
   try{
 
-    const response = await fetch("/health", {
+    const response = await fetch("/health",{
       method:"GET",
       cache:"no-store"
     });
@@ -444,22 +449,30 @@ async function checkHealth(){
 
     const data = await response.json();
 
-    document.getElementById("serverStatus").textContent =
+    const element =
+      document.getElementById("serverStatus");
+
+    element.textContent =
       data.status === "ok" ? "PASS" : "FAIL";
 
-    document.getElementById("serverStatus").className =
+    element.className =
       data.status === "ok" ? "up" : "down";
 
   }catch(error){
 
-    document.getElementById("serverStatus").textContent = "FAIL";
-    document.getElementById("serverStatus").className = "down";
+    const element =
+      document.getElementById("serverStatus");
+
+    element.textContent = "FAIL";
+    element.className = "down";
   }
 }
 
-document.getElementById("order").onclick = async () => {
+document.getElementById("order").onclick =
+async function(){
 
-  const button = document.getElementById("order");
+  const button =
+    document.getElementById("order");
 
   const symbol =
     document.getElementById("symbol").value
@@ -486,60 +499,77 @@ document.getElementById("order").onclick = async () => {
 
   try{
 
-    const response = await fetch("/api/paper-orders", {
-
-      method:"POST",
-
-      headers:{
-        "content-type":"application/json"
-      },
-
-      body:JSON.stringify({
-        symbol,
-        quantity,
-        price,
-        side
-      })
-
-    });
+    const response = await fetch(
+      "/api/paper-orders",
+      {
+        method:"POST",
+        headers:{
+          "content-type":"application/json"
+        },
+        body:JSON.stringify({
+          symbol:symbol,
+          quantity:quantity,
+          price:price,
+          side:side
+        })
+      }
+    );
 
     const data = await response.json();
 
     if(!response.ok){
 
-      toast(data.error || "Paper order rejected");
+      toast(
+        data.error ||
+        "Paper order rejected"
+      );
+
       return;
     }
 
-    document.getElementById("orders").innerHTML += `
+    const order = data.order;
 
-      <div class="row">
+    document.getElementById("orders").innerHTML +=
 
-        <span>
-          <b>${escapeHtml(data.order.symbol)}</b>
-          <span class="mini">
-            ${escapeHtml(String(data.order.quantity))}
-            units @
-            ${escapeHtml(String(data.order.price))}
-          </span>
-        </span>
+      "<div class=\"row\">" +
 
-        <span>
-          ${escapeHtml(data.order.side)}
-        </span>
+        "<span>" +
 
-        <span class="right up">
-          Paper queued
-        </span>
+          "<b>" +
+            escapeHtml(order.symbol) +
+          "</b>" +
 
-      </div>
-    `;
+          "<span class=\"mini\">" +
+            escapeHtml(
+              String(order.quantity)
+            ) +
+            " units @ " +
+            escapeHtml(
+              String(order.price)
+            ) +
+          "</span>" +
 
-    toast("Paper order accepted — live execution is disabled");
+        "</span>" +
+
+        "<span>" +
+          escapeHtml(order.side) +
+        "</span>" +
+
+        "<span class=\"right up\">" +
+          "Paper queued" +
+        "</span>" +
+
+      "</div>";
+
+    toast(
+      "Paper order accepted — live execution is disabled"
+    );
 
   }catch(error){
 
-    toast("Server error — order was not submitted");
+    toast(
+      "Server error — order was not submitted"
+    );
 
   }finally{
 
@@ -564,9 +594,18 @@ NEXAHUNTER VALIDATION ENGINE
 */
 
 const MAX_QUANTITY = 1000000;
+
 const MAX_PRICE = 1000000000;
 
-const SYMBOL_REGEX = /^[A-Z][A-Z0-9./-]{0,9}$/;
+const SYMBOL_REGEX =
+  /^[A-Z][A-Z0-9./-]{0,9}$/;
+
+const MAX_CLOCK_SKEW_MS = 5000;
+
+const DUPLICATE_TTL_MS = 300000;
+
+const recentOrders = new Map();
+
 
 function validatePaperOrder(input){
 
@@ -595,6 +634,7 @@ function validatePaperOrder(input){
       .trim()
       .toUpperCase();
 
+
   if(!symbol){
 
     return {
@@ -603,6 +643,7 @@ function validatePaperOrder(input){
     };
 
   }
+
 
   if(!SYMBOL_REGEX.test(symbol)){
 
@@ -613,6 +654,7 @@ function validatePaperOrder(input){
 
   }
 
+
   if(!Number.isInteger(quantity)){
 
     return {
@@ -621,6 +663,7 @@ function validatePaperOrder(input){
     };
 
   }
+
 
   if(quantity <= 0){
 
@@ -631,6 +674,7 @@ function validatePaperOrder(input){
 
   }
 
+
   if(quantity > MAX_QUANTITY){
 
     return {
@@ -639,6 +683,7 @@ function validatePaperOrder(input){
     };
 
   }
+
 
   if(!Number.isFinite(price)){
 
@@ -649,6 +694,7 @@ function validatePaperOrder(input){
 
   }
 
+
   if(price <= 0){
 
     return {
@@ -657,6 +703,7 @@ function validatePaperOrder(input){
     };
 
   }
+
 
   if(price > MAX_PRICE){
 
@@ -667,6 +714,7 @@ function validatePaperOrder(input){
 
   }
 
+
   if(side !== "BUY" && side !== "SELL"){
 
     return {
@@ -676,31 +724,57 @@ function validatePaperOrder(input){
 
   }
 
+
+  if(input.timestamp !== undefined){
+
+    const timestamp =
+      Date.parse(input.timestamp);
+
+    if(!Number.isFinite(timestamp)){
+
+      return {
+        valid:false,
+        error:"Timestamp must be valid ISO date-time"
+      };
+
+    }
+
+    if(
+      timestamp >
+      Date.now() + MAX_CLOCK_SKEW_MS
+    ){
+
+      return {
+        valid:false,
+        error:"Future timestamps are not allowed"
+      };
+
+    }
+
+  }
+
+
   return {
+
     valid:true,
 
     order:{
-      symbol,
-      quantity,
-      price,
-      side
+      symbol:symbol,
+      quantity:quantity,
+      price:price,
+      side:side
     }
+
   };
+
 }
 
 
 /*
 ========================================================
-DUPLICATE PROTECTION
+DUPLICATE ORDER PROTECTION
 ========================================================
-
-Temporary in-memory protection.
-
-For production persistence this should eventually
-move to Cloudflare D1 or KV.
 */
-
-const recentOrders = new Map();
 
 function duplicateKey(order){
 
@@ -710,19 +784,49 @@ function duplicateKey(order){
     order.price,
     order.side
   ].join("|");
+
 }
+
 
 function isDuplicate(order){
 
-  const key = duplicateKey(order);
+  const now = Date.now();
 
-  if(recentOrders.has(key)){
-    return true;
+  for(
+    const [key,time]
+    of recentOrders
+  ){
+
+    if(
+      now - time >
+      DUPLICATE_TTL_MS
+    ){
+
+      recentOrders.delete(key);
+
+    }
+
   }
 
-  recentOrders.set(key, Date.now());
+
+  const key =
+    duplicateKey(order);
+
+
+  if(recentOrders.has(key)){
+
+    return true;
+
+  }
+
+
+  recentOrders.set(
+    key,
+    now
+  );
 
   return false;
+
 }
 
 
@@ -732,34 +836,56 @@ HTTP HELPERS
 ========================================================
 */
 
-function json(data, status = 200){
-
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers:{
-        "content-type":"application/json;charset=UTF-8",
-        "cache-control":"no-store"
-      }
-    }
-  );
-}
-
 function securityHeaders(){
 
   return {
-    "X-Content-Type-Options":"nosniff",
-    "X-Frame-Options":"DENY",
-    "Referrer-Policy":"no-referrer",
-    "Permissions-Policy":"camera=(), microphone=(), geolocation=()"
+
+    "X-Content-Type-Options":
+      "nosniff",
+
+    "X-Frame-Options":
+      "DENY",
+
+    "Referrer-Policy":
+      "no-referrer",
+
+    "Permissions-Policy":
+      "camera=(), microphone=(), geolocation=()"
+
   };
+
+}
+
+
+function json(data,status=200){
+
+  return new Response(
+
+    JSON.stringify(data),
+
+    {
+      status:status,
+
+      headers:{
+        "content-type":
+          "application/json;charset=UTF-8",
+
+        "cache-control":
+          "no-store",
+
+        ...securityHeaders()
+      }
+
+    }
+
+  );
+
 }
 
 
 /*
 ========================================================
-WORKER
+NEXAHUNTER WORKER
 ========================================================
 */
 
@@ -767,7 +893,9 @@ export default {
 
   async fetch(request){
 
-    const url = new URL(request.url);
+    const url =
+      new URL(request.url);
+
 
     /*
     --------------------------------------------
@@ -781,22 +909,42 @@ export default {
     ){
 
       return new Response(
+
         JSON.stringify({
+
           status:"ok",
+
           app:"NexaHunter",
+
           mode:"paper",
+
           liveExecution:false,
-          timestamp:new Date().toISOString()
+
+          timestamp:
+            new Date().toISOString()
+
         }),
+
         {
+
           status:200,
+
           headers:{
-            "content-type":"application/json;charset=UTF-8",
-            "cache-control":"no-store",
+
+            "content-type":
+              "application/json;charset=UTF-8",
+
+            "cache-control":
+              "no-store",
+
             ...securityHeaders()
+
           }
+
         }
+
       );
+
     }
 
 
@@ -813,36 +961,49 @@ export default {
 
       let body;
 
+
       try{
 
-        body = await request.json();
+        body =
+          await request.json();
 
       }catch(error){
 
         return json(
+
           {
             accepted:false,
-            error:"Request body must be valid JSON"
+            error:
+              "Request body must be valid JSON"
           },
+
           400
+
         );
 
       }
+
 
       const validation =
         validatePaperOrder(body);
 
+
       if(!validation.valid){
 
         return json(
+
           {
             accepted:false,
-            error:validation.error
+            error:
+              validation.error
           },
+
           400
+
         );
 
       }
+
 
       const order =
         validation.order;
@@ -857,11 +1018,15 @@ export default {
       if(isDuplicate(order)){
 
         return json(
+
           {
             accepted:false,
-            error:"Duplicate paper order rejected"
+            error:
+              "Duplicate paper order rejected"
           },
+
           409
+
         );
 
       }
@@ -875,33 +1040,49 @@ export default {
 
       const finalOrder = {
 
-        id:crypto.randomUUID(),
+        id:
+          crypto.randomUUID(),
 
-        symbol:order.symbol,
+        symbol:
+          order.symbol,
 
-        quantity:order.quantity,
+        quantity:
+          order.quantity,
 
-        price:order.price,
+        price:
+          order.price,
 
-        side:order.side,
+        side:
+          order.side,
 
-        mode:"PAPER",
+        mode:
+          "PAPER",
 
-        liveExecution:false,
+        liveExecution:
+          false,
 
-        timestamp:new Date().toISOString()
+        timestamp:
+          new Date().toISOString()
 
       };
 
 
       return json(
+
         {
           accepted:true,
-          message:"Paper order queued",
-          order:finalOrder
+
+          message:
+            "Paper order queued",
+
+          order:
+            finalOrder
         },
+
         200
+
       );
+
     }
 
 
@@ -917,14 +1098,24 @@ export default {
     ){
 
       return new Response(
+
         "NexaHunter: route not found",
+
         {
+
           status:404,
+
           headers:{
-            "content-type":"text/plain;charset=UTF-8",
+
+            "content-type":
+              "text/plain;charset=UTF-8",
+
             ...securityHeaders()
+
           }
+
         }
+
       );
 
     }
@@ -937,15 +1128,27 @@ export default {
     */
 
     return new Response(
+
       APP_HTML,
+
       {
+
         status:200,
+
         headers:{
-          "content-type":"text/html;charset=UTF-8",
-          "cache-control":"no-store",
+
+          "content-type":
+            "text/html;charset=UTF-8",
+
+          "cache-control":
+            "no-store",
+
           ...securityHeaders()
+
         }
+
       }
+
     );
 
   }
