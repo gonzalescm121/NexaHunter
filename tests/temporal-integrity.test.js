@@ -109,6 +109,11 @@ test(
       result.valid,
       true
     );
+
+    assert.deepEqual(
+      result.warnings,
+      []
+    );
   }
 );
 
@@ -581,6 +586,11 @@ test(
       1
     );
 
+    assert.equal(
+      result.quarantined.length,
+      0
+    );
+
     assert.ok(
       result.rejected[0].reasons.includes(
         "DUPLICATE_TIMESTAMP"
@@ -625,6 +635,11 @@ test(
       1
     );
 
+    assert.equal(
+      result.quarantined.length,
+      0
+    );
+
     assert.ok(
       result.rejected[0].reasons.includes(
         "OUT_OF_ORDER_TIMESTAMP"
@@ -667,6 +682,11 @@ test(
     );
 
     assert.equal(
+      result.rejected.length,
+      0
+    );
+
+    assert.equal(
       result.quarantined.length,
       1
     );
@@ -681,7 +701,7 @@ test(
 
 
 test(
-  "series preserves rejected bars separately",
+  "series preserves rejected and quarantined bars separately",
   () => {
     const result =
       validateSeries(
@@ -714,7 +734,7 @@ test(
 
     assert.equal(
       result.accepted.length,
-      2
+      1
     );
 
     assert.equal(
@@ -724,13 +744,34 @@ test(
 
     assert.equal(
       result.quarantined.length,
-      0
+      1
     );
 
     assert.ok(
       result.rejected[0].reasons.includes(
         "IMPOSSIBLE_HIGH"
       )
+    );
+
+    assert.ok(
+      result.quarantined[0].warnings.includes(
+        "DATA_GAP"
+      )
+    );
+
+    assert.equal(
+      result.accepted[0].bar.timestamp,
+      100000
+    );
+
+    assert.equal(
+      result.rejected[0].index,
+      1
+    );
+
+    assert.equal(
+      result.quarantined[0].index,
+      2
     );
   }
 );
