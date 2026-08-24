@@ -542,58 +542,73 @@ JSON DEPTH PROTECTION
 ========================================================
 */
 
-function jsonDepth(
-  value,
-  depth = 0
-){
+function jsonDepth(value){
 
-  if(
-    depth >
-    MAX_JSON_DEPTH
+  const stack = [
+    {
+      value,
+      depth: 0
+    }
+  ];
+
+  let maxDepth = 0;
+
+  while(
+    stack.length > 0
   ){
 
-    return depth;
-  }
+    const current =
+      stack.pop();
 
-  if(
-    value === null ||
-    typeof value !== "object"
-  ){
+    const currentValue =
+      current.value;
 
-    return depth;
-  }
-
-  let maxDepth =
-    depth;
-
-  for(
-    const child
-    of Object.values(value)
-  ){
-
-    maxDepth =
-      Math.max(
-        maxDepth,
-        jsonDepth(
-          child,
-          depth + 1
-        )
-      );
+    const currentDepth =
+      current.depth;
 
     if(
-      maxDepth >
+      currentDepth >
+      maxDepth
+    ){
+
+      maxDepth =
+        currentDepth;
+    }
+
+    if(
+      currentDepth >
       MAX_JSON_DEPTH
     ){
 
-      return maxDepth;
+      return currentDepth;
+    }
+
+    if(
+      currentValue === null ||
+      typeof currentValue !==
+        "object"
+    ){
+
+      continue;
+    }
+
+    for(
+      const child
+      of Object.values(
+        currentValue
+      )
+    ){
+
+      stack.push({
+        value: child,
+        depth:
+          currentDepth + 1
+      });
     }
   }
 
   return maxDepth;
 }
-
-
-/*
 ========================================================
 REQUEST BODY READER
 ========================================================
@@ -1202,24 +1217,36 @@ function json(
 ========================================================
 METHOD RESPONSE
 ========================================================
-*/
-
 function methodNotAllowed(
   allowed
 ){
 
-  return json(
-    {
-      accepted:false,
+  return new Response(
+
+    JSON.stringify({
+      accepted: false,
       error:
         "Method not allowed"
-    },
-    405
+    }),
+
+    {
+      status: 405,
+
+      headers: {
+        "content-type":
+          "application/json;charset=UTF-8",
+
+        "cache-control":
+          "no-store",
+
+        "Allow":
+          allowed,
+
+        ...securityHeaders()
+      }
+    }
   );
 }
-
-
-/*
 ========================================================
 NEXAHUNTER WORKER
 ========================================================
