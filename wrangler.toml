@@ -1,3 +1,11 @@
 name = "nexahunter"
 main = "worker.js"
 compatibility_date = "2026-08-23"
+
+[[durable_objects.bindings]]
+name = "IDEMPOTENCY"
+class_name = "IdempotencyDurableObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["IdempotencyDurableObject"]
