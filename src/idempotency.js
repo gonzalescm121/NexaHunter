@@ -1,13 +1,120 @@
 const DEFAULT_TTL_SECONDS = 300;
 
+const MIN_TTL_SECONDS = 1;
+const MAX_TTL_SECONDS = 86400;
+const MAX_KEY_LENGTH = 256;
+const MAX_VALUE_BYTES = 32768;
+
+function jsonResponse(
+  body,
+  status = 200,
+  extraHeaders = {}
+) {
+  return new Response(
+    JSON.stringify(body),
+    {
+      status,
+      headers: {
+        "content-type":
+          "application/json; charset=utf-8",
+
+        "cache-control":
+          "no-store",
+
+        ...extraHeaders
+      }
+    }
+  );
+}
+
+function normalizeKey(value) {
+  if (
+    typeof value !== "string"
+  ) {
+    return "";
+  }
+
+  return value.trim();
+}
+
+function validTtl(value) {
+  return (
+    Number.isInteger(value) &&
+    value >= MIN_TTL_SECONDS &&
+    value <= MAX_TTL_SECONDS
+  );
+}
+
+function serializedSize(value) {
+  try {
+    return new TextEncoder()
+      .encode(
+        JSON.stringify(value)
+      ).length;
+  } catch {
+    return Infinity;
+  }
+}
+
+
+/*
+========================================================
+IDEMPOTENCY STORE
+========================================================
+*/
+
 export class IdempotencyStore {
   constructor(state, env) {
     this.state = state;
     this.env = env;
   }
 
-  async reserve(key, value, ttlSeconds = DEFAULT_TTL_SECONDS) {
-    const existing = await this.state.storage.get(key);
+  async reserve(
+    key,
+    value,
+    ttlSeconds =
+      DEFAULT_TTL_SECONDS
+  ) {
+    const normalizedKey =
+      normalizeKey(key);
+
+    if (
+      !normalizedKey ||
+      normalizedKey.length >
+        MAX_KEY_LENGTH
+    ) {
+      return {
+        accepted: false,
+        error:
+          "INVALID_IDEMPOTENCY_KEY"
+      };
+    }
+
+    if (
+      !validTtl(ttlSeconds)
+    ) {
+      return {
+        accepted: false,
+        error:
+          "INVALID_IDEMPOTENCY_TTL"
+      };
+    }
+
+    if (
+      serializedSize(value) >
+      MAX_VALUE_BYTES
+    ) {
+      return {
+        accepted: false,
+        error:
+          "IDEMPOTENCY_VALUE_TOO_LARGE"
+      };
+    }
+
+    const existing =
+      await this.state.storage.get(
+        normalizedKey
+      );
 
     if (existing) {
       return {
@@ -16,14 +123,24 @@ export class IdempotencyStore {
       };
     }
 
+    const record = {
+      ...(
+        value &&
+        typeof value ===
+          "object"
+          ? value
+          : {}
+      ),
+
+      createdAt: Date.now()
+    };
+
     await this.state.storage.put(
-      key,
+      normalizedKey,
+      record,
       {
-        ...value,
-        createdAt: Date.now()
-      },
-      {
-        expirationTtl: ttlSeconds
+        expirationTtl:
+          ttlSeconds
       }
     );
 
@@ -34,106 +151,321 @@ export class IdempotencyStore {
   }
 
   async get(key) {
-    return this.state.storage.get(key);
+    const normalizedKey =
+      normalizeKey(key);
+
+    if (
+      !normalizedKey ||
+      normalizedKey.length >
+        MAX_KEY_LENGTH
+    ) {
+      return null;
+    }
+
+    return this.state.storage.get(
+      normalizedKey
+    );
   }
 }
+
+
+/*
+========================================================
+DURABLE OBJECT
+========================================================
+*/
 
 export class IdempotencyDurableObject {
   constructor(state, env) {
     this.state = state;
     this.env = env;
-    this.store = new IdempotencyStore(
-      state,
-      env
-    );
+
+    this.store =
+      new IdempotencyStore(
+        state,
+        env
+      );
   }
 
   async fetch(request) {
-    const url = new URL(request.url);
+    const url =
+      new URL(
+        request.url
+      );
 
-    if (url.pathname !== "/reserve") {
-      return new Response(
-        JSON.stringify({
-          error: "Not found"
-        }),
+    /*
+    ----------------------------------------------------
+    ROUTING
+    ----------------------------------------------------
+    */
+
+    if (
+      url.pathname !==
+      "/reserve"
+    ) {
+      return jsonResponse(
         {
-          status: 404,
-          headers: {
-            "content-type":
-              "application/json"
-          }
+          error:
+            "Not found"
+        },
+        404
+      );
+    }
+
+    /*
+    ----------------------------------------------------
+    METHOD
+    ----------------------------------------------------
+    */
+
+    if (
+      request.method !==
+      "POST"
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "Method not allowed"
+        },
+        405,
+        {
+          allow: "POST"
         }
       );
     }
 
-    if (request.method !== "POST") {
-      return new Response(
-        JSON.stringify({
-          error: "Method not allowed"
-        }),
+    /*
+    ----------------------------------------------------
+    CONTENT TYPE
+    ----------------------------------------------------
+    */
+
+    const contentType =
+      request.headers.get(
+        "content-type"
+      ) || "";
+
+    if (
+      !contentType
+        .toLowerCase()
+        .startsWith(
+          "application/json"
+        )
+    ) {
+      return jsonResponse(
         {
-          status: 405,
-          headers: {
-            "content-type":
-              "application/json"
-          }
-        }
+          error:
+            "Content-Type must be application/json"
+        },
+        415
       );
     }
+
+    /*
+    ----------------------------------------------------
+    BODY
+    ----------------------------------------------------
+    */
 
     let body;
 
     try {
-      body = await request.json();
+      body =
+        await request.json();
     } catch {
-      return new Response(
-        JSON.stringify({
-          error: "Invalid JSON"
-        }),
+      return jsonResponse(
         {
-          status: 400,
-          headers: {
-            "content-type":
-              "application/json"
-          }
-        }
+          error:
+            "Invalid JSON"
+        },
+        400
       );
     }
 
-    const key = String(
-      body?.key ?? ""
-    ).trim();
+    if (
+      !body ||
+      typeof body !==
+        "object" ||
+      Array.isArray(body)
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "Request body must be an object"
+        },
+        400
+      );
+    }
+
+    /*
+    ----------------------------------------------------
+    IDEMPOTENCY KEY
+    ----------------------------------------------------
+    */
+
+    const key =
+      normalizeKey(
+        body.key
+      );
 
     if (!key) {
-      return new Response(
-        JSON.stringify({
-          error: "Missing idempotency key"
-        }),
+      return jsonResponse(
         {
-          status: 400,
-          headers: {
-            "content-type":
-              "application/json"
-          }
-        }
+          error:
+            "Missing idempotency key"
+        },
+        400
       );
     }
 
-    const result =
-      await this.store.reserve(
-        key,
-        body.value ?? {}
+    if (
+      key.length >
+      MAX_KEY_LENGTH
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "Idempotency key too long"
+        },
+        400
       );
+    }
 
-    return new Response(
-      JSON.stringify(result),
-      {
-        status: 200,
-        headers: {
-          "content-type":
-            "application/json"
-        }
+    /*
+    ----------------------------------------------------
+    TTL
+    ----------------------------------------------------
+    */
+
+    const ttlSeconds =
+      body.ttlSeconds ===
+      undefined
+        ? DEFAULT_TTL_SECONDS
+        : Number(
+            body.ttlSeconds
+          );
+
+    if (
+      !validTtl(
+        ttlSeconds
+      )
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "Invalid TTL"
+        },
+        400
+      );
+    }
+
+    /*
+    ----------------------------------------------------
+    VALUE
+    ----------------------------------------------------
+    */
+
+    const value =
+      body.value ??
+      {};
+
+    if (
+      serializedSize(value) >
+      MAX_VALUE_BYTES
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "Idempotency value too large"
+        },
+        413
+      );
+    }
+
+    /*
+    ----------------------------------------------------
+    RESERVE
+    ----------------------------------------------------
+    */
+
+    try {
+      const result =
+        await this.store.reserve(
+          key,
+          value,
+          ttlSeconds
+        );
+
+      if (
+        result.error ===
+        "INVALID_IDEMPOTENCY_KEY"
+      ) {
+        return jsonResponse(
+          result,
+          400
+        );
       }
-    );
+
+      if (
+        result.error ===
+        "INVALID_IDEMPOTENCY_TTL"
+      ) {
+        return jsonResponse(
+          result,
+          400
+        );
+      }
+
+      if (
+        result.error ===
+        "IDEMPOTENCY_VALUE_TOO_LARGE"
+      ) {
+        return jsonResponse(
+          result,
+          413
+        );
+      }
+
+      /*
+      --------------------------------------------------
+      DUPLICATE
+      --------------------------------------------------
+      */
+
+      if (
+        result.accepted ===
+        false
+      ) {
+        return jsonResponse(
+          result,
+          200
+        );
+      }
+
+      /*
+      --------------------------------------------------
+      FIRST RESERVATION
+      --------------------------------------------------
+      */
+
+      return jsonResponse(
+        result,
+        200
+      );
+    } catch {
+      /*
+      Fail closed. Never report a reservation
+      as successful when persistence failed.
+      */
+
+      return jsonResponse(
+        {
+          accepted: false,
+          error:
+            "IDEMPOTENCY_STORAGE_ERROR"
+        },
+        503
+      );
+    }
   }
 }
