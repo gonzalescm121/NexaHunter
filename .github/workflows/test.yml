@@ -1,0 +1,39 @@
+name: NexaHunter Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Validation Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify Node.js
+        run: node --version
+
+      - name: Verify npm
+        run: npm --version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run NexaHunter tests
+        run: npm test
