@@ -193,7 +193,7 @@ test(
     const result =
       evaluateRisk(
         {
-          quantity: Number.MAX_SAFE_INTEGER,
+          quantity: Number.MAX_VALUE,
           price: 1,
           side: "BUY"
         },
@@ -292,10 +292,7 @@ test(
     const result =
       evaluateRisk(
         BASE_ORDER,
-        {
-          currentPosition: 0,
-          dailyLoss: 0
-        },
+        BASE_STATE,
         {
           maxPositionNotional: 1000
         }
