@@ -10,16 +10,27 @@ function finitePositive(value) {
 
 export function validateBar(bar, options = {}) {
   const nowMs = options.nowMs ?? Date.now();
+
   const maxClockSkewMs =
-    options.maxClockSkewMs ?? DEFAULT_MAX_CLOCK_SKEW_MS;
+    options.maxClockSkewMs ??
+    DEFAULT_MAX_CLOCK_SKEW_MS;
+
   const staleAfterMs =
-    options.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
+    options.staleAfterMs ??
+    DEFAULT_STALE_AFTER_MS;
+
   const intervalMs =
-    options.intervalMs ?? DEFAULT_INTERVAL_MS;
+    options.intervalMs ??
+    DEFAULT_INTERVAL_MS;
+
   const maxGapIntervals =
     options.maxGapIntervals ?? 1;
-  const previousTimestamp = options.previousTimestamp;
-  const expectedSymbol = options.symbol;
+
+  const previousTimestamp =
+    options.previousTimestamp;
+
+  const expectedSymbol =
+    options.symbol;
 
   const reasons = [];
   const warnings = [];
@@ -33,13 +44,28 @@ export function validateBar(bar, options = {}) {
     };
   }
 
-  const symbol = String(bar.symbol ?? "").trim().toUpperCase();
-  const timestamp = Number(bar.timestamp);
-  const open = Number(bar.open);
-  const high = Number(bar.high);
-  const low = Number(bar.low);
-  const close = Number(bar.close);
-  const volume = Number(bar.volume);
+  const symbol =
+    String(bar.symbol ?? "")
+      .trim()
+      .toUpperCase();
+
+  const timestamp =
+    Number(bar.timestamp);
+
+  const open =
+    Number(bar.open);
+
+  const high =
+    Number(bar.high);
+
+  const low =
+    Number(bar.low);
+
+  const close =
+    Number(bar.close);
+
+  const volume =
+    Number(bar.volume);
 
   if (!SYMBOL_REGEX.test(symbol)) {
     reasons.push("INVALID_SYMBOL");
@@ -47,12 +73,18 @@ export function validateBar(bar, options = {}) {
 
   if (
     expectedSymbol &&
-    symbol !== String(expectedSymbol).trim().toUpperCase()
+    symbol !==
+      String(expectedSymbol)
+        .trim()
+        .toUpperCase()
   ) {
     reasons.push("SYMBOL_MISMATCH");
   }
 
-  if (!Number.isFinite(timestamp) || timestamp <= 0) {
+  if (
+    !Number.isFinite(timestamp) ||
+    timestamp <= 0
+  ) {
     reasons.push("INVALID_TIMESTAMP");
   }
 
@@ -64,16 +96,25 @@ export function validateBar(bar, options = {}) {
     reasons.push("INVALID_PRICE");
   }
 
-  if (!Number.isFinite(volume) || volume < 0) {
+  if (
+    !Number.isFinite(volume) ||
+    volume < 0
+  ) {
     reasons.push("INVALID_VOLUME");
   }
 
   if (Number.isFinite(timestamp)) {
-    if (timestamp > nowMs + maxClockSkewMs) {
+    if (
+      timestamp >
+      nowMs + maxClockSkewMs
+    ) {
       reasons.push("FUTURE_TIMESTAMP");
     }
 
-    if (nowMs - timestamp > staleAfterMs) {
+    if (
+      nowMs - timestamp >
+      staleAfterMs
+    ) {
       warnings.push("STALE_FEED");
     }
   }
@@ -82,18 +123,27 @@ export function validateBar(bar, options = {}) {
     Number.isFinite(previousTimestamp) &&
     Number.isFinite(timestamp)
   ) {
-    if (timestamp === previousTimestamp) {
-      reasons.push("DUPLICATE_TIMESTAMP");
+    if (
+      timestamp === previousTimestamp
+    ) {
+      reasons.push(
+        "DUPLICATE_TIMESTAMP"
+      );
     }
 
-    if (timestamp < previousTimestamp) {
-      reasons.push("OUT_OF_ORDER_TIMESTAMP");
+    if (
+      timestamp < previousTimestamp
+    ) {
+      reasons.push(
+        "OUT_OF_ORDER_TIMESTAMP"
+      );
     }
 
     if (
       timestamp >
       previousTimestamp +
-        intervalMs * maxGapIntervals
+        intervalMs *
+          maxGapIntervals
     ) {
       warnings.push("DATA_GAP");
     }
@@ -106,16 +156,28 @@ export function validateBar(bar, options = {}) {
   ) {
     if (
       high <
-      Math.max(open, close, low)
+      Math.max(
+        open,
+        close,
+        low
+      )
     ) {
-      reasons.push("IMPOSSIBLE_HIGH");
+      reasons.push(
+        "IMPOSSIBLE_HIGH"
+      );
     }
 
     if (
       low >
-      Math.min(open, close, high)
+      Math.min(
+        open,
+        close,
+        high
+      )
     ) {
-      reasons.push("IMPOSSIBLE_LOW");
+      reasons.push(
+        "IMPOSSIBLE_LOW"
+      );
     }
   }
 
@@ -158,7 +220,9 @@ export function validateSeries(
       quarantined: [
         {
           index: -1,
-          reasons: ["SERIES_NOT_ARRAY"]
+          reasons: [
+            "SERIES_NOT_ARRAY"
+          ]
         }
       ]
     };
@@ -171,12 +235,16 @@ export function validateSeries(
   let previousTimestamp;
 
   bars.forEach((bar, index) => {
-    const result = validateBar(bar, {
-      ...options,
-      previousTimestamp
-    });
+    const result =
+      validateBar(bar, {
+        ...options,
+        previousTimestamp
+      });
 
-    if (result.status === "ACCEPT") {
+    if (
+      result.status ===
+      "ACCEPT"
+    ) {
       accepted.push({
         index,
         bar
@@ -184,13 +252,16 @@ export function validateSeries(
 
       previousTimestamp =
         Number(bar.timestamp);
+
     } else if (
-      result.status === "QUARANTINE"
+      result.status ===
+      "QUARANTINE"
     ) {
       quarantined.push({
         index,
         ...result
       });
+
     } else {
       rejected.push({
         index,
@@ -207,7 +278,9 @@ export function validateSeries(
     status: valid
       ? "ACCEPT"
       : "DEGRADED",
+
     valid,
+
     accepted,
     rejected,
     quarantined
@@ -259,7 +332,8 @@ export function validateUniverseMembership(
   universeHistory
 ) {
   const date =
-    String(decisionDate).slice(0, 10);
+    String(decisionDate)
+      .slice(0, 10);
 
   const active =
     universeHistory?.[date];
@@ -267,17 +341,27 @@ export function validateUniverseMembership(
   if (!Array.isArray(active)) {
     return {
       allowed: false,
-      reason: "UNIVERSE_SNAPSHOT_MISSING"
+      reason:
+        "UNIVERSE_SNAPSHOT_MISSING"
     };
   }
 
   return active.includes(symbol)
-    ? { allowed: true }
+    ? {
+        allowed: true
+      }
     : {
         allowed: false,
-        reason: "SYMBOL_NOT_IN_UNIVERSE"
+        reason:
+          "SYMBOL_NOT_IN_UNIVERSE"
       };
 }
+
+/*
+========================================================
+RISK ENGINE
+========================================================
+*/
 
 export function evaluateRisk(
   order,
@@ -291,13 +375,19 @@ export function evaluateRisk(
     Number(order?.price);
 
   const currentPosition =
-    Number(state.currentPosition ?? 0);
+    Number(
+      state.currentPosition ?? 0
+    );
 
   const dailyLoss =
-    Number(state.dailyLoss ?? 0);
+    Number(
+      state.dailyLoss ?? 0
+    );
 
   const side =
-    String(order?.side ?? "").toUpperCase();
+    String(
+      order?.side ?? ""
+    ).toUpperCase();
 
   const signedQuantity =
     side === "SELL"
@@ -313,10 +403,40 @@ export function evaluateRisk(
 
   const projectedNotional =
     Math.abs(
-      projectedPosition * price
+      projectedPosition *
+        price
     );
 
   const reasons = [];
+
+  /*
+  ------------------------------------------------------
+  HARDENING:
+  Corrupted internal state must fail closed.
+
+  Without this check:
+
+    NaN
+    Infinity
+    -Infinity
+
+  could flow through calculations and make
+  risk-limit comparisons unreliable.
+  ------------------------------------------------------
+  */
+
+  if (
+    !Number.isFinite(
+      currentPosition
+    ) ||
+    !Number.isFinite(
+      dailyLoss
+    )
+  ) {
+    reasons.push(
+      "INVALID_RISK_STATE"
+    );
+  }
 
   if (
     !Number.isInteger(quantity) ||
@@ -327,14 +447,22 @@ export function evaluateRisk(
     );
   }
 
-  if (!finitePositive(price)) {
-    reasons.push("INVALID_PRICE");
+  if (
+    !finitePositive(price)
+  ) {
+    reasons.push(
+      "INVALID_PRICE"
+    );
   }
 
   if (
-    !["BUY", "SELL"].includes(side)
+    !["BUY", "SELL"].includes(
+      side
+    )
   ) {
-    reasons.push("INVALID_SIDE");
+    reasons.push(
+      "INVALID_SIDE"
+    );
   }
 
   if (
@@ -365,7 +493,9 @@ export function evaluateRisk(
     Number.isFinite(
       limits.maxAbsolutePosition
     ) &&
-    Math.abs(projectedPosition) >
+    Math.abs(
+      projectedPosition
+    ) >
       limits.maxAbsolutePosition
   ) {
     reasons.push(
@@ -390,29 +520,40 @@ export function evaluateRisk(
   return {
     allowed:
       reasons.length === 0,
+
     reasons,
+
     orderNotional,
+
     projectedPosition,
+
     projectedNotional
   };
 }
+
+/*
+========================================================
+EXECUTION ESTIMATOR
+========================================================
+*/
 
 export function estimateExecution(
   order,
   market = {}
 ) {
   const price =
-    Number(order.price);
+    Number(order?.price);
 
   const quantity =
-    Number(order.quantity);
+    Number(order?.quantity);
 
-  const spreadBps = Math.max(
-    0,
-    Number(
-      market.spreadBps ?? 0
-    )
-  );
+  const spreadBps =
+    Math.max(
+      0,
+      Number(
+        market.spreadBps ?? 0
+      )
+    );
 
   const slippageBps =
     Math.max(
@@ -431,7 +572,73 @@ export function estimateExecution(
     );
 
   const side =
-    String(order.side).toUpperCase();
+    String(
+      order?.side ?? ""
+    ).toUpperCase();
+
+  /*
+  ------------------------------------------------------
+  HARDENING:
+  Invalid execution inputs fail closed.
+  ------------------------------------------------------
+  */
+
+  if (
+    !Number.isFinite(price) ||
+    price <= 0 ||
+    !Number.isInteger(quantity) ||
+    quantity <= 0
+  ) {
+    return {
+      valid: false,
+      error:
+        "INVALID_EXECUTION_ORDER"
+    };
+  }
+
+  if (
+    !Number.isFinite(
+      Number(
+        market.spreadBps ?? 0
+      )
+    ) ||
+    Number(
+      market.spreadBps ?? 0
+    ) < 0 ||
+    !Number.isFinite(
+      Number(
+        market.slippageBps ?? 0
+      )
+    ) ||
+    Number(
+      market.slippageBps ?? 0
+    ) < 0 ||
+    !Number.isFinite(
+      Number(
+        market.latencyMs ?? 0
+      )
+    ) ||
+    Number(
+      market.latencyMs ?? 0
+    ) < 0
+  ) {
+    return {
+      valid: false,
+      error:
+        "INVALID_EXECUTION_MARKET"
+    };
+  }
+
+  if (
+    side !== "BUY" &&
+    side !== "SELL"
+  ) {
+    return {
+      valid: false,
+      error:
+        "INVALID_EXECUTION_SIDE"
+    };
+  }
 
   const impact =
     (
@@ -441,24 +648,40 @@ export function estimateExecution(
 
   const executionPrice =
     side === "SELL"
-      ? price * (1 - impact)
-      : price * (1 + impact);
+      ? price *
+        (1 - impact)
+      : price *
+        (1 + impact);
 
   return {
+    valid: true,
+
     executionPrice,
+
     grossNotional:
       price * quantity,
+
     estimatedNotional:
-      executionPrice * quantity,
+      executionPrice *
+      quantity,
+
     estimatedCost:
       Math.abs(
-        executionPrice - price
+        executionPrice -
+          price
       ) * quantity,
+
     spreadBps,
     slippageBps,
     latencyMs
   };
 }
+
+/*
+========================================================
+IDEMPOTENCY
+========================================================
+*/
 
 export function createIdempotencyKey(
   order
@@ -474,6 +697,12 @@ export function createIdempotencyKey(
   ].join("|");
 }
 
+/*
+========================================================
+STATE RECONCILIATION
+========================================================
+*/
+
 export function reconcileState(
   internal = {},
   external = {}
@@ -481,8 +710,12 @@ export function reconcileState(
   const mismatches = [];
 
   if (
-    Number(internal.position ?? 0) !==
-    Number(external.position ?? 0)
+    Number(
+      internal.position ?? 0
+    ) !==
+    Number(
+      external.position ?? 0
+    )
   ) {
     mismatches.push(
       "POSITION_MISMATCH"
@@ -490,8 +723,12 @@ export function reconcileState(
   }
 
   if (
-    Number(internal.openOrders ?? 0) !==
-    Number(external.openOrders ?? 0)
+    Number(
+      internal.openOrders ?? 0
+    ) !==
+    Number(
+      external.openOrders ?? 0
+    )
   ) {
     mismatches.push(
       "OPEN_ORDER_MISMATCH"
@@ -504,11 +741,15 @@ export function reconcileState(
   ) {
     const internalIds = [
       ...internal.knownOrderIds
-    ].sort().join(",");
+    ]
+      .sort()
+      .join(",");
 
     const externalIds = [
       ...external.knownOrderIds
-    ].sort().join(",");
+    ]
+      .sort()
+      .join(",");
 
     if (
       internalIds !==
@@ -531,20 +772,32 @@ export function reconcileState(
   };
 }
 
+/*
+========================================================
+RECOVERY
+========================================================
+*/
+
 export function recoveryDecision(
   state
 ) {
   const value =
-    String(state ?? "").toUpperCase();
+    String(
+      state ?? ""
+    ).toUpperCase();
 
-  if (value === "RUNNING") {
+  if (
+    value === "RUNNING"
+  ) {
     return {
       state: "RUNNING",
       tradingAllowed: true
     };
   }
 
-  if (value === "RECOVERED") {
+  if (
+    value === "RECOVERED"
+  ) {
     return {
       state: "RECOVERED",
       tradingAllowed: true
@@ -554,9 +807,17 @@ export function recoveryDecision(
   return {
     state:
       value || "UNKNOWN",
-    tradingAllowed: false
+
+    tradingAllowed:
+      false
   };
 }
+
+/*
+========================================================
+WALK-FORWARD WINDOWS
+========================================================
+*/
 
 export function walkForwardWindows(
   data,
@@ -577,24 +838,31 @@ export function walkForwardWindows(
 
   for (
     let start = 0;
+
     start +
       trainSize +
       testSize <=
       data.length;
+
     start += step
   ) {
     windows.push({
-      train: data.slice(
-        start,
-        start + trainSize
-      ),
+      train:
+        data.slice(
+          start,
+          start +
+            trainSize
+        ),
 
-      test: data.slice(
-        start + trainSize,
-        start +
-          trainSize +
-          testSize
-      )
+      test:
+        data.slice(
+          start +
+            trainSize,
+
+          start +
+            trainSize +
+            testSize
+        )
     });
   }
 
