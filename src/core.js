@@ -1,3 +1,17 @@
+/*
+========================================================
+NEXAHUNTER CORE ENGINE
+Version: 1.3.0
+Mode: Validation / Paper Trading Support
+
+IMPORTANT:
+This module contains validation and risk logic only.
+It does NOT enable live trading.
+========================================================
+*/
+
+export const CORE_VERSION = "1.3.0";
+
 export const DEFAULT_MAX_CLOCK_SKEW_MS = 5000;
 export const DEFAULT_STALE_AFTER_MS = 120000;
 export const DEFAULT_INTERVAL_MS = 60000;
@@ -9,10 +23,89 @@ function finitePositive(value) {
 }
 
 function finiteNonNegative(value) {
-  return (
-    Number.isFinite(value) &&
-    value >= 0
-  );
+  return Number.isFinite(value) && value >= 0;
+}
+
+function finiteNumber(value) {
+  return Number.isFinite(value);
+}
+
+/*
+========================================================
+CONFIGURATION VALIDATION
+========================================================
+*/
+
+export function validateCoreConfig(config = {}) {
+  const errors = [];
+
+  const maxClockSkewMs =
+    Number(
+      config.maxClockSkewMs ??
+        DEFAULT_MAX_CLOCK_SKEW_MS
+    );
+
+  const staleAfterMs =
+    Number(
+      config.staleAfterMs ??
+        DEFAULT_STALE_AFTER_MS
+    );
+
+  const intervalMs =
+    Number(
+      config.intervalMs ??
+        DEFAULT_INTERVAL_MS
+    );
+
+  const maxGapIntervals =
+    Number(
+      config.maxGapIntervals ?? 1
+    );
+
+  if (
+    !finiteNonNegative(maxClockSkewMs)
+  ) {
+    errors.push(
+      "INVALID_MAX_CLOCK_SKEW_MS"
+    );
+  }
+
+  if (
+    !finiteNonNegative(staleAfterMs)
+  ) {
+    errors.push(
+      "INVALID_STALE_AFTER_MS"
+    );
+  }
+
+  if (
+    !finitePositive(intervalMs)
+  ) {
+    errors.push(
+      "INVALID_INTERVAL_MS"
+    );
+  }
+
+  if (
+    !Number.isInteger(maxGapIntervals) ||
+    maxGapIntervals <= 0
+  ) {
+    errors.push(
+      "INVALID_MAX_GAP_INTERVALS"
+    );
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+
+    values: {
+      maxClockSkewMs,
+      staleAfterMs,
+      intervalMs,
+      maxGapIntervals
+    }
+  };
 }
 
 /*
@@ -51,49 +144,25 @@ export function validateBar(
   const expectedSymbol =
     options.symbol;
 
-  const reasons = [];
-  const warnings = [];
+  const config =
+    validateCoreConfig({
+      nowMs,
+      maxClockSkewMs,
+      staleAfterMs,
+      intervalMs,
+      maxGapIntervals
+    });
 
-  /*
-  ------------------------------------------------------
-  HARDENING LAYER:
-  VALIDATION CONFIGURATION BOUNDARY
-  ------------------------------------------------------
-
-  Security-sensitive configuration must fail closed.
-
-  Reject:
-  - NaN
-  - Infinity
-  - negative timing values
-  - zero intervals
-  - fractional gap counts
-  ------------------------------------------------------
-  */
-
-  if (
-    !finiteNonNegative(nowMs) ||
-    !finiteNonNegative(maxClockSkewMs) ||
-    !finiteNonNegative(staleAfterMs) ||
-    !finitePositive(intervalMs) ||
-    !Number.isInteger(maxGapIntervals) ||
-    maxGapIntervals <= 0
-  ) {
+  if (!config.valid) {
     return {
       status: "REJECT",
       valid: false,
       reasons: [
         "INVALID_VALIDATION_CONFIG"
       ],
-      warnings
+      warnings: []
     };
   }
-
-  /*
-  ------------------------------------------------------
-  BAR TYPE
-  ------------------------------------------------------
-  */
 
   if (
     !bar ||
@@ -106,15 +175,9 @@ export function validateBar(
       reasons: [
         "BAR_NOT_OBJECT"
       ],
-      warnings
+      warnings: []
     };
   }
-
-  /*
-  ------------------------------------------------------
-  NORMALIZE INPUT
-  ------------------------------------------------------
-  */
 
   const symbol =
     String(
@@ -141,9 +204,12 @@ export function validateBar(
   const volume =
     Number(bar.volume);
 
+  const reasons = [];
+  const warnings = [];
+
   /*
   ------------------------------------------------------
-  SYMBOL VALIDATION
+  SYMBOL
   ------------------------------------------------------
   */
 
@@ -169,7 +235,7 @@ export function validateBar(
 
   /*
   ------------------------------------------------------
-  TIMESTAMP VALIDATION
+  TIMESTAMP
   ------------------------------------------------------
   */
 
@@ -184,7 +250,7 @@ export function validateBar(
 
   /*
   ------------------------------------------------------
-  PRICE VALIDATION
+  PRICE
   ------------------------------------------------------
   */
 
@@ -201,7 +267,7 @@ export function validateBar(
 
   /*
   ------------------------------------------------------
-  VOLUME VALIDATION
+  VOLUME
   ------------------------------------------------------
   */
 
@@ -216,7 +282,7 @@ export function validateBar(
 
   /*
   ------------------------------------------------------
-  CLOCK / STALENESS VALIDATION
+  CLOCK / STALENESS
   ------------------------------------------------------
   */
 
@@ -246,7 +312,7 @@ export function validateBar(
 
   /*
   ------------------------------------------------------
-  SEQUENCE VALIDATION
+  SEQUENCE
   ------------------------------------------------------
   */
 
@@ -426,7 +492,6 @@ export function validateSeries(
           Number(
             bar.timestamp
           );
-
       } else if (
         result.status ===
         "QUARANTINE"
@@ -435,7 +500,6 @@ export function validateSeries(
           index,
           ...result
         });
-
       } else {
         rejected.push({
           index,
@@ -474,25 +538,13 @@ export function pointInTimeGuard(
   options = {}
 ) {
   const feature =
-    Number(
-      featureTimestamp
-    );
+    Number(featureTimestamp);
 
   const decision =
-    Number(
-      decisionTimestamp
-    );
+    Number(decisionTimestamp);
 
   const minimumLagMs =
-    options.minimumLagMs ??
-    0;
-
-  /*
-  ------------------------------------------------------
-  HARDENING LAYER:
-  TIMESTAMP CONFIGURATION BOUNDARY
-  ------------------------------------------------------
-  */
+    options.minimumLagMs ?? 0;
 
   if (
     !Number.isFinite(feature) ||
@@ -516,12 +568,6 @@ export function pointInTimeGuard(
         "INVALID_TIMESTAMP_CONFIG"
     };
   }
-
-  /*
-  ------------------------------------------------------
-  FUTURE FEATURE PROTECTION
-  ------------------------------------------------------
-  */
 
   if (
     feature >
@@ -551,6 +597,13 @@ export function validateUniverseMembership(
   decisionDate,
   universeHistory
 ) {
+  const normalizedSymbol =
+    String(
+      symbol ?? ""
+    )
+      .trim()
+      .toUpperCase();
+
   const date =
     String(
       decisionDate
@@ -570,7 +623,7 @@ export function validateUniverseMembership(
   }
 
   return active.includes(
-    symbol
+    normalizedSymbol
   )
     ? {
         allowed: true
@@ -605,14 +658,12 @@ export function evaluateRisk(
 
   const currentPosition =
     Number(
-      state.currentPosition ??
-        0
+      state.currentPosition ?? 0
     );
 
   const dailyLoss =
     Number(
-      state.dailyLoss ??
-        0
+      state.dailyLoss ?? 0
     );
 
   const side =
@@ -642,8 +693,7 @@ export function evaluateRisk(
 
   /*
   ------------------------------------------------------
-  HARDENING:
-  CORRUPTED INTERNAL STATE
+  INTERNAL STATE
   ------------------------------------------------------
   */
 
@@ -662,8 +712,7 @@ export function evaluateRisk(
 
   /*
   ------------------------------------------------------
-  HARDENING:
-  DERIVED CALCULATION OVERFLOW
+  CALCULATION SAFETY
   ------------------------------------------------------
   */
 
@@ -685,8 +734,7 @@ export function evaluateRisk(
 
   /*
   ------------------------------------------------------
-  HARDENING:
-  RISK CONFIGURATION BOUNDARY
+  LIMIT CONFIGURATION
   ------------------------------------------------------
   */
 
@@ -764,7 +812,7 @@ export function evaluateRisk(
 
   /*
   ------------------------------------------------------
-  ORDER NOTIONAL LIMIT
+  ORDER LIMIT
   ------------------------------------------------------
   */
 
@@ -782,7 +830,7 @@ export function evaluateRisk(
 
   /*
   ------------------------------------------------------
-  POSITION NOTIONAL LIMIT
+  POSITION LIMIT
   ------------------------------------------------------
   */
 
@@ -797,12 +845,6 @@ export function evaluateRisk(
       "POSITION_NOTIONAL_LIMIT"
     );
   }
-
-  /*
-  ------------------------------------------------------
-  ABSOLUTE POSITION LIMIT
-  ------------------------------------------------------
-  */
 
   if (
     Number.isFinite(
@@ -820,7 +862,7 @@ export function evaluateRisk(
 
   /*
   ------------------------------------------------------
-  DAILY LOSS LIMIT
+  DAILY LOSS
   ------------------------------------------------------
   */
 
@@ -872,17 +914,17 @@ export function estimateExecution(
       order?.quantity
     );
 
-  const rawSpreadBps =
+  const spreadBps =
     Number(
       market.spreadBps ?? 0
     );
 
-  const rawSlippageBps =
+  const slippageBps =
     Number(
       market.slippageBps ?? 0
     );
 
-  const rawLatencyMs =
+  const latencyMs =
     Number(
       market.latencyMs ?? 0
     );
@@ -891,13 +933,6 @@ export function estimateExecution(
     String(
       order?.side ?? ""
     ).toUpperCase();
-
-  /*
-  ------------------------------------------------------
-  HARDENING:
-  INVALID EXECUTION ORDER
-  ------------------------------------------------------
-  */
 
   if (
     !Number.isFinite(price) ||
@@ -912,22 +947,15 @@ export function estimateExecution(
     };
   }
 
-  /*
-  ------------------------------------------------------
-  HARDENING:
-  INVALID EXECUTION MARKET
-  ------------------------------------------------------
-  */
-
   if (
     !finiteNonNegative(
-      rawSpreadBps
+      spreadBps
     ) ||
     !finiteNonNegative(
-      rawSlippageBps
+      slippageBps
     ) ||
     !finiteNonNegative(
-      rawLatencyMs
+      latencyMs
     )
   ) {
     return {
@@ -936,21 +964,6 @@ export function estimateExecution(
         "INVALID_EXECUTION_MARKET"
     };
   }
-
-  const spreadBps =
-    rawSpreadBps;
-
-  const slippageBps =
-    rawSlippageBps;
-
-  const latencyMs =
-    rawLatencyMs;
-
-  /*
-  ------------------------------------------------------
-  SIDE VALIDATION
-  ------------------------------------------------------
-  */
 
   if (
     side !== "BUY" &&
@@ -962,12 +975,6 @@ export function estimateExecution(
         "INVALID_EXECUTION_SIDE"
     };
   }
-
-  /*
-  ------------------------------------------------------
-  MARKET IMPACT
-  ------------------------------------------------------
-  */
 
   const impact =
     (
@@ -994,13 +1001,6 @@ export function estimateExecution(
       executionPrice -
         price
     ) * quantity;
-
-  /*
-  ------------------------------------------------------
-  HARDENING:
-  EXECUTION CALCULATION OVERFLOW
-  ------------------------------------------------------
-  */
 
   if (
     !Number.isFinite(
@@ -1050,12 +1050,19 @@ IDEMPOTENCY
 export function createIdempotencyKey(
   order
 ) {
+  if (
+    !order ||
+    typeof order !== "object"
+  ) {
+    return "";
+  }
+
   return [
     order.symbol,
     order.quantity,
     order.price,
     String(
-      order.side
+      order.side ?? ""
     ).toUpperCase(),
     order.timestamp ?? ""
   ].join("|");
@@ -1073,26 +1080,60 @@ export function reconcileState(
 ) {
   const mismatches = [];
 
-  if (
+  const internalPosition =
     Number(
       internal.position ?? 0
-    ) !==
+    );
+
+  const externalPosition =
     Number(
       external.position ?? 0
+    );
+
+  if (
+    !Number.isFinite(
+      internalPosition
+    ) ||
+    !Number.isFinite(
+      externalPosition
     )
+  ) {
+    mismatches.push(
+      "INVALID_POSITION_STATE"
+    );
+  } else if (
+    internalPosition !==
+    externalPosition
   ) {
     mismatches.push(
       "POSITION_MISMATCH"
     );
   }
 
-  if (
+  const internalOrders =
     Number(
       internal.openOrders ?? 0
-    ) !==
+    );
+
+  const externalOrders =
     Number(
       external.openOrders ?? 0
+    );
+
+  if (
+    !Number.isFinite(
+      internalOrders
+    ) ||
+    !Number.isFinite(
+      externalOrders
     )
+  ) {
+    mismatches.push(
+      "INVALID_OPEN_ORDER_STATE"
+    );
+  } else if (
+    internalOrders !==
+    externalOrders
   ) {
     mismatches.push(
       "OPEN_ORDER_MISMATCH"
@@ -1106,12 +1147,14 @@ export function reconcileState(
     const internalIds = [
       ...internal.knownOrderIds
     ]
+      .map(String)
       .sort()
       .join(",");
 
     const externalIds = [
       ...external.knownOrderIds
     ]
+      .map(String)
       .sort()
       .join(",");
 
