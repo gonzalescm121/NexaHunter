@@ -943,6 +943,85 @@ test("DELETE health endpoint is rejected", async () => {
 ALLOW HEADER VALIDATION
 ========================================================
 */
+/*
+========================================================
+405 SECURITY HEADER VALIDATION
+========================================================
+*/
+
+test("405 health response includes security headers", async () => {
+  const response = await request(
+    "/health",
+    {
+      method: "POST"
+    }
+  );
+
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "GET");
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(
+    response.headers.get("x-content-type-options"),
+    "nosniff"
+  );
+  assert.equal(
+    response.headers.get("x-frame-options"),
+    "DENY"
+  );
+  assert.equal(
+    response.headers.get("referrer-policy"),
+    "no-referrer"
+  );
+  assert.equal(
+    response.headers.get("permissions-policy"),
+    "camera=(), microphone=(), geolocation=()"
+  );
+  assert.equal(
+    response.headers.get("content-security-policy") !== null,
+    true
+  );
+  assert.equal(
+    response.headers.get("cross-origin-resource-policy"),
+    "same-origin"
+  );
+});
+
+test("405 paper-order response includes security headers", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "GET"
+    }
+  );
+
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "POST");
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(
+    response.headers.get("x-content-type-options"),
+    "nosniff"
+  );
+  assert.equal(
+    response.headers.get("x-frame-options"),
+    "DENY"
+  );
+  assert.equal(
+    response.headers.get("referrer-policy"),
+    "no-referrer"
+  );
+  assert.equal(
+    response.headers.get("permissions-policy"),
+    "camera=(), microphone=(), geolocation=()"
+  );
+  assert.equal(
+    response.headers.get("content-security-policy") !== null,
+    true
+  );
+  assert.equal(
+    response.headers.get("cross-origin-resource-policy"),
+    "same-origin"
+  );
+});
 
 test("POST health endpoint includes Allow GET header", async () => {
   const response = await request(
