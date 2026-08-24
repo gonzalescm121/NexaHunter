@@ -435,6 +435,34 @@ export function evaluateRisk(
   /*
   ------------------------------------------------------
   HARDENING:
+  Derived risk calculations must remain finite.
+
+  Even when individual inputs are finite, arithmetic
+  overflow can produce Infinity. A risk engine must never
+  allow an order when calculated exposure is unsafe.
+  ------------------------------------------------------
+  */
+
+  if (
+    !Number.isFinite(
+      orderNotional
+    ) ||
+    !Number.isFinite(
+      projectedPosition
+    ) ||
+    !Number.isFinite(
+      projectedNotional
+    )
+  ) {
+    reasons.push(
+      "RISK_CALCULATION_OVERFLOW"
+    );
+  }
+
+
+  /*
+  ------------------------------------------------------
+  HARDENING:
   Risk-limit configuration itself must also be valid.
 
   A NaN, Infinity, -Infinity, or negative limit must
@@ -732,23 +760,59 @@ export function estimateExecution(
       : price *
         (1 + impact);
 
+  const grossNotional =
+    price * quantity;
+
+  const estimatedNotional =
+    executionPrice *
+    quantity;
+
+  const estimatedCost =
+    Math.abs(
+      executionPrice -
+        price
+    ) * quantity;
+
+
+  /*
+  ------------------------------------------------------
+  HARDENING:
+  Execution calculations must remain finite and positive.
+  ------------------------------------------------------
+  */
+
+  if (
+    !Number.isFinite(
+      executionPrice
+    ) ||
+    executionPrice <= 0 ||
+    !Number.isFinite(
+      grossNotional
+    ) ||
+    !Number.isFinite(
+      estimatedNotional
+    ) ||
+    !Number.isFinite(
+      estimatedCost
+    )
+  ) {
+    return {
+      valid: false,
+      error:
+        "EXECUTION_CALCULATION_OVERFLOW"
+    };
+  }
+
   return {
     valid: true,
 
     executionPrice,
 
-    grossNotional:
-      price * quantity,
+    grossNotional,
 
-    estimatedNotional:
-      executionPrice *
-      quantity,
+    estimatedNotional,
 
-    estimatedCost:
-      Math.abs(
-        executionPrice -
-          price
-      ) * quantity,
+    estimatedCost,
 
     spreadBps,
     slippageBps,
@@ -889,7 +953,6 @@ export function recoveryDecision(
   return {
     state:
       value || "UNKNOWN",
-
     tradingAllowed:
       false
   };
