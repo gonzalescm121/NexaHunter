@@ -412,7 +412,15 @@ test("quarantined bar does not update timestamp baseline", () => {
     {
       nowMs: 280000,
       intervalMs: 60000,
-      maxGapIntervals: 1
+      maxGapIntervals: 1,
+
+      /*
+       * Prevent the first bar from being quarantined
+       * for STALE_FEED. This test is specifically testing
+       * whether a DATA_GAP quarantine updates the
+       * timestamp baseline.
+       */
+      staleAfterMs: 1000000
     }
   );
 
@@ -430,6 +438,21 @@ test("quarantined bar does not update timestamp baseline", () => {
 
   assert.equal(
     result.quarantined.length,
+    2
+  );
+
+  assert.equal(
+    result.accepted[0].index,
+    0
+  );
+
+  assert.equal(
+    result.quarantined[0].index,
+    1
+  );
+
+  assert.equal(
+    result.quarantined[1].index,
     2
   );
 
