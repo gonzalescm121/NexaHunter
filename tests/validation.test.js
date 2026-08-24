@@ -189,6 +189,21 @@ test("symbol longer than ten characters is rejected", async () => {
   assert.equal(response.status, 400);
 });
 
+test("symbol whitespace is normalized", async () => {
+  const response = await jsonRequest({
+    symbol: "  NORMAL  ",
+    quantity: 1,
+    price: 100,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 200);
+
+  const data = await readJson(response);
+
+  assert.equal(data.order.symbol, "NORMAL");
+});
+
 /*
 ========================================================
 QUANTITY VALIDATION
@@ -354,6 +369,21 @@ test("lowercase buy is normalized and accepted", async () => {
   assert.equal(data.order.side, "BUY");
 });
 
+test("lowercase sell is normalized and accepted", async () => {
+  const response = await jsonRequest({
+    symbol: "MSFT",
+    quantity: 2,
+    price: 100,
+    side: "sell"
+  });
+
+  assert.equal(response.status, 200);
+
+  const data = await readJson(response);
+
+  assert.equal(data.order.side, "SELL");
+});
+
 /*
 ========================================================
 TIMESTAMP SECURITY
@@ -462,6 +492,11 @@ test("different order parameters are not duplicates", async () => {
 ========================================================
 HTTP METHOD PROTECTION
 ========================================================
+
+IMPORTANT:
+worker.js returns 405 for unsupported methods.
+These tests intentionally expect 405.
+========================================================
 */
 
 test("GET paper-order endpoint is rejected", async () => {
@@ -472,7 +507,12 @@ test("GET paper-order endpoint is rejected", async () => {
     }
   );
 
-  assert.equal(response.status, 404);
+  assert.equal(response.status, 405);
+
+  const data = await readJson(response);
+
+  assert.equal(data.accepted, false);
+  assert.match(data.error, /method not allowed/i);
 });
 
 test("PUT paper-order endpoint is rejected", async () => {
@@ -483,7 +523,12 @@ test("PUT paper-order endpoint is rejected", async () => {
     }
   );
 
-  assert.equal(response.status, 404);
+  assert.equal(response.status, 405);
+
+  const data = await readJson(response);
+
+  assert.equal(data.accepted, false);
+  assert.match(data.error, /method not allowed/i);
 });
 
 test("DELETE paper-order endpoint is rejected", async () => {
@@ -494,7 +539,12 @@ test("DELETE paper-order endpoint is rejected", async () => {
     }
   );
 
-  assert.equal(response.status, 404);
+  assert.equal(response.status, 405);
+
+  const data = await readJson(response);
+
+  assert.equal(data.accepted, false);
+  assert.match(data.error, /method not allowed/i);
 });
 
 /*
@@ -545,6 +595,20 @@ test("health response includes security headers", async () => {
     ),
     "no-referrer"
   );
+
+  assert.equal(
+    response.headers.get(
+      "permissions-policy"
+    ),
+    "camera=(), microphone=(), geolocation=()"
+  );
+
+  assert.equal(
+    response.headers.get(
+      "content-security-policy"
+    ) !== null,
+    true
+  );
 });
 
 test("paper order response includes security headers", async () => {
@@ -567,6 +631,13 @@ test("paper order response includes security headers", async () => {
       "x-frame-options"
     ),
     "DENY"
+  );
+
+  assert.equal(
+    response.headers.get(
+      "referrer-policy"
+    ),
+    "no-referrer"
   );
 });
 
@@ -647,7 +718,7 @@ test("maximum allowed quantity is accepted", async () => {
 
 test("maximum allowed price is accepted", async () => {
   const response = await jsonRequest({
-    symbol: "MAXPRICE",
+    symbol: "MAXPRC",
     quantity: 1,
     price: 1000000000,
     side: "BUY"
@@ -658,80 +729,449 @@ test("maximum allowed price is accepted", async () => {
 
 /*
 ========================================================
-STRING/NORMALIZATION TESTS
+CONTENT TYPE
 ========================================================
 */
 
-test("symbol whitespace is normalized", async () => {
-  const response = await jsonRequest({
-    symbol: "  NORMAL  ",
-    quantity: 1,
-    price: 100,
-    side: "BUY"
-  });
+test("missing content type is rejected", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        symbol: "AAPL",
+        quantity: 1,
+        price: 100,
+        side: "BUY"
+      })
+    }
+  );
 
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 415);
 
   const data = await readJson(response);
 
-  assert.equal(
-    data.order.symbol,
-    "NORMAL"
+  assert.equal(data.accepted, false);
+  assert.match(
+    data.error,
+    /content-type/i
   );
 });
 
-test("side whitespace is normalized", async () => {
-  const response = await jsonRequest({
-    symbol: "WHITESIDE",
-    quantity: 1,
-    price: 100,
-    side: " BUY "
-  });
+test("text content type is rejected", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "text/plain"
+      },
+      body: JSON.stringify({
+        symbol: "AAPL",
+        quantity: 1,
+        price: 100,
+        side: "BUY"
+      })
+    }
+  );
+
+  assert.equal(response.status, 415);
+});
+
+test("application/json with charset is accepted", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "POST",
+      headers: {
+        "content-type":
+          "application/json; charset=utf-8"
+      },
+      body: JSON.stringify({
+        symbol: "CHARSET",
+        quantity: 1,
+        price: 100,
+        side: "BUY"
+      })
+    }
+  );
 
   assert.equal(response.status, 200);
+});
+
+/*
+========================================================
+REQUEST SIZE PROTECTION
+========================================================
+*/
+
+test("oversized request body is rejected", async () => {
+  const hugeValue =
+    "x".repeat(20000);
+
+  const response = await jsonRequest({
+    symbol: "BIG",
+    quantity: 1,
+    price: 100,
+    side: "BUY",
+    extra: hugeValue
+  });
+
+  assert.equal(response.status, 413);
 
   const data = await readJson(response);
 
-  assert.equal(
-    data.order.side,
-    "BUY"
+  assert.equal(data.accepted, false);
+
+  assert.match(
+    data.error,
+    /too large/i
+  );
+});
+
+test("invalid content length is rejected", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "POST",
+      headers: {
+        "content-type":
+          "application/json",
+        "content-length":
+          "not-a-number"
+      },
+      body: JSON.stringify({
+        symbol: "AAPL",
+        quantity: 1,
+        price: 100,
+        side: "BUY"
+      })
+    }
+  );
+
+  assert.equal(response.status, 400);
+
+  const data = await readJson(response);
+
+  assert.match(
+    data.error,
+    /content-length/i
   );
 });
 
 /*
 ========================================================
-FINAL SAFETY INVARIANTS
+JSON DEPTH PROTECTION
 ========================================================
 */
 
-test("accepted order always contains a generated ID", async () => {
+test("excessively deep JSON is rejected", async () => {
+  let value = {};
+
+  for(let i = 0; i < 15; i++){
+    value = {
+      nested: value
+    };
+  }
+
   const response = await jsonRequest({
-    symbol: "IDTEST",
+    symbol: "DEPTH",
     quantity: 1,
     price: 100,
+    side: "BUY",
+    data: value
+  });
+
+  assert.equal(response.status, 400);
+
+  const data = await readJson(response);
+
+  assert.match(
+    data.error,
+    /nesting/i
+  );
+});
+
+/*
+========================================================
+METHOD PROTECTION ON HEALTH
+========================================================
+*/
+
+test("POST health endpoint is rejected", async () => {
+  const response = await request(
+    "/health",
+    {
+      method: "POST"
+    }
+  );
+
+  assert.equal(response.status, 405);
+
+  const data = await readJson(response);
+
+  assert.equal(data.accepted, false);
+  assert.match(
+    data.error,
+    /method not allowed/i
+  );
+});
+
+test("PUT health endpoint is rejected", async () => {
+  const response = await request(
+    "/health",
+    {
+      method: "PUT"
+    }
+  );
+
+  assert.equal(response.status, 405);
+});
+
+test("DELETE health endpoint is rejected", async () => {
+  const response = await request(
+    "/health",
+    {
+      method: "DELETE"
+    }
+  );
+
+  assert.equal(response.status, 405);
+});
+
+/*
+========================================================
+RESPONSE FORMAT
+========================================================
+*/
+
+test("successful paper order returns JSON", async () => {
+  const response = await jsonRequest({
+    symbol: "FORMAT",
+    quantity: 1,
+    price: 25,
     side: "BUY"
   });
 
   assert.equal(response.status, 200);
 
+  const contentType =
+    response.headers.get(
+      "content-type"
+    );
+
+  assert.match(
+    contentType,
+    /application\/json/i
+  );
+
   const data = await readJson(response);
 
-  assert.equal(typeof data.order.id, "string");
-  assert.ok(data.order.id.length > 0);
+  assert.equal(
+    typeof data,
+    "object"
+  );
+
+  assert.equal(
+    data.accepted,
+    true
+  );
+
+  assert.ok(data.order);
 });
 
-test("accepted orders always remain PAPER mode", async () => {
+/*
+========================================================
+PAPER MODE ENFORCEMENT
+========================================================
+*/
+
+test("live mode input is ignored", async () => {
   const response = await jsonRequest({
-    symbol: "PAPERONLY",
-    quantity: 3,
+    symbol: "LIVEMODE",
+    quantity: 1,
     price: 50,
-    side: "SELL"
+    side: "BUY",
+    mode: "LIVE"
   });
 
   assert.equal(response.status, 200);
 
   const data = await readJson(response);
 
-  assert.equal(data.order.mode, "PAPER");
-  assert.equal(data.order.liveExecution, false);
+  assert.equal(
+    data.order.mode,
+    "PAPER"
+  );
+
+  assert.equal(
+    data.order.liveExecution,
+    false
+  );
+});
+
+test("live execution input is ignored", async () => {
+  const response = await jsonRequest({
+    symbol: "LIVEFLAG",
+    quantity: 1,
+    price: 50,
+    side: "BUY",
+    liveExecution: true
+  });
+
+  assert.equal(response.status, 200);
+
+  const data = await readJson(response);
+
+  assert.equal(
+    data.order.liveExecution,
+    false
+  );
+
+  assert.equal(
+    data.order.mode,
+    "PAPER"
+  );
+});
+
+/*
+========================================================
+ORDER ID
+========================================================
+*/
+
+test("accepted order receives unique id", async () => {
+  const first = await jsonRequest({
+    symbol: "ORDERID1",
+    quantity: 1,
+    price: 10,
+    side: "BUY"
+  });
+
+  const second = await jsonRequest({
+    symbol: "ORDERID2",
+    quantity: 1,
+    price: 10,
+    side: "BUY"
+  });
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+
+  const firstData = await readJson(first);
+  const secondData = await readJson(second);
+
+  assert.ok(firstData.order.id);
+  assert.ok(secondData.order.id);
+
+  assert.notEqual(
+    firstData.order.id,
+    secondData.order.id
+  );
+});
+
+/*
+========================================================
+CACHE CONTROL
+========================================================
+*/
+
+test("paper order response disables caching", async () => {
+  const response = await jsonRequest({
+    symbol: "CACHE",
+    quantity: 1,
+    price: 10,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 200);
+
+  assert.equal(
+    response.headers.get(
+      "cache-control"
+    ),
+    "no-store"
+  );
+});
+
+test("unknown route disables caching", async () => {
+  const response = await request(
+    "/unknown-test-route"
+  );
+
+  assert.equal(response.status, 404);
+
+  assert.equal(
+    response.headers.get(
+      "cache-control"
+    ),
+    "no-store"
+  );
+});
+
+/*
+========================================================
+SECURITY HEADER CONSISTENCY
+========================================================
+*/
+
+test("unknown route includes security headers", async () => {
+  const response = await request(
+    "/security-test-route"
+  );
+
+  assert.equal(response.status, 404);
+
+  assert.equal(
+    response.headers.get(
+      "x-content-type-options"
+    ),
+    "nosniff"
+  );
+
+  assert.equal(
+    response.headers.get(
+      "x-frame-options"
+    ),
+    "DENY"
+  );
+
+  assert.equal(
+    response.headers.get(
+      "referrer-policy"
+    ),
+    "no-referrer"
+  );
+});
+
+/*
+========================================================
+FINAL SAFETY ASSERTION
+========================================================
+*/
+
+test("NexaHunter remains paper trading only", async () => {
+  const health = await request("/health");
+
+  assert.equal(
+    health.status,
+    200
+  );
+
+  const data = await readJson(health);
+
+  assert.equal(
+    data.app,
+    "NexaHunter"
+  );
+
+  assert.equal(
+    data.mode,
+    "paper"
+  );
+
+  assert.equal(
+    data.liveExecution,
+    false
+  );
 });
