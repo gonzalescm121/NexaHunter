@@ -58,6 +58,7 @@ test("validateSeries rejects null", () => {
   assert.equal(result.accepted.length, 0);
   assert.equal(result.rejected.length, 0);
   assert.equal(result.quarantined.length, 1);
+
   assert.ok(
     result.quarantined[0].reasons.includes(
       "SERIES_NOT_ARRAY"
@@ -70,6 +71,7 @@ test("validateSeries rejects object input", () => {
 
   assert.equal(result.status, "REJECT");
   assert.equal(result.valid, false);
+
   assert.ok(
     result.quarantined[0].reasons.includes(
       "SERIES_NOT_ARRAY"
@@ -87,9 +89,22 @@ test("validateSeries handles empty array safely", () => {
   assert.deepEqual(result.quarantined, []);
 });
 
-test("pointInTimeGuard rejects null feature timestamp", () => {
+test("pointInTimeGuard rejects undefined feature timestamp", () => {
   const result = pointInTimeGuard(
-    null,
+    undefined,
+    Date.now()
+  );
+
+  assert.equal(result.allowed, false);
+  assert.equal(
+    result.reason,
+    "INVALID_TIMESTAMP"
+  );
+});
+
+test("pointInTimeGuard rejects invalid feature timestamp", () => {
+  const result = pointInTimeGuard(
+    "not-a-time",
     Date.now()
   );
 
@@ -174,7 +189,10 @@ test("validateUniverseMembership rejects symbol absent from snapshot", () => {
     "AAPL",
     "2026-08-24",
     {
-      "2026-08-24": ["MSFT", "GOOG"]
+      "2026-08-24": [
+        "MSFT",
+        "GOOG"
+      ]
     }
   );
 
@@ -190,7 +208,10 @@ test("validateUniverseMembership accepts symbol in snapshot", () => {
     "AAPL",
     "2026-08-24",
     {
-      "2026-08-24": ["AAPL", "MSFT"]
+      "2026-08-24": [
+        "AAPL",
+        "MSFT"
+      ]
     }
   );
 
@@ -205,14 +226,23 @@ test("evaluateRisk rejects null order", () => {
   );
 
   assert.equal(result.allowed, false);
+
   assert.ok(
-    result.reasons.includes("INVALID_QUANTITY")
+    result.reasons.includes(
+      "INVALID_QUANTITY"
+    )
   );
+
   assert.ok(
-    result.reasons.includes("INVALID_PRICE")
+    result.reasons.includes(
+      "INVALID_PRICE"
+    )
   );
+
   assert.ok(
-    result.reasons.includes("INVALID_SIDE")
+    result.reasons.includes(
+      "INVALID_SIDE"
+    )
   );
 });
 
@@ -231,8 +261,11 @@ test("evaluateRisk rejects malformed state", () => {
   );
 
   assert.equal(result.allowed, false);
+
   assert.ok(
-    result.reasons.includes("INVALID_RISK_STATE")
+    result.reasons.includes(
+      "INVALID_RISK_STATE"
+    )
   );
 });
 
@@ -279,7 +312,10 @@ test("estimateExecution remains valid with omitted market", () => {
   );
 
   assert.equal(result.valid, true);
+
   assert.ok(
-    Number.isFinite(result.executionPrice)
+    Number.isFinite(
+      result.executionPrice
+    )
   );
 });
