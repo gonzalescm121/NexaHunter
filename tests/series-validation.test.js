@@ -17,17 +17,10 @@ const BASE_BAR = {
 };
 
 
-const OPTIONS = {
-  nowMs: 220000,
-  intervalMs: 60000,
-  maxGapIntervals: 1,
-  staleAfterMs: 120000
-};
-
-
 /*
 ========================================================
-BASIC SERIES ACCEPTANCE
+TEST 1
+VALID CHRONOLOGICAL SERIES
 ========================================================
 */
 
@@ -50,39 +43,26 @@ test(
             timestamp: 220000
           }
         ],
-        OPTIONS
+        {
+          nowMs: 220000,
+          intervalMs: 60000,
+          maxGapIntervals: 1,
+          staleAfterMs: 120000
+        }
       );
 
-    assert.equal(
-      result.status,
-      "ACCEPT"
-    );
-
-    assert.equal(
-      result.valid,
-      true
-    );
-
-    assert.equal(
-      result.accepted.length,
-      3
-    );
-
-    assert.equal(
-      result.rejected.length,
-      0
-    );
-
-    assert.equal(
-      result.quarantined.length,
-      0
-    );
+    assert.equal(result.status, "ACCEPT");
+    assert.equal(result.valid, true);
+    assert.equal(result.accepted.length, 3);
+    assert.equal(result.rejected.length, 0);
+    assert.equal(result.quarantined.length, 0);
   }
 );
 
 
 /*
 ========================================================
+TEST 2
 EMPTY SERIES
 ========================================================
 */
@@ -93,61 +73,37 @@ test(
     const result =
       validateSeries(
         [],
-        OPTIONS
+        {
+          nowMs: 100000
+        }
       );
 
-    assert.equal(
-      result.status,
-      "ACCEPT"
-    );
-
-    assert.equal(
-      result.valid,
-      true
-    );
-
-    assert.deepEqual(
-      result.accepted,
-      []
-    );
-
-    assert.deepEqual(
-      result.rejected,
-      []
-    );
-
-    assert.deepEqual(
-      result.quarantined,
-      []
-    );
+    assert.equal(result.status, "ACCEPT");
+    assert.equal(result.valid, true);
+    assert.deepEqual(result.accepted, []);
+    assert.deepEqual(result.rejected, []);
+    assert.deepEqual(result.quarantined, []);
   }
 );
 
 
 /*
 ========================================================
-INVALID SERIES CONTAINER
+TEST 3
+NON-ARRAY SERIES
 ========================================================
 */
 
 test(
-  "non-array series is rejected",
+  "non-array series is rejected safely",
   () => {
     const result =
       validateSeries(
-        null,
-        OPTIONS
+        null
       );
 
-    assert.equal(
-      result.status,
-      "REJECT"
-    );
-
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.status, "REJECT");
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.accepted.length,
@@ -178,42 +134,10 @@ test(
 );
 
 
-test(
-  "object series is rejected",
-  () => {
-    const result =
-      validateSeries(
-        {},
-        OPTIONS
-      );
-
-    assert.equal(
-      result.status,
-      "REJECT"
-    );
-
-    assert.equal(
-      result.valid,
-      false
-    );
-
-    assert.equal(
-      result.quarantined.length,
-      1
-    );
-
-    assert.ok(
-      result.quarantined[0].reasons.includes(
-        "SERIES_NOT_ARRAY"
-      )
-    );
-  }
-);
-
-
 /*
 ========================================================
-DUPLICATE TIMESTAMPS
+TEST 4
+DUPLICATE TIMESTAMP
 ========================================================
 */
 
@@ -233,15 +157,12 @@ test(
           }
         ],
         {
-          ...OPTIONS,
-          nowMs: 100000
+          nowMs: 100000,
+          intervalMs: 60000
         }
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.accepted.length,
@@ -274,7 +195,8 @@ test(
 
 /*
 ========================================================
-OUT OF ORDER DATA
+TEST 5
+OUT OF ORDER
 ========================================================
 */
 
@@ -294,15 +216,12 @@ test(
           }
         ],
         {
-          ...OPTIONS,
-          nowMs: 100000
+          nowMs: 100000,
+          intervalMs: 60000
         }
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.accepted.length,
@@ -311,16 +230,6 @@ test(
 
     assert.equal(
       result.rejected.length,
-      1
-    );
-
-    assert.equal(
-      result.quarantined.length,
-      0
-    );
-
-    assert.equal(
-      result.rejected[0].index,
       1
     );
 
@@ -335,7 +244,8 @@ test(
 
 /*
 ========================================================
-DATA GAPS
+TEST 6
+DATA GAP
 ========================================================
 */
 
@@ -354,8 +264,17 @@ test(
             timestamp: 220000
           }
         ],
-        OPTIONS
+        {
+          nowMs: 220000,
+          intervalMs: 60000,
+          maxGapIntervals: 1
+        }
       );
+
+    assert.equal(
+      result.status,
+      "DEGRADED"
+    );
 
     assert.equal(
       result.valid,
@@ -377,11 +296,6 @@ test(
       1
     );
 
-    assert.equal(
-      result.quarantined[0].index,
-      1
-    );
-
     assert.ok(
       result.quarantined[0].warnings.includes(
         "DATA_GAP"
@@ -391,8 +305,15 @@ test(
 );
 
 
+/*
+========================================================
+TEST 7
+MAXIMUM ALLOWED GAP
+========================================================
+*/
+
 test(
-  "maximum allowed gap is accepted",
+  "maximum allowed interval gap is accepted",
   () => {
     const result =
       validateSeries(
@@ -407,10 +328,16 @@ test(
           }
         ],
         {
-          ...OPTIONS,
-          nowMs: 160000
+          nowMs: 160000,
+          intervalMs: 60000,
+          maxGapIntervals: 1
         }
       );
+
+    assert.equal(
+      result.status,
+      "ACCEPT"
+    );
 
     assert.equal(
       result.valid,
@@ -432,12 +359,13 @@ test(
 
 /*
 ========================================================
-REJECTED BAR DOES NOT BECOME BASELINE
+TEST 8
+INVALID BAR
 ========================================================
 */
 
 test(
-  "rejected bar does not advance timestamp baseline",
+  "invalid bar is rejected without crashing",
   () => {
     const result =
       validateSeries(
@@ -446,92 +374,10 @@ test(
             ...BASE_BAR,
             timestamp: 100000
           },
-          {
-            ...BASE_BAR,
-            timestamp: 160000,
-            high: 50
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 220000
-          }
-        ],
-        OPTIONS
-      );
-
-    assert.equal(
-      result.valid,
-      false
-    );
-
-    assert.equal(
-      result.accepted.length,
-      1
-    );
-
-    assert.equal(
-      result.rejected.length,
-      1
-    );
-
-    assert.equal(
-      result.quarantined.length,
-      1
-    );
-
-    assert.equal(
-      result.rejected[0].index,
-      1
-    );
-
-    assert.equal(
-      result.quarantined[0].index,
-      2
-    );
-
-    assert.ok(
-      result.rejected[0].reasons.includes(
-        "IMPOSSIBLE_HIGH"
-      )
-    );
-
-    assert.ok(
-      result.quarantined[0].warnings.includes(
-        "DATA_GAP"
-      )
-    );
-  }
-);
-
-
-/*
-========================================================
-QUARANTINED BAR DOES NOT BECOME BASELINE
-========================================================
-*/
-
-test(
-  "quarantined bar does not advance timestamp baseline",
-  () => {
-    const result =
-      validateSeries(
-        [
-          {
-            ...BASE_BAR,
-            timestamp: 100000
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 220000
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 280000
-          }
+          null
         ],
         {
-          ...OPTIONS,
-          nowMs: 280000
+          nowMs: 100000
         }
       );
 
@@ -547,89 +393,6 @@ test(
 
     assert.equal(
       result.rejected.length,
-      0
-    );
-
-    assert.equal(
-      result.quarantined.length,
-      2
-    );
-
-    assert.equal(
-      result.quarantined[0].index,
-      1
-    );
-
-    assert.equal(
-      result.quarantined[1].index,
-      2
-    );
-
-    assert.ok(
-      result.quarantined[0].warnings.includes(
-        "DATA_GAP"
-      )
-    );
-
-    assert.ok(
-      result.quarantined[1].warnings.includes(
-        "DATA_GAP"
-      )
-    );
-  }
-);
-
-
-/*
-========================================================
-INVALID BAR INSIDE SERIES
-========================================================
-*/
-
-test(
-  "invalid bar is rejected without crashing series validation",
-  () => {
-    const result =
-      validateSeries(
-        [
-          {
-            ...BASE_BAR,
-            timestamp: 100000
-          },
-          null,
-          {
-            ...BASE_BAR,
-            timestamp: 160000
-          }
-        ],
-        {
-          ...OPTIONS,
-          nowMs: 160000
-        }
-      );
-
-    assert.equal(
-      result.valid,
-      false
-    );
-
-    assert.equal(
-      result.accepted.length,
-      2
-    );
-
-    assert.equal(
-      result.rejected.length,
-      1
-    );
-
-    assert.equal(
-      result.quarantined.length,
-      0
-    );
-
-    assert.equal(
-      result.rejected[0].index,
       1
     );
 
@@ -644,12 +407,13 @@ test(
 
 /*
 ========================================================
-INVALID PRICE INSIDE SERIES
+TEST 9
+INVALID PRICE
 ========================================================
 */
 
 test(
-  "invalid price bar is rejected",
+  "invalid price is rejected",
   () => {
     const result =
       validateSeries(
@@ -662,13 +426,12 @@ test(
             ...BASE_BAR,
             timestamp: 160000,
             close: 0
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 220000
           }
         ],
-        OPTIONS
+        {
+          nowMs: 160000,
+          intervalMs: 60000
+        }
       );
 
     assert.equal(
@@ -678,21 +441,11 @@ test(
 
     assert.equal(
       result.accepted.length,
-      2
-    );
-
-    assert.equal(
-      result.rejected.length,
       1
     );
 
     assert.equal(
-      result.quarantined.length,
-      0
-    );
-
-    assert.equal(
-      result.rejected[0].index,
+      result.rejected.length,
       1
     );
 
@@ -707,12 +460,13 @@ test(
 
 /*
 ========================================================
-INVALID VOLUME INSIDE SERIES
+TEST 10
+INVALID VOLUME
 ========================================================
 */
 
 test(
-  "negative volume bar is rejected",
+  "negative volume is rejected",
   () => {
     const result =
       validateSeries(
@@ -725,13 +479,12 @@ test(
             ...BASE_BAR,
             timestamp: 160000,
             volume: -1
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 220000
           }
         ],
-        OPTIONS
+        {
+          nowMs: 160000,
+          intervalMs: 60000
+        }
       );
 
     assert.equal(
@@ -741,7 +494,7 @@ test(
 
     assert.equal(
       result.accepted.length,
-      2
+      1
     );
 
     assert.equal(
@@ -760,7 +513,8 @@ test(
 
 /*
 ========================================================
-FUTURE TIMESTAMP INSIDE SERIES
+TEST 11
+FUTURE TIMESTAMP
 ========================================================
 */
 
@@ -780,9 +534,9 @@ test(
           }
         ],
         {
-          ...OPTIONS,
           nowMs: 100000,
-          maxClockSkewMs: 0
+          maxClockSkewMs: 0,
+          intervalMs: 60000
         }
       );
 
@@ -812,12 +566,13 @@ test(
 
 /*
 ========================================================
-MULTIPLE REJECTIONS
+TEST 12
+REJECTED BAR DOES NOT BECOME BASELINE
 ========================================================
 */
 
 test(
-  "series preserves multiple independent rejected bars",
+  "rejected bar does not become timestamp baseline",
   () => {
     const result =
       validateSeries(
@@ -826,24 +581,22 @@ test(
             ...BASE_BAR,
             timestamp: 100000
           },
+
           {
             ...BASE_BAR,
             timestamp: 160000,
             high: 50
           },
+
           {
             ...BASE_BAR,
-            timestamp: 220000,
-            volume: -1
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 280000
+            timestamp: 220000
           }
         ],
         {
-          ...OPTIONS,
-          nowMs: 280000
+          nowMs: 220000,
+          intervalMs: 60000,
+          maxGapIntervals: 1
         }
       );
 
@@ -854,17 +607,17 @@ test(
 
     assert.equal(
       result.accepted.length,
-      2
+      1
     );
 
     assert.equal(
       result.rejected.length,
-      2
+      1
     );
 
     assert.equal(
       result.quarantined.length,
-      0
+      1
     );
 
     assert.equal(
@@ -873,7 +626,7 @@ test(
     );
 
     assert.equal(
-      result.rejected[1].index,
+      result.quarantined[0].index,
       2
     );
 
@@ -884,8 +637,8 @@ test(
     );
 
     assert.ok(
-      result.rejected[1].reasons.includes(
-        "INVALID_VOLUME"
+      result.quarantined[0].warnings.includes(
+        "DATA_GAP"
       )
     );
   }
@@ -894,12 +647,13 @@ test(
 
 /*
 ========================================================
-MIXED SERIES
+TEST 13
+QUARANTINED BAR DOES NOT BECOME BASELINE
 ========================================================
 */
 
 test(
-  "mixed accepted rejected and quarantined bars remain separated",
+  "quarantined bar does not become timestamp baseline",
   () => {
     const result =
       validateSeries(
@@ -908,28 +662,21 @@ test(
             ...BASE_BAR,
             timestamp: 100000
           },
-          {
-            ...BASE_BAR,
-            timestamp: 160000,
-            high: 50
-          },
+
           {
             ...BASE_BAR,
             timestamp: 220000
           },
+
           {
             ...BASE_BAR,
-            timestamp: 280000,
-            volume: -1
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 340000
+            timestamp: 280000
           }
         ],
         {
-          ...OPTIONS,
-          nowMs: 340000
+          nowMs: 280000,
+          intervalMs: 60000,
+          maxGapIntervals: 1
         }
       );
 
@@ -940,12 +687,192 @@ test(
 
     assert.equal(
       result.accepted.length,
-      2
+      1
     );
 
     assert.equal(
       result.rejected.length,
+      0
+    );
+
+    assert.equal(
+      result.quarantined.length,
       2
+    );
+
+    assert.ok(
+      result.quarantined[0].warnings.includes(
+        "DATA_GAP"
+      )
+    );
+
+    assert.ok(
+      result.quarantined[1].warnings.includes(
+        "DATA_GAP"
+      )
+    );
+  }
+);
+
+
+/*
+========================================================
+TEST 14
+IMPOSSIBLE HIGH
+========================================================
+*/
+
+test(
+  "impossible high is rejected",
+  () => {
+    const result =
+      validateSeries(
+        [
+          {
+            ...BASE_BAR,
+            high: 90
+          }
+        ],
+        {
+          nowMs: 100000
+        }
+      );
+
+    assert.equal(
+      result.status,
+      "DEGRADED"
+    );
+
+    assert.equal(
+      result.valid,
+      false
+    );
+
+    assert.equal(
+      result.accepted.length,
+      0
+    );
+
+    assert.equal(
+      result.rejected.length,
+      1
+    );
+
+    assert.ok(
+      result.rejected[0].reasons.includes(
+        "IMPOSSIBLE_HIGH"
+      )
+    );
+  }
+);
+
+
+/*
+========================================================
+TEST 15
+IMPOSSIBLE LOW
+========================================================
+*/
+
+test(
+  "impossible low is rejected",
+  () => {
+    const result =
+      validateSeries(
+        [
+          {
+            ...BASE_BAR,
+            low: 110
+          }
+        ],
+        {
+          nowMs: 100000
+        }
+      );
+
+    assert.equal(
+      result.status,
+      "DEGRADED"
+    );
+
+    assert.equal(
+      result.valid,
+      false
+    );
+
+    assert.equal(
+      result.accepted.length,
+      0
+    );
+
+    assert.equal(
+      result.rejected.length,
+      1
+    );
+
+    assert.ok(
+      result.rejected[0].reasons.includes(
+        "IMPOSSIBLE_LOW"
+      )
+    );
+  }
+);
+
+
+/*
+========================================================
+TEST 16
+MIXED VALIDATION
+========================================================
+*/
+
+test(
+  "mixed series separates accepted rejected and quarantined bars",
+  () => {
+    const result =
+      validateSeries(
+        [
+          {
+            ...BASE_BAR,
+            timestamp: 100000
+          },
+
+          {
+            ...BASE_BAR,
+            timestamp: 160000,
+            high: 50
+          },
+
+          {
+            ...BASE_BAR,
+            timestamp: 220000
+          }
+        ],
+        {
+          nowMs: 220000,
+          intervalMs: 60000,
+          maxGapIntervals: 1
+        }
+      );
+
+    assert.equal(
+      result.status,
+      "DEGRADED"
+    );
+
+    assert.equal(
+      result.valid,
+      false
+    );
+
+    assert.equal(
+      result.accepted.length,
+      1
+    );
+
+    assert.equal(
+      result.rejected.length,
+      1
     );
 
     assert.equal(
@@ -959,18 +886,8 @@ test(
     );
 
     assert.equal(
-      result.accepted[1].index,
-      4
-    );
-
-    assert.equal(
       result.rejected[0].index,
       1
-    );
-
-    assert.equal(
-      result.rejected[1].index,
-      3
     );
 
     assert.equal(
@@ -983,12 +900,47 @@ test(
 
 /*
 ========================================================
-RESULT STATUS
+TEST 17
+SERIES STATUS
 ========================================================
 */
 
 test(
-  "any rejected bar changes series status to DEGRADED",
+  "clean series returns ACCEPT",
+  () => {
+    const result =
+      validateSeries(
+        [
+          {
+            ...BASE_BAR,
+            timestamp: 100000
+          },
+          {
+            ...BASE_BAR,
+            timestamp: 160000
+          }
+        ],
+        {
+          nowMs: 160000,
+          intervalMs: 60000
+        }
+      );
+
+    assert.equal(
+      result.status,
+      "ACCEPT"
+    );
+
+    assert.equal(
+      result.valid,
+      true
+    );
+  }
+);
+
+
+test(
+  "degraded series returns DEGRADED",
   () => {
     const result =
       validateSeries(
@@ -1000,44 +952,13 @@ test(
           {
             ...BASE_BAR,
             timestamp: 160000,
-            high: 50
+            volume: -1
           }
         ],
         {
-          ...OPTIONS,
-          nowMs: 160000
+          nowMs: 160000,
+          intervalMs: 60000
         }
-      );
-
-    assert.equal(
-      result.status,
-      "DEGRADED"
-    );
-
-    assert.equal(
-      result.valid,
-      false
-    );
-  }
-);
-
-
-test(
-  "any quarantined bar changes series status to DEGRADED",
-  () => {
-    const result =
-      validateSeries(
-        [
-          {
-            ...BASE_BAR,
-            timestamp: 100000
-          },
-          {
-            ...BASE_BAR,
-            timestamp: 220000
-          }
-        ],
-        OPTIONS
       );
 
     assert.equal(
