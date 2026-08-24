@@ -8,8 +8,26 @@ function finitePositive(value) {
   return Number.isFinite(value) && value > 0;
 }
 
-export function validateBar(bar, options = {}) {
-  const nowMs = options.nowMs ?? Date.now();
+function finiteNonNegative(value) {
+  return (
+    Number.isFinite(value) &&
+    value >= 0
+  );
+}
+
+/*
+========================================================
+MARKET DATA VALIDATION
+========================================================
+*/
+
+export function validateBar(
+  bar,
+  options = {}
+) {
+  const nowMs =
+    options.nowMs ??
+    Date.now();
 
   const maxClockSkewMs =
     options.maxClockSkewMs ??
@@ -24,7 +42,8 @@ export function validateBar(bar, options = {}) {
     DEFAULT_INTERVAL_MS;
 
   const maxGapIntervals =
-    options.maxGapIntervals ?? 1;
+    options.maxGapIntervals ??
+    1;
 
   const previousTimestamp =
     options.previousTimestamp;
@@ -35,17 +54,72 @@ export function validateBar(bar, options = {}) {
   const reasons = [];
   const warnings = [];
 
-  if (!bar || typeof bar !== "object") {
+  /*
+  ------------------------------------------------------
+  HARDENING LAYER:
+  VALIDATION CONFIGURATION BOUNDARY
+  ------------------------------------------------------
+
+  Security-sensitive configuration must fail closed.
+
+  Reject:
+  - NaN
+  - Infinity
+  - negative timing values
+  - zero intervals
+  - fractional gap counts
+  ------------------------------------------------------
+  */
+
+  if (
+    !finiteNonNegative(nowMs) ||
+    !finiteNonNegative(maxClockSkewMs) ||
+    !finiteNonNegative(staleAfterMs) ||
+    !finitePositive(intervalMs) ||
+    !Number.isInteger(maxGapIntervals) ||
+    maxGapIntervals <= 0
+  ) {
     return {
       status: "REJECT",
       valid: false,
-      reasons: ["BAR_NOT_OBJECT"],
+      reasons: [
+        "INVALID_VALIDATION_CONFIG"
+      ],
       warnings
     };
   }
 
+  /*
+  ------------------------------------------------------
+  BAR TYPE
+  ------------------------------------------------------
+  */
+
+  if (
+    !bar ||
+    typeof bar !== "object" ||
+    Array.isArray(bar)
+  ) {
+    return {
+      status: "REJECT",
+      valid: false,
+      reasons: [
+        "BAR_NOT_OBJECT"
+      ],
+      warnings
+    };
+  }
+
+  /*
+  ------------------------------------------------------
+  NORMALIZE INPUT
+  ------------------------------------------------------
+  */
+
   const symbol =
-    String(bar.symbol ?? "")
+    String(
+      bar.symbol ?? ""
+    )
       .trim()
       .toUpperCase();
 
@@ -67,8 +141,18 @@ export function validateBar(bar, options = {}) {
   const volume =
     Number(bar.volume);
 
-  if (!SYMBOL_REGEX.test(symbol)) {
-    reasons.push("INVALID_SYMBOL");
+  /*
+  ------------------------------------------------------
+  SYMBOL VALIDATION
+  ------------------------------------------------------
+  */
+
+  if (
+    !SYMBOL_REGEX.test(symbol)
+  ) {
+    reasons.push(
+      "INVALID_SYMBOL"
+    );
   }
 
   if (
@@ -78,53 +162,105 @@ export function validateBar(bar, options = {}) {
         .trim()
         .toUpperCase()
   ) {
-    reasons.push("SYMBOL_MISMATCH");
+    reasons.push(
+      "SYMBOL_MISMATCH"
+    );
   }
+
+  /*
+  ------------------------------------------------------
+  TIMESTAMP VALIDATION
+  ------------------------------------------------------
+  */
 
   if (
     !Number.isFinite(timestamp) ||
     timestamp <= 0
   ) {
-    reasons.push("INVALID_TIMESTAMP");
+    reasons.push(
+      "INVALID_TIMESTAMP"
+    );
   }
+
+  /*
+  ------------------------------------------------------
+  PRICE VALIDATION
+  ------------------------------------------------------
+  */
 
   if (
     [open, high, low, close].some(
-      value => !finitePositive(value)
+      value =>
+        !finitePositive(value)
     )
   ) {
-    reasons.push("INVALID_PRICE");
+    reasons.push(
+      "INVALID_PRICE"
+    );
   }
+
+  /*
+  ------------------------------------------------------
+  VOLUME VALIDATION
+  ------------------------------------------------------
+  */
 
   if (
     !Number.isFinite(volume) ||
     volume < 0
   ) {
-    reasons.push("INVALID_VOLUME");
+    reasons.push(
+      "INVALID_VOLUME"
+    );
   }
 
-  if (Number.isFinite(timestamp)) {
-    if (
-      timestamp >
-      nowMs + maxClockSkewMs
-    ) {
-      reasons.push("FUTURE_TIMESTAMP");
-    }
-
-    if (
-      nowMs - timestamp >
-      staleAfterMs
-    ) {
-      warnings.push("STALE_FEED");
-    }
-  }
+  /*
+  ------------------------------------------------------
+  CLOCK / STALENESS VALIDATION
+  ------------------------------------------------------
+  */
 
   if (
-    Number.isFinite(previousTimestamp) &&
     Number.isFinite(timestamp)
   ) {
     if (
-      timestamp === previousTimestamp
+      timestamp >
+      nowMs +
+        maxClockSkewMs
+    ) {
+      reasons.push(
+        "FUTURE_TIMESTAMP"
+      );
+    }
+
+    if (
+      nowMs -
+        timestamp >
+      staleAfterMs
+    ) {
+      warnings.push(
+        "STALE_FEED"
+      );
+    }
+  }
+
+  /*
+  ------------------------------------------------------
+  SEQUENCE VALIDATION
+  ------------------------------------------------------
+  */
+
+  if (
+    Number.isFinite(
+      previousTimestamp
+    ) &&
+    Number.isFinite(
+      timestamp
+    )
+  ) {
+    if (
+      timestamp ===
+      previousTimestamp
     ) {
       reasons.push(
         "DUPLICATE_TIMESTAMP"
@@ -132,7 +268,8 @@ export function validateBar(bar, options = {}) {
     }
 
     if (
-      timestamp < previousTimestamp
+      timestamp <
+      previousTimestamp
     ) {
       reasons.push(
         "OUT_OF_ORDER_TIMESTAMP"
@@ -145,12 +282,25 @@ export function validateBar(bar, options = {}) {
         intervalMs *
           maxGapIntervals
     ) {
-      warnings.push("DATA_GAP");
+      warnings.push(
+        "DATA_GAP"
+      );
     }
   }
 
+  /*
+  ------------------------------------------------------
+  OHLC CONSISTENCY
+  ------------------------------------------------------
+  */
+
   if (
-    [open, high, low, close].every(
+    [
+      open,
+      high,
+      low,
+      close
+    ].every(
       Number.isFinite
     )
   ) {
@@ -181,7 +331,15 @@ export function validateBar(bar, options = {}) {
     }
   }
 
-  if (reasons.length > 0) {
+  /*
+  ------------------------------------------------------
+  FINAL STATUS
+  ------------------------------------------------------
+  */
+
+  if (
+    reasons.length > 0
+  ) {
     return {
       status: "REJECT",
       valid: false,
@@ -190,7 +348,9 @@ export function validateBar(bar, options = {}) {
     };
   }
 
-  if (warnings.length > 0) {
+  if (
+    warnings.length > 0
+  ) {
     return {
       status: "QUARANTINE",
       valid: false,
@@ -207,11 +367,19 @@ export function validateBar(bar, options = {}) {
   };
 }
 
+/*
+========================================================
+SERIES VALIDATION
+========================================================
+*/
+
 export function validateSeries(
   bars,
   options = {}
 ) {
-  if (!Array.isArray(bars)) {
+  if (
+    !Array.isArray(bars)
+  ) {
     return {
       status: "REJECT",
       valid: false,
@@ -234,41 +402,48 @@ export function validateSeries(
 
   let previousTimestamp;
 
-  bars.forEach((bar, index) => {
-    const result =
-      validateBar(bar, {
-        ...options,
-        previousTimestamp
-      });
+  bars.forEach(
+    (bar, index) => {
+      const result =
+        validateBar(
+          bar,
+          {
+            ...options,
+            previousTimestamp
+          }
+        );
 
-    if (
-      result.status ===
-      "ACCEPT"
-    ) {
-      accepted.push({
-        index,
-        bar
-      });
+      if (
+        result.status ===
+        "ACCEPT"
+      ) {
+        accepted.push({
+          index,
+          bar
+        });
 
-      previousTimestamp =
-        Number(bar.timestamp);
+        previousTimestamp =
+          Number(
+            bar.timestamp
+          );
 
-    } else if (
-      result.status ===
-      "QUARANTINE"
-    ) {
-      quarantined.push({
-        index,
-        ...result
-      });
+      } else if (
+        result.status ===
+        "QUARANTINE"
+      ) {
+        quarantined.push({
+          index,
+          ...result
+        });
 
-    } else {
-      rejected.push({
-        index,
-        ...result
-      });
+      } else {
+        rejected.push({
+          index,
+          ...result
+        });
+      }
     }
-  });
+  );
 
   const valid =
     rejected.length === 0 &&
@@ -287,19 +462,37 @@ export function validateSeries(
   };
 }
 
+/*
+========================================================
+POINT-IN-TIME GUARD
+========================================================
+*/
+
 export function pointInTimeGuard(
   featureTimestamp,
   decisionTimestamp,
   options = {}
 ) {
   const feature =
-    Number(featureTimestamp);
+    Number(
+      featureTimestamp
+    );
 
   const decision =
-    Number(decisionTimestamp);
+    Number(
+      decisionTimestamp
+    );
 
   const minimumLagMs =
-    options.minimumLagMs ?? 0;
+    options.minimumLagMs ??
+    0;
+
+  /*
+  ------------------------------------------------------
+  HARDENING LAYER:
+  TIMESTAMP CONFIGURATION BOUNDARY
+  ------------------------------------------------------
+  */
 
   if (
     !Number.isFinite(feature) ||
@@ -307,17 +500,38 @@ export function pointInTimeGuard(
   ) {
     return {
       allowed: false,
-      reason: "INVALID_TIMESTAMP"
+      reason:
+        "INVALID_TIMESTAMP"
     };
   }
 
   if (
-    feature >
-    decision - minimumLagMs
+    !finiteNonNegative(
+      minimumLagMs
+    )
   ) {
     return {
       allowed: false,
-      reason: "FUTURE_FEATURE"
+      reason:
+        "INVALID_TIMESTAMP_CONFIG"
+    };
+  }
+
+  /*
+  ------------------------------------------------------
+  FUTURE FEATURE PROTECTION
+  ------------------------------------------------------
+  */
+
+  if (
+    feature >
+    decision -
+      minimumLagMs
+  ) {
+    return {
+      allowed: false,
+      reason:
+        "FUTURE_FEATURE"
     };
   }
 
@@ -326,19 +540,28 @@ export function pointInTimeGuard(
   };
 }
 
+/*
+========================================================
+UNIVERSE MEMBERSHIP
+========================================================
+*/
+
 export function validateUniverseMembership(
   symbol,
   decisionDate,
   universeHistory
 ) {
   const date =
-    String(decisionDate)
-      .slice(0, 10);
+    String(
+      decisionDate
+    ).slice(0, 10);
 
   const active =
     universeHistory?.[date];
 
-  if (!Array.isArray(active)) {
+  if (
+    !Array.isArray(active)
+  ) {
     return {
       allowed: false,
       reason:
@@ -346,7 +569,9 @@ export function validateUniverseMembership(
     };
   }
 
-  return active.includes(symbol)
+  return active.includes(
+    symbol
+  )
     ? {
         allowed: true
       }
@@ -356,7 +581,6 @@ export function validateUniverseMembership(
           "SYMBOL_NOT_IN_UNIVERSE"
       };
 }
-
 
 /*
 ========================================================
@@ -370,19 +594,25 @@ export function evaluateRisk(
   limits = {}
 ) {
   const quantity =
-    Number(order?.quantity);
+    Number(
+      order?.quantity
+    );
 
   const price =
-    Number(order?.price);
+    Number(
+      order?.price
+    );
 
   const currentPosition =
     Number(
-      state.currentPosition ?? 0
+      state.currentPosition ??
+        0
     );
 
   const dailyLoss =
     Number(
-      state.dailyLoss ?? 0
+      state.dailyLoss ??
+        0
     );
 
   const side =
@@ -410,11 +640,10 @@ export function evaluateRisk(
 
   const reasons = [];
 
-
   /*
   ------------------------------------------------------
   HARDENING:
-  Corrupted internal state must fail closed.
+  CORRUPTED INTERNAL STATE
   ------------------------------------------------------
   */
 
@@ -431,15 +660,10 @@ export function evaluateRisk(
     );
   }
 
-
   /*
   ------------------------------------------------------
   HARDENING:
-  Derived risk calculations must remain finite.
-
-  Even when individual inputs are finite, arithmetic
-  overflow can produce Infinity. A risk engine must never
-  allow an order when calculated exposure is unsafe.
+  DERIVED CALCULATION OVERFLOW
   ------------------------------------------------------
   */
 
@@ -459,14 +683,10 @@ export function evaluateRisk(
     );
   }
 
-
   /*
   ------------------------------------------------------
   HARDENING:
-  Risk-limit configuration itself must also be valid.
-
-  A NaN, Infinity, -Infinity, or negative limit must
-  NEVER silently disable a safety control.
+  RISK CONFIGURATION BOUNDARY
   ------------------------------------------------------
   */
 
@@ -506,7 +726,6 @@ export function evaluateRisk(
     }
   }
 
-
   /*
   ------------------------------------------------------
   ORDER VALIDATION
@@ -514,7 +733,9 @@ export function evaluateRisk(
   */
 
   if (
-    !Number.isInteger(quantity) ||
+    !Number.isInteger(
+      quantity
+    ) ||
     quantity <= 0
   ) {
     reasons.push(
@@ -531,15 +752,15 @@ export function evaluateRisk(
   }
 
   if (
-    !["BUY", "SELL"].includes(
-      side
-    )
+    ![
+      "BUY",
+      "SELL"
+    ].includes(side)
   ) {
     reasons.push(
       "INVALID_SIDE"
     );
   }
-
 
   /*
   ------------------------------------------------------
@@ -559,7 +780,6 @@ export function evaluateRisk(
     );
   }
 
-
   /*
   ------------------------------------------------------
   POSITION NOTIONAL LIMIT
@@ -577,7 +797,6 @@ export function evaluateRisk(
       "POSITION_NOTIONAL_LIMIT"
     );
   }
-
 
   /*
   ------------------------------------------------------
@@ -598,7 +817,6 @@ export function evaluateRisk(
       "POSITION_LIMIT"
     );
   }
-
 
   /*
   ------------------------------------------------------
@@ -634,7 +852,6 @@ export function evaluateRisk(
   };
 }
 
-
 /*
 ========================================================
 EXECUTION ESTIMATOR
@@ -646,33 +863,28 @@ export function estimateExecution(
   market = {}
 ) {
   const price =
-    Number(order?.price);
+    Number(
+      order?.price
+    );
 
   const quantity =
-    Number(order?.quantity);
-
-  const spreadBps =
-    Math.max(
-      0,
-      Number(
-        market.spreadBps ?? 0
-      )
+    Number(
+      order?.quantity
     );
 
-  const slippageBps =
-    Math.max(
-      0,
-      Number(
-        market.slippageBps ?? 0
-      )
+  const rawSpreadBps =
+    Number(
+      market.spreadBps ?? 0
     );
 
-  const latencyMs =
-    Math.max(
-      0,
-      Number(
-        market.latencyMs ?? 0
-      )
+  const rawSlippageBps =
+    Number(
+      market.slippageBps ?? 0
+    );
+
+  const rawLatencyMs =
+    Number(
+      market.latencyMs ?? 0
     );
 
   const side =
@@ -680,11 +892,10 @@ export function estimateExecution(
       order?.side ?? ""
     ).toUpperCase();
 
-
   /*
   ------------------------------------------------------
   HARDENING:
-  Invalid execution inputs fail closed.
+  INVALID EXECUTION ORDER
   ------------------------------------------------------
   */
 
@@ -701,33 +912,23 @@ export function estimateExecution(
     };
   }
 
+  /*
+  ------------------------------------------------------
+  HARDENING:
+  INVALID EXECUTION MARKET
+  ------------------------------------------------------
+  */
+
   if (
-    !Number.isFinite(
-      Number(
-        market.spreadBps ?? 0
-      )
+    !finiteNonNegative(
+      rawSpreadBps
     ) ||
-    Number(
-      market.spreadBps ?? 0
-    ) < 0 ||
-
-    !Number.isFinite(
-      Number(
-        market.slippageBps ?? 0
-      )
+    !finiteNonNegative(
+      rawSlippageBps
     ) ||
-    Number(
-      market.slippageBps ?? 0
-    ) < 0 ||
-
-    !Number.isFinite(
-      Number(
-        market.latencyMs ?? 0
-      )
-    ) ||
-    Number(
-      market.latencyMs ?? 0
-    ) < 0
+    !finiteNonNegative(
+      rawLatencyMs
+    )
   ) {
     return {
       valid: false,
@@ -735,6 +936,21 @@ export function estimateExecution(
         "INVALID_EXECUTION_MARKET"
     };
   }
+
+  const spreadBps =
+    rawSpreadBps;
+
+  const slippageBps =
+    rawSlippageBps;
+
+  const latencyMs =
+    rawLatencyMs;
+
+  /*
+  ------------------------------------------------------
+  SIDE VALIDATION
+  ------------------------------------------------------
+  */
 
   if (
     side !== "BUY" &&
@@ -746,6 +962,12 @@ export function estimateExecution(
         "INVALID_EXECUTION_SIDE"
     };
   }
+
+  /*
+  ------------------------------------------------------
+  MARKET IMPACT
+  ------------------------------------------------------
+  */
 
   const impact =
     (
@@ -773,11 +995,10 @@ export function estimateExecution(
         price
     ) * quantity;
 
-
   /*
   ------------------------------------------------------
   HARDENING:
-  Execution calculations must remain finite and positive.
+  EXECUTION CALCULATION OVERFLOW
   ------------------------------------------------------
   */
 
@@ -820,7 +1041,6 @@ export function estimateExecution(
   };
 }
 
-
 /*
 ========================================================
 IDEMPOTENCY
@@ -840,7 +1060,6 @@ export function createIdempotencyKey(
     order.timestamp ?? ""
   ].join("|");
 }
-
 
 /*
 ========================================================
@@ -917,7 +1136,6 @@ export function reconcileState(
   };
 }
 
-
 /*
 ========================================================
 RECOVERY
@@ -953,11 +1171,11 @@ export function recoveryDecision(
   return {
     state:
       value || "UNKNOWN",
+
     tradingAllowed:
       false
   };
 }
-
 
 /*
 ========================================================
@@ -973,6 +1191,9 @@ export function walkForwardWindows(
 ) {
   if (
     !Array.isArray(data) ||
+    !Number.isInteger(trainSize) ||
+    !Number.isInteger(testSize) ||
+    !Number.isInteger(step) ||
     trainSize <= 0 ||
     testSize <= 0 ||
     step <= 0
