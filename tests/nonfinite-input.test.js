@@ -399,6 +399,7 @@ test("estimateExecution rejects NaN price", () => {
   );
 
   assert.equal(result.valid, false);
+
   assert.equal(
     result.error,
     "INVALID_EXECUTION_ORDER"
@@ -417,6 +418,7 @@ test("estimateExecution rejects Infinity price", () => {
   );
 
   assert.equal(result.valid, false);
+
   assert.equal(
     result.error,
     "INVALID_EXECUTION_ORDER"
@@ -435,6 +437,7 @@ test("estimateExecution rejects NaN quantity", () => {
   );
 
   assert.equal(result.valid, false);
+
   assert.equal(
     result.error,
     "INVALID_EXECUTION_ORDER"
@@ -453,6 +456,7 @@ test("estimateExecution rejects Infinity quantity", () => {
   );
 
   assert.equal(result.valid, false);
+
   assert.equal(
     result.error,
     "INVALID_EXECUTION_ORDER"
@@ -473,6 +477,7 @@ test("estimateExecution rejects NaN spread", () => {
   );
 
   assert.equal(result.valid, false);
+
   assert.equal(
     result.error,
     "INVALID_EXECUTION_MARKET"
@@ -493,6 +498,7 @@ test("estimateExecution rejects Infinity slippage", () => {
   );
 
   assert.equal(result.valid, false);
+
   assert.equal(
     result.error,
     "INVALID_EXECUTION_MARKET"
@@ -513,6 +519,7 @@ test("estimateExecution rejects NaN latency", () => {
   );
 
   assert.equal(result.valid, false);
+
   assert.equal(
     result.error,
     "INVALID_EXECUTION_MARKET"
@@ -541,10 +548,9 @@ test("normal finite inputs remain valid", () => {
     }
   );
 
-  assert.equal(result.valid, true);
   assert.equal(
-    result.side,
-    "BUY"
+    result.valid,
+    true
   );
 
   assert.ok(
@@ -555,7 +561,19 @@ test("normal finite inputs remain valid", () => {
 
   assert.ok(
     Number.isFinite(
-      result.executionNotional
+      result.estimatedNotional
+    )
+  );
+
+  assert.ok(
+    Number.isFinite(
+      result.grossNotional
+    )
+  );
+
+  assert.ok(
+    Number.isFinite(
+      result.estimatedCost
     )
   );
 });
