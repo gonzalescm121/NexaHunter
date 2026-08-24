@@ -122,6 +122,16 @@ const side=document.getElementById("side").value;
 if(!symbol||!qty||!price){toast("Complete all order fields");return}
 
 const order={symbol,qty,price,side,id:crypto.randomUUID()};
+const duplicate=orders.some(o=>
+  o.symbol===symbol &&
+  o.qty===qty &&
+  o.price===price &&
+  o.side===side
+);
+if(duplicate){
+  toast("Duplicate paper order rejected");
+  return;
+}
 orders.unshift(order);
 
 document.getElementById("orders").innerHTML=
