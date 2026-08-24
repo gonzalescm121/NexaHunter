@@ -938,6 +938,107 @@ test("DELETE health endpoint is rejected", async () => {
 
   assert.equal(response.status, 405);
 });
+/*
+========================================================
+ALLOW HEADER VALIDATION
+========================================================
+*/
+
+test("POST health endpoint includes Allow GET header", async () => {
+  const response = await request(
+    "/health",
+    {
+      method: "POST"
+    }
+  );
+
+  assert.equal(response.status, 405);
+
+  assert.equal(
+    response.headers.get("allow"),
+    "GET"
+  );
+});
+
+test("PUT health endpoint includes Allow GET header", async () => {
+  const response = await request(
+    "/health",
+    {
+      method: "PUT"
+    }
+  );
+
+  assert.equal(response.status, 405);
+
+  assert.equal(
+    response.headers.get("allow"),
+    "GET"
+  );
+});
+
+test("DELETE health endpoint includes Allow GET header", async () => {
+  const response = await request(
+    "/health",
+    {
+      method: "DELETE"
+    }
+  );
+
+  assert.equal(response.status, 405);
+
+  assert.equal(
+    response.headers.get("allow"),
+    "GET"
+  );
+});
+
+test("GET paper-order endpoint includes Allow POST header", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "GET"
+    }
+  );
+
+  assert.equal(response.status, 405);
+
+  assert.equal(
+    response.headers.get("allow"),
+    "POST"
+  );
+});
+
+test("PUT paper-order endpoint includes Allow POST header", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "PUT"
+    }
+  );
+
+  assert.equal(response.status, 405);
+
+  assert.equal(
+    response.headers.get("allow"),
+    "POST"
+  );
+});
+
+test("DELETE paper-order endpoint includes Allow POST header", async () => {
+  const response = await request(
+    "/api/paper-orders",
+    {
+      method: "DELETE"
+    }
+  );
+
+  assert.equal(response.status, 405);
+
+  assert.equal(
+    response.headers.get("allow"),
+    "POST"
+  );
+});
 
 /*
 ========================================================
