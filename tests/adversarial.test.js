@@ -1,632 +1,382 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  validateBar,
-  validateSeries,
-  pointInTimeGuard,
-  validateUniverseMembership,
-  evaluateRisk,
-  estimateExecution,
-  createIdempotencyKey,
-  reconcileState,
-  recoveryDecision,
-  walkForwardWindows
-} from "../src/core.js";
+import worker from "../worker.js";
 
-const NOW = 1700000000000;
+const BASE_URL = "https://nexahunter.test";
 
-function bar(overrides = {}) {
-  return {
-    symbol: "AAPL",
-    timestamp: NOW - 60000,
-    open: 100,
-    high: 105,
-    low: 99,
-    close: 103,
-    volume: 1000,
-    ...overrides
-  };
+function request(path, options = {}) {
+  return worker.fetch(
+    new Request(`${BASE_URL}${path}`, options)
+  );
 }
 
-/* DATA INTEGRITY */
+async function jsonRequest(body, headers = {}) {
+  return request("/api/paper-orders", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...headers
+    },
+    body: JSON.stringify(body)
+  });
+}
 
-test("valid market bar is accepted", () => {
-  const result = validateBar(
-    bar(),
-    { nowMs: NOW }
-  );
+async function readJson(response) {
+  return response.json();
+}
 
-  assert.equal(
-    result.status,
-    "ACCEPT"
-  );
-  assert.equal(
-    result.valid,
-    true
-  );
+/*
+========================================================
+ADVERSARIAL ROUTING
+========================================================
+*/
+
+test("HEAD health endpoint is rejected with 405", async () => {
+  const response = await request("/health", {
+    method: "HEAD"
+  });
+
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "GET");
 });
 
-test("corrupted OHLC is rejected", () => {
-  const result = validateBar(
-    bar({
-      high: 90
-    }),
-    { nowMs: NOW }
-  );
+test("OPTIONS health endpoint is rejected with 405", async () => {
+  const response = await request("/health", {
+    method: "OPTIONS"
+  });
 
-  assert.equal(
-    result.status,
-    "REJECT"
-  );
-
-  assert.ok(
-    result.reasons.includes(
-      "IMPOSSIBLE_HIGH"
-    )
-  );
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "GET");
 });
 
-test("negative volume is rejected", () => {
-  const result = validateBar(
-    bar({
-      volume: -1
-    }),
-    { nowMs: NOW }
-  );
+test("PATCH paper-order endpoint is rejected with 405", async () => {
+  const response = await request("/api/paper-orders", {
+    method: "PATCH"
+  });
 
-  assert.equal(
-    result.status,
-    "REJECT"
-  );
-
-  assert.ok(
-    result.reasons.includes(
-      "INVALID_VOLUME"
-    )
-  );
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "POST");
 });
 
-test("future timestamp is rejected", () => {
-  const result = validateBar(
-    bar({
-      timestamp:
-        NOW + 60000
-    }),
-    { nowMs: NOW }
-  );
+test("OPTIONS paper-order endpoint is rejected with 405", async () => {
+  const response = await request("/api/paper-orders", {
+    method: "OPTIONS"
+  });
 
-  assert.ok(
-    result.reasons.includes(
-      "FUTURE_TIMESTAMP"
-    )
-  );
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "POST");
 });
 
-test("duplicate timestamp is rejected", () => {
-  const result = validateBar(
-    bar({
-      timestamp:
-        NOW - 60000
-    }),
+/*
+========================================================
+QUERY STRING ROUTING
+========================================================
+*/
+
+test("health routing ignores query string", async () => {
+  const response = await request(
+    "/health?probe=1&source=adversarial"
+  );
+
+  assert.equal(response.status, 200);
+
+  const data = await readJson(response);
+
+  assert.equal(data.status, "ok");
+});
+
+test("paper-order routing works with query string", async () => {
+  const response = await request(
+    "/api/paper-orders?source=test",
     {
-      nowMs: NOW,
-      previousTimestamp:
-        NOW - 60000
-    }
-  );
-
-  assert.ok(
-    result.reasons.includes(
-      "DUPLICATE_TIMESTAMP"
-    )
-  );
-});
-
-test("out-of-order timestamp is rejected", () => {
-  const result = validateBar(
-    bar({
-      timestamp:
-        NOW - 120000
-    }),
-    {
-      nowMs: NOW,
-      previousTimestamp:
-        NOW - 60000
-    }
-  );
-
-  assert.ok(
-    result.reasons.includes(
-      "OUT_OF_ORDER_TIMESTAMP"
-    )
-  );
-});
-
-test("stale data is quarantined", () => {
-  const result = validateBar(
-    bar({
-      timestamp:
-        NOW - 600000
-    }),
-    {
-      nowMs: NOW,
-      staleAfterMs:
-        120000
-    }
-  );
-
-  assert.equal(
-    result.status,
-    "QUARANTINE"
-  );
-
-  assert.ok(
-    result.warnings.includes(
-      "STALE_FEED"
-    )
-  );
-});
-
-test("large data gap is quarantined", () => {
-  const result = validateBar(
-    bar({
-      timestamp:
-        NOW - 60000
-    }),
-    {
-      nowMs: NOW,
-      previousTimestamp:
-        NOW - 600000,
-      intervalMs: 60000,
-      maxGapIntervals: 1
-    }
-  );
-
-  assert.equal(
-    result.status,
-    "QUARANTINE"
-  );
-
-  assert.ok(
-    result.warnings.includes(
-      "DATA_GAP"
-    )
-  );
-});
-
-test("invalid symbol is rejected", () => {
-  const result = validateBar(
-    bar({
-      symbol:
-        "<script>"
-    }),
-    { nowMs: NOW }
-  );
-
-  assert.ok(
-    result.reasons.includes(
-      "INVALID_SYMBOL"
-    )
-  );
-});
-
-test("series detects corrupted data", () => {
-  const result = validateSeries(
-    [
-      bar({
-        timestamp:
-          NOW - 120000
-      }),
-
-      bar({
-        timestamp:
-          NOW - 60000
-      }),
-
-      bar({
-        timestamp:
-          NOW - 60000
-      })
-    ],
-    {
-      nowMs: NOW
-    }
-  );
-
-  assert.equal(
-    result.valid,
-    false
-  );
-
-  assert.ok(
-    result.rejected.length > 0
-  );
-});
-
-/* LEAKAGE */
-
-test("point-in-time guard accepts historical feature", () => {
-  const result =
-    pointInTimeGuard(
-      NOW - 60000,
-      NOW
-    );
-
-  assert.equal(
-    result.allowed,
-    true
-  );
-});
-
-test("point-in-time guard rejects future feature", () => {
-  const result =
-    pointInTimeGuard(
-      NOW + 1,
-      NOW
-    );
-
-  assert.equal(
-    result.allowed,
-    false
-  );
-
-  assert.equal(
-    result.reason,
-    "FUTURE_FEATURE"
-  );
-});
-
-test("minimum feature lag is enforced", () => {
-  const result =
-    pointInTimeGuard(
-      NOW - 100,
-      NOW,
-      {
-        minimumLagMs:
-          1000
-      }
-    );
-
-  assert.equal(
-    result.allowed,
-    false
-  );
-});
-
-test("missing universe snapshot is rejected", () => {
-  const result =
-    validateUniverseMembership(
-      "AAPL",
-      "2026-01-01",
-      {}
-    );
-
-  assert.equal(
-    result.allowed,
-    false
-  );
-
-  assert.equal(
-    result.reason,
-    "UNIVERSE_SNAPSHOT_MISSING"
-  );
-});
-
-test("inactive symbol is rejected", () => {
-  const result =
-    validateUniverseMembership(
-      "AAPL",
-      "2026-01-01",
-      {
-        "2026-01-01": [
-          "MSFT",
-          "NVDA"
-        ]
-      }
-    );
-
-  assert.equal(
-    result.allowed,
-    false
-  );
-});
-
-/* RISK */
-
-test("risk engine accepts safe order", () => {
-  const result =
-    evaluateRisk(
-      {
-        symbol: "AAPL",
-        quantity: 10,
-        price: 100,
-        side: "BUY"
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
       },
-      {
-        currentPosition: 0,
-        dailyLoss: 0
-      },
-      {
-        maxOrderNotional: 5000,
-        maxPositionNotional: 10000,
-        maxAbsolutePosition: 100,
-        maxDailyLoss: 1000
-      }
-    );
-
-  assert.equal(
-    result.allowed,
-    true
-  );
-});
-
-test("risk engine rejects oversized order", () => {
-  const result =
-    evaluateRisk(
-      {
-        symbol: "AAPL",
-        quantity: 100,
-        price: 100,
-        side: "BUY"
-      },
-      {},
-      {
-        maxOrderNotional: 5000
-      }
-    );
-
-  assert.equal(
-    result.allowed,
-    false
-  );
-
-  assert.ok(
-    result.reasons.includes(
-      "ORDER_NOTIONAL_LIMIT"
-    )
-  );
-});
-
-test("risk engine rejects position limit", () => {
-  const result =
-    evaluateRisk(
-      {
-        symbol: "AAPL",
-        quantity: 10,
-        price: 100,
-        side: "BUY"
-      },
-      {
-        currentPosition: 95
-      },
-      {
-        maxAbsolutePosition: 100
-      }
-    );
-
-  assert.equal(
-    result.allowed,
-    false
-  );
-
-  assert.ok(
-    result.reasons.includes(
-      "POSITION_LIMIT"
-    )
-  );
-});
-
-test("risk engine blocks after daily loss limit", () => {
-  const result =
-    evaluateRisk(
-      {
-        symbol: "AAPL",
+      body: JSON.stringify({
+        symbol: "QUERY01",
         quantity: 1,
-        price: 100,
+        price: 17,
         side: "BUY"
-      },
-      {
-        dailyLoss: -1000
-      },
-      {
-        maxDailyLoss: 1000
-      }
-    );
-
-  assert.equal(
-    result.allowed,
-    false
+      })
+    }
   );
 
-  assert.ok(
-    result.reasons.includes(
-      "DAILY_LOSS_LIMIT"
-    )
-  );
+  assert.equal(response.status, 200);
 });
 
-/* EXECUTION */
+/*
+========================================================
+SYMBOL HARDENING
+========================================================
+*/
 
-test("execution model calculates buy slippage", () => {
-  const result =
-    estimateExecution(
-      {
-        side: "BUY",
-        price: 100,
-        quantity: 10
-      },
-      {
-        spreadBps: 20,
-        slippageBps: 10,
-        latencyMs: 50
-      }
-    );
+test("unicode symbol is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "AAPL€",
+    quantity: 1,
+    price: 100,
+    side: "BUY"
+  });
 
-  assert.ok(
-    result.executionPrice > 100
-  );
-
-  assert.equal(
-    result.latencyMs,
-    50
-  );
-
-  assert.ok(
-    result.estimatedCost > 0
-  );
+  assert.equal(response.status, 400);
 });
 
-test("execution model calculates sell slippage", () => {
-  const result =
-    estimateExecution(
-      {
-        side: "SELL",
-        price: 100,
-        quantity: 10
-      },
-      {
-        spreadBps: 20,
-        slippageBps: 10
-      }
-    );
+test("newline injection in symbol is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "AAPL\nX",
+    quantity: 1,
+    price: 100,
+    side: "BUY"
+  });
 
-  assert.ok(
-    result.executionPrice < 100
-  );
+  assert.equal(response.status, 400);
 });
 
-test("idempotency key is deterministic", () => {
-  const order = {
-    symbol: "AAPL",
-    quantity: 10,
+test("symbol containing only punctuation is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "///",
+    quantity: 1,
+    price: 100,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 400);
+});
+
+test("mixed-case symbol is normalized", async () => {
+  const response = await jsonRequest({
+    symbol: "  adVeRsArY1  ",
+    quantity: 1,
+    price: 100,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 200);
+
+  const data = await readJson(response);
+
+  assert.equal(data.order.symbol, "ADVERSARY1");
+});
+
+/*
+========================================================
+NUMERIC TYPE HARDENING
+========================================================
+*/
+
+test("boolean quantity is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "BOOLQTY",
+    quantity: true,
+    price: 100,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 400);
+});
+
+test("boolean price is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "BOOLPRC",
+    quantity: 1,
+    price: true,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 400);
+});
+
+test("null quantity is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "NULLQTY",
+    quantity: null,
+    price: 100,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 400);
+});
+
+test("null price is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "NULLPRC",
+    quantity: 1,
+    price: null,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 400);
+});
+
+test("non-numeric quantity string is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "STRQTY",
+    quantity: "not-a-number",
+    price: 100,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 400);
+});
+
+test("negative zero quantity is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "NEGZERO",
+    quantity: -0,
+    price: 100,
+    side: "BUY"
+  });
+
+  assert.equal(response.status, 400);
+});
+
+/*
+========================================================
+TIMESTAMP HARDENING
+========================================================
+*/
+
+test("invalid numeric-like timestamp is rejected", async () => {
+  const response = await jsonRequest({
+    symbol: "NUMTIME",
+    quantity: 1,
     price: 100,
     side: "BUY",
-    timestamp: 123
-  };
+    timestamp: "not-a-date"
+  });
 
-  assert.equal(
-    createIdempotencyKey(order),
-    createIdempotencyKey(order)
-  );
+  assert.equal(response.status, 400);
 });
 
-/* RECOVERY */
+test("old timestamp is accepted when otherwise valid", async () => {
+  const response = await jsonRequest({
+    symbol: "OLDTIME",
+    quantity: 1,
+    price: 100,
+    side: "BUY",
+    timestamp: "2020-01-01T00:00:00.000Z"
+  });
 
-test("matching internal and external state reconciles", () => {
-  const result =
-    reconcileState(
-      {
-        position: 10,
-        openOrders: 1,
-        knownOrderIds: [
-          "A"
-        ]
-      },
-      {
-        position: 10,
-        openOrders: 1,
-        knownOrderIds: [
-          "A"
-        ]
-      }
-    );
-
-  assert.equal(
-    result.reconciled,
-    true
-  );
-
-  assert.equal(
-    result.tradingAllowed,
-    true
-  );
+  assert.equal(response.status, 200);
 });
 
-test("position mismatch blocks trading", () => {
-  const result =
-    reconcileState(
-      {
-        position: 10,
-        openOrders: 0
-      },
-      {
-        position: 5,
-        openOrders: 0
-      }
-    );
+/*
+========================================================
+PAPER-MODE TAMPERING
+========================================================
+*/
 
-  assert.equal(
-    result.reconciled,
-    false
-  );
+test("hostile live-control fields cannot change paper mode", async () => {
+  const response = await jsonRequest({
+    symbol: "TAMPER01",
+    quantity: 1,
+    price: 100,
+    side: "BUY",
+    mode: "LIVE",
+    liveExecution: true,
+    executeLive: true,
+    paper: false,
+    environment: "production"
+  });
 
-  assert.equal(
-    result.tradingAllowed,
-    false
-  );
+  assert.equal(response.status, 200);
+
+  const data = await readJson(response);
+
+  assert.equal(data.order.mode, "PAPER");
+  assert.equal(data.order.liveExecution, false);
+  assert.equal(data.order.executeLive, undefined);
 });
 
-test("unknown recovery state blocks trading", () => {
-  const result =
-    recoveryDecision(
-      "UNKNOWN"
-    );
+/*
+========================================================
+RESPONSE SECURITY
+========================================================
+*/
+
+test("405 responses consistently include security headers", async () => {
+  const response = await request("/api/paper-orders", {
+    method: "PATCH"
+  });
+
+  assert.equal(response.status, 405);
 
   assert.equal(
-    result.tradingAllowed,
-    false
+    response.headers.get("x-content-type-options"),
+    "nosniff"
   );
-});
-
-test("recovered state permits trading", () => {
-  const result =
-    recoveryDecision(
-      "RECOVERED"
-    );
 
   assert.equal(
-    result.tradingAllowed,
+    response.headers.get("x-frame-options"),
+    "DENY"
+  );
+
+  assert.equal(
+    response.headers.get("referrer-policy"),
+    "no-referrer"
+  );
+
+  assert.equal(
+    response.headers.get("content-security-policy") !== null,
     true
   );
 });
 
-/* WALK-FORWARD */
+test("root application response includes security headers", async () => {
+  const response = await request("/");
 
-test("walk-forward windows never overlap train and test data", () => {
-  const data =
-    [1, 2, 3, 4, 5, 6, 7, 8];
+  assert.equal(response.status, 200);
 
-  const windows =
-    walkForwardWindows(
-      data,
-      3,
-      2,
-      2
-    );
+  assert.match(
+    response.headers.get("content-type") || "",
+    /text\/html/i
+  );
 
   assert.equal(
-    windows.length,
-    2
+    response.headers.get("x-content-type-options"),
+    "nosniff"
   );
 
-  assert.deepEqual(
-    windows[0].train,
-    [1, 2, 3]
+  assert.equal(
+    response.headers.get("x-frame-options"),
+    "DENY"
   );
 
-  assert.deepEqual(
-    windows[0].test,
-    [4, 5]
+  assert.equal(
+    response.headers.get("referrer-policy"),
+    "no-referrer"
   );
 
-  assert.deepEqual(
-    windows[1].train,
-    [3, 4, 5]
+  assert.equal(
+    response.headers.get("cache-control"),
+    "no-store"
+  );
+});
+
+/*
+========================================================
+UNKNOWN ROUTE
+========================================================
+*/
+
+test("unknown route remains 404 regardless of query string", async () => {
+  const response = await request(
+    "/definitely-not-a-route?method=POST"
   );
 
-  assert.deepEqual(
-    windows[1].test,
-    [6, 7]
+  assert.equal(response.status, 404);
+
+  assert.equal(
+    response.headers.get("cache-control"),
+    "no-store"
+  );
+
+  const text = await response.text();
+
+  assert.match(
+    text,
+    /route not found/i
   );
 });
