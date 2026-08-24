@@ -12,6 +12,10 @@ Features:
 - Durable Object idempotency in production
 - Process-global fallback for Node tests
 - Security headers
+- Request size protection
+- Content-Type enforcement
+- Method enforcement
+- API error normalization
 - Live execution permanently disabled
 ========================================================
 */
@@ -31,10 +35,7 @@ body{
   color:#f5f7fa;
   font-family:Arial,Helvetica,sans-serif
 }
-.container{
-  max-width:1000px;
-  margin:auto
-}
+.container{max-width:1000px;margin:auto}
 .card{
   background:#151b23;
   border:1px solid #2a3340;
@@ -232,50 +233,60 @@ function escapeHtml(value){
     .replaceAll("'","&#039;");
 }
 
-const market = document.getElementById("market");
+const market =
+  document.getElementById("market");
 
-market.innerHTML = assets.map(function(a){
+market.innerHTML =
+  assets.map(function(a){
 
-  const cls =
-    a[3][0] === "-" ? "down" : "up";
+    const cls =
+      a[3][0] === "-"
+        ? "down"
+        : "up";
 
-  return (
-    "<div class='row'>" +
+    return (
+      "<div class='row'>" +
 
-      "<div>" +
-        "<b>" +
-          escapeHtml(a[1]) +
-        "</b>" +
-        "<span class='mini'>" +
-          escapeHtml(a[0]) +
+        "<div>" +
+          "<b>" +
+            escapeHtml(a[1]) +
+          "</b>" +
+          "<span class='mini'>" +
+            escapeHtml(a[0]) +
+          "</span>" +
+        "</div>" +
+
+        "<span class='right'>" +
+          escapeHtml(a[2]) +
         "</span>" +
-      "</div>" +
 
-      "<span class='right'>" +
-        escapeHtml(a[2]) +
-      "</span>" +
+        "<b class='right " +
+          cls +
+        "'>" +
+          escapeHtml(a[3]) +
+        "</b>" +
 
-      "<b class='right " +
-        cls +
-      "'>" +
-        escapeHtml(a[3]) +
-      "</b>" +
+      "</div>"
+    );
 
-    "</div>"
-  );
-
-}).join("");
+  }).join("");
 
 function toast(message){
 
   const element =
     document.getElementById("toast");
 
-  element.textContent = message;
-  element.style.display = "block";
+  element.textContent =
+    message;
+
+  element.style.display =
+    "block";
 
   setTimeout(function(){
-    element.style.display = "none";
+
+    element.style.display =
+      "none";
+
   },2500);
 }
 
@@ -284,13 +295,18 @@ async function checkHealth(){
   try{
 
     const response =
-      await fetch("/health",{
-        method:"GET",
-        cache:"no-store"
-      });
+      await fetch(
+        "/health",
+        {
+          method:"GET",
+          cache:"no-store"
+        }
+      );
 
     if(!response.ok){
-      throw new Error("Health check failed");
+      throw new Error(
+        "Health check failed"
+      );
     }
 
     const data =
@@ -318,8 +334,11 @@ async function checkHealth(){
         "serverStatus"
       );
 
-    element.textContent = "FAIL";
-    element.className = "down";
+    element.textContent =
+      "FAIL";
+
+    element.className =
+      "down";
   }
 }
 
@@ -336,22 +355,35 @@ async function(){
       .toUpperCase();
 
   const quantity =
-    document.getElementById("qty").value;
+    document.getElementById("qty")
+      .value;
 
   const price =
-    document.getElementById("price").value;
+    document.getElementById("price")
+      .value;
 
   const side =
-    document.getElementById("side").value;
+    document.getElementById("side")
+      .value;
 
-  if(!symbol || !quantity || !price){
+  if(
+    !symbol ||
+    !quantity ||
+    !price
+  ){
 
-    toast("Complete all order fields");
+    toast(
+      "Complete all order fields"
+    );
+
     return;
   }
 
-  button.disabled = true;
-  button.textContent = "Validating...";
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Validating...";
 
   try{
 
@@ -360,10 +392,15 @@ async function(){
         "/api/paper-orders",
         {
           method:"POST",
+
           headers:{
             "content-type":
+              "application/json",
+
+            "accept":
               "application/json"
           },
+
           body:JSON.stringify({
             symbol,
             quantity,
@@ -397,22 +434,30 @@ async function(){
 
         "<span>" +
           "<b>" +
-            escapeHtml(order.symbol) +
+            escapeHtml(
+              order.symbol
+            ) +
           "</b>" +
 
           "<span class='mini'>" +
             escapeHtml(
-              String(order.quantity)
+              String(
+                order.quantity
+              )
             ) +
             " units @ " +
             escapeHtml(
-              String(order.price)
+              String(
+                order.price
+              )
             ) +
           "</span>" +
         "</span>" +
 
         "<span>" +
-          escapeHtml(order.side) +
+          escapeHtml(
+            order.side
+          ) +
         "</span>" +
 
         "<span class='right up'>" +
@@ -433,10 +478,11 @@ async function(){
 
   }finally{
 
-    button.disabled = false;
+    button.disabled =
+      false;
+
     button.textContent =
       "Queue Paper Order";
-
   }
 };
 
@@ -454,40 +500,246 @@ VALIDATION CONSTANTS
 ========================================================
 */
 
-const MAX_QUANTITY = 1000000;
+const MAX_QUANTITY =
+  1000000;
 
-const MAX_PRICE = 1000000000;
+const MAX_PRICE =
+  1000000000;
 
 const SYMBOL_REGEX =
   /^[A-Z][A-Z0-9./-]{0,9}$/;
 
-const MAX_CLOCK_SKEW_MS = 5000;
+const MAX_CLOCK_SKEW_MS =
+  5000;
 
-const DUPLICATE_TTL_MS = 300000;
+const DUPLICATE_TTL_MS =
+  300000;
+
+const MAX_REQUEST_BYTES =
+  16 * 1024;
+
+const MAX_JSON_DEPTH =
+  10;
 
 
 /*
 ========================================================
 NODE TEST FALLBACK
-
-This is intentionally global.
-
-The recovery test imports worker.js twice using
-different query strings to simulate Worker restarts.
-
-A module-local Map would be recreated.
-
-globalThis survives those module instances
-inside the same Node process.
-
-Production uses the Durable Object below.
 ========================================================
 */
 
 const fallbackOrders =
   globalThis.__NEXAHUNTER_RECENT_ORDERS__ ||
-  (globalThis.__NEXAHUNTER_RECENT_ORDERS__ =
-    new Map());
+  (
+    globalThis.__NEXAHUNTER_RECENT_ORDERS__ =
+      new Map()
+  );
+
+
+/*
+========================================================
+JSON DEPTH PROTECTION
+========================================================
+*/
+
+function jsonDepth(
+  value,
+  depth = 0
+){
+
+  if(
+    depth >
+    MAX_JSON_DEPTH
+  ){
+
+    return depth;
+  }
+
+  if(
+    value === null ||
+    typeof value !== "object"
+  ){
+
+    return depth;
+  }
+
+  let maxDepth =
+    depth;
+
+  for(
+    const child
+    of Object.values(value)
+  ){
+
+    maxDepth =
+      Math.max(
+        maxDepth,
+        jsonDepth(
+          child,
+          depth + 1
+        )
+      );
+
+    if(
+      maxDepth >
+      MAX_JSON_DEPTH
+    ){
+
+      return maxDepth;
+    }
+  }
+
+  return maxDepth;
+}
+
+
+/*
+========================================================
+REQUEST BODY READER
+========================================================
+*/
+
+async function readJsonBody(
+  request
+){
+
+  const contentLength =
+    request.headers.get(
+      "content-length"
+    );
+
+  if(
+    contentLength !== null
+  ){
+
+    const declaredLength =
+      Number(
+        contentLength
+      );
+
+    if(
+      !Number.isFinite(
+        declaredLength
+      ) ||
+      declaredLength < 0
+    ){
+
+      return {
+        ok:false,
+        status:400,
+        error:
+          "Invalid Content-Length"
+      };
+    }
+
+    if(
+      declaredLength >
+      MAX_REQUEST_BYTES
+    ){
+
+      return {
+        ok:false,
+        status:413,
+        error:
+          "Request body too large"
+      };
+    }
+  }
+
+  let raw;
+
+  try{
+
+    raw =
+      await request.text();
+
+  }catch{
+
+    return {
+      ok:false,
+      status:400,
+      error:
+        "Unable to read request body"
+    };
+  }
+
+  const bytes =
+    new TextEncoder()
+      .encode(raw)
+      .byteLength;
+
+  if(
+    bytes >
+    MAX_REQUEST_BYTES
+  ){
+
+    return {
+      ok:false,
+      status:413,
+      error:
+        "Request body too large"
+    };
+  }
+
+  if(!raw.trim()){
+
+    return {
+      ok:false,
+      status:400,
+      error:
+        "Request body is required"
+    };
+  }
+
+  let body;
+
+  try{
+
+    body =
+      JSON.parse(raw);
+
+  }catch{
+
+    return {
+      ok:false,
+      status:400,
+      error:
+        "Request body must be valid JSON"
+    };
+  }
+
+  if(
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body)
+  ){
+
+    return {
+      ok:false,
+      status:400,
+      error:
+        "Request body must be an object"
+    };
+  }
+
+  if(
+    jsonDepth(body) >
+    MAX_JSON_DEPTH
+  ){
+
+    return {
+      ok:false,
+      status:400,
+      error:
+        "Request body nesting is too deep"
+    };
+  }
+
+  return {
+    ok:true,
+    body
+  };
+}
 
 
 /*
@@ -496,33 +748,44 @@ VALIDATE PAPER ORDER
 ========================================================
 */
 
-function validatePaperOrder(input){
+function validatePaperOrder(
+  input
+){
 
   if(
     !input ||
-    typeof input !== "object"
+    typeof input !== "object" ||
+    Array.isArray(input)
   ){
 
     return {
       valid:false,
-      error:"Invalid order payload"
+      error:
+        "Invalid order payload"
     };
-
   }
 
   const symbol =
-    String(input.symbol || "")
+    String(
+      input.symbol || ""
+    )
       .trim()
       .toUpperCase();
 
   const quantity =
-    Number(input.quantity);
+    Number(
+      input.quantity
+    );
 
   const price =
-    Number(input.price);
+    Number(
+      input.price
+    );
 
   const side =
-    String(input.side || "")
+    String(
+      input.side || ""
+    )
       .trim()
       .toUpperCase();
 
@@ -531,79 +794,99 @@ function validatePaperOrder(input){
 
     return {
       valid:false,
-      error:"Symbol is required"
+      error:
+        "Symbol is required"
     };
-
   }
 
 
-  if(!SYMBOL_REGEX.test(symbol)){
+  if(
+    !SYMBOL_REGEX.test(symbol)
+  ){
 
     return {
       valid:false,
-      error:"Invalid symbol"
+      error:
+        "Invalid symbol"
     };
-
   }
 
 
-  if(!Number.isInteger(quantity)){
+  if(
+    !Number.isInteger(
+      quantity
+    )
+  ){
 
     return {
       valid:false,
-      error:"Quantity must be a whole number"
+      error:
+        "Quantity must be a whole number"
     };
-
   }
 
 
-  if(quantity <= 0){
+  if(
+    quantity <= 0
+  ){
 
     return {
       valid:false,
-      error:"Quantity must be greater than zero"
+      error:
+        "Quantity must be greater than zero"
     };
-
   }
 
 
-  if(quantity > MAX_QUANTITY){
+  if(
+    quantity >
+    MAX_QUANTITY
+  ){
 
     return {
       valid:false,
-      error:"Quantity exceeds maximum allowed"
+      error:
+        "Quantity exceeds maximum allowed"
     };
-
   }
 
 
-  if(!Number.isFinite(price)){
+  if(
+    !Number.isFinite(
+      price
+    )
+  ){
 
     return {
       valid:false,
-      error:"Price must be a valid number"
+      error:
+        "Price must be a valid number"
     };
-
   }
 
 
-  if(price <= 0){
+  if(
+    price <= 0
+  ){
 
     return {
       valid:false,
-      error:"Price must be greater than zero"
+      error:
+        "Price must be greater than zero"
     };
-
   }
 
 
-  if(price > MAX_PRICE){
+  if(
+    price >
+    MAX_PRICE
+  ){
 
     return {
       valid:false,
-      error:"Price exceeds maximum allowed"
+      error:
+        "Price exceeds maximum allowed"
     };
-
   }
 
 
@@ -614,30 +897,45 @@ function validatePaperOrder(input){
 
     return {
       valid:false,
-      error:"Side must be BUY or SELL"
+      error:
+        "Side must be BUY or SELL"
     };
-
   }
 
 
-  if(input.timestamp !== undefined){
+  /*
+  ------------------------------------------------------
+  OPTIONAL CLIENT TIMESTAMP
+  ------------------------------------------------------
+  */
+
+  if(
+    input.timestamp !==
+    undefined
+  ){
 
     const timestamp =
-      Date.parse(input.timestamp);
+      Date.parse(
+        input.timestamp
+      );
 
-    if(!Number.isFinite(timestamp)){
+    if(
+      !Number.isFinite(
+        timestamp
+      )
+    ){
 
       return {
         valid:false,
         error:
           "Timestamp must be valid ISO date-time"
       };
-
     }
 
     if(
       timestamp >
-      Date.now() + MAX_CLOCK_SKEW_MS
+      Date.now() +
+      MAX_CLOCK_SKEW_MS
     ){
 
       return {
@@ -645,9 +943,30 @@ function validatePaperOrder(input){
         error:
           "Future timestamps are not allowed"
       };
-
     }
+  }
 
+
+  /*
+  ------------------------------------------------------
+  SERVER-SIDE NOTIONAL SAFETY
+  ------------------------------------------------------
+  */
+
+  const notional =
+    quantity * price;
+
+  if(
+    !Number.isFinite(
+      notional
+    )
+  ){
+
+    return {
+      valid:false,
+      error:
+        "Order calculation overflow"
+    };
   }
 
 
@@ -663,7 +982,6 @@ function validatePaperOrder(input){
     }
 
   };
-
 }
 
 
@@ -673,7 +991,9 @@ DUPLICATE KEY
 ========================================================
 */
 
-function duplicateKey(order){
+function duplicateKey(
+  order
+){
 
   return [
     order.symbol,
@@ -691,7 +1011,9 @@ FALLBACK DUPLICATE PROTECTION
 ========================================================
 */
 
-function fallbackIsDuplicate(order){
+function fallbackIsDuplicate(
+  order
+){
 
   const now =
     Date.now();
@@ -706,10 +1028,10 @@ function fallbackIsDuplicate(order){
       DUPLICATE_TTL_MS
     ){
 
-      fallbackOrders.delete(key);
-
+      fallbackOrders.delete(
+        key
+      );
     }
-
   }
 
   const key =
@@ -720,7 +1042,6 @@ function fallbackIsDuplicate(order){
   ){
 
     return true;
-
   }
 
   fallbackOrders.set(
@@ -729,26 +1050,12 @@ function fallbackIsDuplicate(order){
   );
 
   return false;
-
 }
 
 
 /*
 ========================================================
 DURABLE OBJECT DUPLICATE PROTECTION
-========================================================
-
-Returns:
-
-{
-  duplicate: boolean
-}
-
-The Durable Object itself performs the atomic
-reservation.
-
-If the binding is unavailable, the Node test fallback
-is used.
 ========================================================
 */
 
@@ -757,25 +1064,14 @@ async function durableIsDuplicate(
   order
 ){
 
-  /*
-  Node test environment.
-
-  The tests call:
-
-    worker.fetch(request)
-
-  without an env object.
-
-  Therefore we use the process-global fallback.
-  */
-
   if(
     !env ||
     !env.IDEMPOTENCY
   ){
 
-    return fallbackIsDuplicate(order);
-
+    return fallbackIsDuplicate(
+      order
+    );
   }
 
 
@@ -783,10 +1079,14 @@ async function durableIsDuplicate(
     duplicateKey(order);
 
   const id =
-    env.IDEMPOTENCY.idFromName(key);
+    env.IDEMPOTENCY.idFromName(
+      key
+    );
 
   const stub =
-    env.IDEMPOTENCY.get(id);
+    env.IDEMPOTENCY.get(
+      id
+    );
 
   const response =
     await stub.fetch(
@@ -806,19 +1106,24 @@ async function durableIsDuplicate(
       }
     );
 
-  if(!response.ok){
+
+  if(
+    !response.ok
+  ){
 
     throw new Error(
       "Idempotency service failed"
     );
-
   }
+
 
   const result =
     await response.json();
 
-  return result.accepted === false;
-
+  return (
+    result.accepted ===
+    false
+  );
 }
 
 
@@ -842,10 +1147,22 @@ function securityHeaders(){
       "no-referrer",
 
     "Permissions-Policy":
-      "camera=(), microphone=(), geolocation=()"
+      "camera=(), microphone=(), geolocation=()",
+
+    "Content-Security-Policy":
+      "default-src 'self'; " +
+      "script-src 'unsafe-inline'; " +
+      "style-src 'unsafe-inline'; " +
+      "connect-src 'self'; " +
+      "img-src 'self' data:; " +
+      "object-src 'none'; " +
+      "base-uri 'self'; " +
+      "frame-ancestors 'none'",
+
+    "Cross-Origin-Resource-Policy":
+      "same-origin"
 
   };
-
 }
 
 
@@ -876,11 +1193,29 @@ function json(
 
         ...securityHeaders()
       }
-
     }
-
   );
+}
 
+
+/*
+========================================================
+METHOD RESPONSE
+========================================================
+*/
+
+function methodNotAllowed(
+  allowed
+){
+
+  return json(
+    {
+      accepted:false,
+      error:
+        "Method not allowed"
+    },
+    405
+  );
 }
 
 
@@ -898,22 +1233,33 @@ export default {
   ){
 
     const url =
-      new URL(request.url);
+      new URL(
+        request.url
+      );
 
 
     /*
     --------------------------------------------
-    HEALTH CHECK
+    HEALTH
     --------------------------------------------
     */
 
     if(
-      url.pathname === "/health" &&
-      request.method === "GET"
+      url.pathname ===
+      "/health"
     ){
 
-      return json(
+      if(
+        request.method !==
+        "GET"
+      ){
 
+        return methodNotAllowed(
+          "GET"
+        );
+      }
+
+      return json(
         {
           status:"ok",
           app:"NexaHunter",
@@ -922,11 +1268,8 @@ export default {
           timestamp:
             new Date().toISOString()
         },
-
         200
-
       );
-
     }
 
 
@@ -938,53 +1281,100 @@ export default {
 
     if(
       url.pathname ===
-        "/api/paper-orders" &&
-      request.method === "POST"
+      "/api/paper-orders"
     ){
 
-      let body;
+      if(
+        request.method !==
+        "POST"
+      ){
 
-
-      try{
-
-        body =
-          await request.json();
-
-      }catch(error){
-
-        return json(
-
-          {
-            accepted:false,
-            error:
-              "Request body must be valid JSON"
-          },
-
-          400
-
+        return methodNotAllowed(
+          "POST"
         );
-
       }
 
 
-      const validation =
-        validatePaperOrder(body);
+      /*
+      ------------------------------------------
+      CONTENT TYPE
+      ------------------------------------------
+      */
 
+      const contentType =
+        request.headers.get(
+          "content-type"
+        ) || "";
 
-      if(!validation.valid){
+      if(
+        !contentType
+          .toLowerCase()
+          .startsWith(
+            "application/json"
+          )
+      ){
 
         return json(
+          {
+            accepted:false,
+            error:
+              "Content-Type must be application/json"
+          },
+          415
+        );
+      }
 
+
+      /*
+      ------------------------------------------
+      BODY
+      ------------------------------------------
+      */
+
+      const parsed =
+        await readJsonBody(
+          request
+        );
+
+      if(
+        !parsed.ok
+      ){
+
+        return json(
+          {
+            accepted:false,
+            error:
+              parsed.error
+          },
+          parsed.status
+        );
+      }
+
+
+      /*
+      ------------------------------------------
+      VALIDATION
+      ------------------------------------------
+      */
+
+      const validation =
+        validatePaperOrder(
+          parsed.body
+        );
+
+
+      if(
+        !validation.valid
+      ){
+
+        return json(
           {
             accepted:false,
             error:
               validation.error
           },
-
           400
-
         );
-
       }
 
 
@@ -994,21 +1384,7 @@ export default {
 
       /*
       ------------------------------------------
-      DUPLICATE ORDER CHECK
-      ------------------------------------------
-
-      IMPORTANT:
-
-      This used to use only:
-
-        new Map()
-
-      which failed after a Worker restart.
-
-      It now uses:
-
-        Durable Object in production
-        globalThis fallback in Node tests
+      IDEMPOTENCY
       ------------------------------------------
       */
 
@@ -1024,48 +1400,35 @@ export default {
 
       }catch(error){
 
-        /*
-        Do NOT silently accept an order if
-        idempotency infrastructure fails.
-
-        Fail closed.
-        */
-
         return json(
-
           {
             accepted:false,
             error:
               "Idempotency service unavailable"
           },
-
           503
-
         );
-
       }
 
 
-      if(duplicate){
+      if(
+        duplicate
+      ){
 
         return json(
-
           {
             accepted:false,
             error:
               "Duplicate paper order rejected"
           },
-
           409
-
         );
-
       }
 
 
       /*
       ------------------------------------------
-      SERVER-SIDE PAPER ORDER
+      PAPER ORDER
       ------------------------------------------
       */
 
@@ -1094,12 +1457,10 @@ export default {
 
         timestamp:
           new Date().toISOString()
-
       };
 
 
       return json(
-
         {
           accepted:true,
 
@@ -1109,11 +1470,8 @@ export default {
           order:
             finalOrder
         },
-
         200
-
       );
-
     }
 
 
@@ -1144,7 +1502,6 @@ export default {
           }
         }
       );
-
     }
 
 
@@ -1170,22 +1527,13 @@ export default {
         }
       }
     );
-
   }
-
 };
 
 
 /*
 ========================================================
 DURABLE OBJECT EXPORT
-========================================================
-
-Wrangler binds:
-
-  IDEMPOTENCY
-      ↓
-  IdempotencyDurableObject
 ========================================================
 */
 
