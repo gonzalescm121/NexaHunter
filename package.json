@@ -1,9 +1,16 @@
 {
   "name": "nexahunter",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "description": "NexaHunter paper-trading and market-validation platform",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:watch": "node --test --watch tests/*.test.js",
+    "test:core": "node --test tests/*.test.js",
+    "check": "npm test"
   }
 }
