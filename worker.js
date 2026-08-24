@@ -1154,3 +1154,6 @@ export default {
   }
 
 };
+export {
+  IdempotencyDurableObject
+} from "./src/idempotency.js";
