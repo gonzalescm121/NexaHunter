@@ -357,6 +357,7 @@ export function validateUniverseMembership(
       };
 }
 
+
 /*
 ========================================================
 RISK ENGINE
@@ -409,19 +410,11 @@ export function evaluateRisk(
 
   const reasons = [];
 
+
   /*
   ------------------------------------------------------
   HARDENING:
   Corrupted internal state must fail closed.
-
-  Without this check:
-
-    NaN
-    Infinity
-    -Infinity
-
-  could flow through calculations and make
-  risk-limit comparisons unreliable.
   ------------------------------------------------------
   */
 
@@ -437,6 +430,60 @@ export function evaluateRisk(
       "INVALID_RISK_STATE"
     );
   }
+
+
+  /*
+  ------------------------------------------------------
+  HARDENING:
+  Risk-limit configuration itself must also be valid.
+
+  A NaN, Infinity, -Infinity, or negative limit must
+  NEVER silently disable a safety control.
+  ------------------------------------------------------
+  */
+
+  const riskLimits = [
+    [
+      "maxOrderNotional",
+      limits.maxOrderNotional
+    ],
+    [
+      "maxPositionNotional",
+      limits.maxPositionNotional
+    ],
+    [
+      "maxAbsolutePosition",
+      limits.maxAbsolutePosition
+    ],
+    [
+      "maxDailyLoss",
+      limits.maxDailyLoss
+    ]
+  ];
+
+  for (
+    const [name, value]
+    of riskLimits
+  ) {
+    if (
+      value !== undefined &&
+      (
+        !Number.isFinite(value) ||
+        value < 0
+      )
+    ) {
+      reasons.push(
+        `INVALID_RISK_LIMIT_${name.toUpperCase()}`
+      );
+    }
+  }
+
+
+  /*
+  ------------------------------------------------------
+  ORDER VALIDATION
+  ------------------------------------------------------
+  */
 
   if (
     !Number.isInteger(quantity) ||
@@ -465,6 +512,13 @@ export function evaluateRisk(
     );
   }
 
+
+  /*
+  ------------------------------------------------------
+  ORDER NOTIONAL LIMIT
+  ------------------------------------------------------
+  */
+
   if (
     Number.isFinite(
       limits.maxOrderNotional
@@ -477,6 +531,13 @@ export function evaluateRisk(
     );
   }
 
+
+  /*
+  ------------------------------------------------------
+  POSITION NOTIONAL LIMIT
+  ------------------------------------------------------
+  */
+
   if (
     Number.isFinite(
       limits.maxPositionNotional
@@ -488,6 +549,13 @@ export function evaluateRisk(
       "POSITION_NOTIONAL_LIMIT"
     );
   }
+
+
+  /*
+  ------------------------------------------------------
+  ABSOLUTE POSITION LIMIT
+  ------------------------------------------------------
+  */
 
   if (
     Number.isFinite(
@@ -502,6 +570,13 @@ export function evaluateRisk(
       "POSITION_LIMIT"
     );
   }
+
+
+  /*
+  ------------------------------------------------------
+  DAILY LOSS LIMIT
+  ------------------------------------------------------
+  */
 
   if (
     Number.isFinite(
@@ -530,6 +605,7 @@ export function evaluateRisk(
     projectedNotional
   };
 }
+
 
 /*
 ========================================================
@@ -576,6 +652,7 @@ export function estimateExecution(
       order?.side ?? ""
     ).toUpperCase();
 
+
   /*
   ------------------------------------------------------
   HARDENING:
@@ -605,6 +682,7 @@ export function estimateExecution(
     Number(
       market.spreadBps ?? 0
     ) < 0 ||
+
     !Number.isFinite(
       Number(
         market.slippageBps ?? 0
@@ -613,6 +691,7 @@ export function estimateExecution(
     Number(
       market.slippageBps ?? 0
     ) < 0 ||
+
     !Number.isFinite(
       Number(
         market.latencyMs ?? 0
@@ -677,6 +756,7 @@ export function estimateExecution(
   };
 }
 
+
 /*
 ========================================================
 IDEMPOTENCY
@@ -696,6 +776,7 @@ export function createIdempotencyKey(
     order.timestamp ?? ""
   ].join("|");
 }
+
 
 /*
 ========================================================
@@ -772,6 +853,7 @@ export function reconcileState(
   };
 }
 
+
 /*
 ========================================================
 RECOVERY
@@ -812,6 +894,7 @@ export function recoveryDecision(
       false
   };
 }
+
 
 /*
 ========================================================
