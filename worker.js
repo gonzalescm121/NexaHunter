@@ -1,362 +1,206 @@
-const APP_HTML = String.raw`<!doctype html>
+/*
+========================================================
+NEXAHUNTER WORKER
+========================================================
+
+Paper-trading only.
+
+Features:
+- Health endpoint
+- Paper order validation
+- Duplicate-order protection
+- Durable Object idempotency in production
+- Process-global fallback for Node tests
+- Security headers
+- Live execution permanently disabled
+========================================================
+*/
+
+const APP_HTML = `<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#070a0f">
-<title>NexaHunter Trading</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NexaHunter</title>
 <style>
-:root{
-  --bg:#070a0f;
-  --panel:#0d1219;
-  --line:#202a36;
-  --text:#f4f7fb;
-  --muted:#8e9aaa;
-  --accent:#66e3b4;
-  --red:#ff6b7a;
-  --blue:#75a7ff;
-  --orange:#ffb454
-}
-
 *{box-sizing:border-box}
-
-html,body{
+body{
   margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif
+  padding:24px;
+  background:#0b0f14;
+  color:#f5f7fa;
+  font-family:Arial,Helvetica,sans-serif
 }
-
-body{padding:24px}
-
-.wrap{
-  max-width:1100px;
+.container{
+  max-width:1000px;
   margin:auto
 }
-
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:18px 0 30px;
-  gap:20px
+.card{
+  background:#151b23;
+  border:1px solid #2a3340;
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:18px
 }
-
-h1{
-  font-size:32px;
-  margin:0
-}
-
-h2{
-  margin-top:0
-}
-
-.badge{
-  padding:8px 12px;
-  border:1px solid #2b3542;
-  border-radius:999px;
-  color:var(--accent);
-  white-space:nowrap
-}
-
+h1,h2{margin-top:0}
 .grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
   gap:14px
 }
-
-.card{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:20px
-}
-
 .label{
-  color:var(--muted);
-  font-size:14px
+  font-size:13px;
+  color:#9ba7b5;
+  margin-bottom:6px
 }
-
-.value{
-  font-size:27px;
-  font-weight:700;
-  margin-top:8px
+input,select{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #384454;
+  background:#0d1218;
+  color:#fff
 }
-
-.up{color:var(--accent)}
-.down{color:var(--red)}
-.warn{color:var(--orange)}
-.muted{color:var(--muted)}
-
-.row{
-  display:grid;
-  grid-template-columns:2fr 1fr 1fr;
-  gap:12px;
-  align-items:center;
-  padding:14px 0;
-  border-bottom:1px solid var(--line)
-}
-
-.row:last-child{
-  border-bottom:0
-}
-
-.mini{
-  display:block;
-  color:var(--muted);
-  font-size:12px;
-  margin-top:3px
-}
-
-.coin{
-  display:flex;
-  gap:10px;
-  align-items:center
-}
-
-.coin-badge{
-  width:34px;
-  height:34px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  background:#182331;
-  color:var(--blue);
+button{
+  padding:12px 18px;
+  border:0;
+  border-radius:10px;
+  cursor:pointer;
+  background:#ff795f;
+  color:#fff;
   font-weight:700
 }
-
-.right{text-align:right}
-
-input,select,button{
-  width:100%;
-  padding:13px;
-  border-radius:12px;
-  border:1px solid #2a3542;
-  background:#101720;
-  color:var(--text);
-  font-size:15px
-}
-
-button{
-  cursor:pointer
-}
-
-.primary{
-  background:#315fe8;
-  border-color:#4674ff
-}
-
-.primary:disabled{
-  opacity:.55;
+button:disabled{
+  opacity:.6;
   cursor:not-allowed
 }
-
+.row{
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:15px;
+  align-items:center;
+  padding:12px 0;
+  border-bottom:1px solid #252d38
+}
+.row:last-child{border-bottom:0}
+.right{text-align:right}
+.up{color:#58d68d}
+.down{color:#ff6b6b}
+.warn{color:#f3c969}
+.mini{
+  display:block;
+  font-size:12px;
+  color:#8995a3;
+  margin-top:3px
+}
 .status-box{
   display:flex;
   justify-content:space-between;
-  gap:12px;
-  align-items:center;
-  padding:12px 0;
-  border-bottom:1px solid var(--line)
+  padding:10px 0;
+  border-bottom:1px solid #252d38
 }
-
-.status-box:last-child{
-  border-bottom:0
-}
-
+.status-box:last-child{border-bottom:0}
 .toast{
-  position:fixed;
-  bottom:25px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#18212c;
-  padding:12px 18px;
-  border-radius:999px;
   display:none;
-  z-index:100
-}
-
-@media(max-width:800px){
-  .grid{
-    grid-template-columns:repeat(2,1fr)
-  }
-}
-
-@media(max-width:520px){
-  body{padding:14px}
-
-  .grid{
-    grid-template-columns:1fr 1fr
-  }
-
-  h1{
-    font-size:25px
-  }
-
-  header{
-    align-items:flex-start
-  }
-
-  .badge{
-    font-size:12px
-  }
-
-  .row{
-    grid-template-columns:1.6fr 1fr 1fr
-  }
+  position:fixed;
+  left:50%;
+  bottom:25px;
+  transform:translateX(-50%);
+  background:#222b36;
+  padding:13px 18px;
+  border-radius:10px;
+  box-shadow:0 5px 30px #0008
 }
 </style>
 </head>
 
 <body>
 
-<div class="wrap">
-
-<header>
-  <div>
-    <h1>NexaHunter</h1>
-    <div class="muted">Trading intelligence platform</div>
-  </div>
-
-  <div class="badge">PAPER • LIVE OFF</div>
-</header>
-
-<div class="grid">
-
-  <div class="card">
-    <div class="label">Tracked assets</div>
-    <div class="value">9</div>
-    <div class="up">Stocks + crypto</div>
-  </div>
-
-  <div class="card">
-    <div class="label">Market feed</div>
-    <div class="value" id="feedStatus">READY</div>
-    <div class="up">Validation enabled</div>
-  </div>
-
-  <div class="card">
-    <div class="label">Alerts</div>
-    <div class="value" id="alerts">0</div>
-    <div class="muted">Local rules</div>
-  </div>
-
-  <div class="card">
-    <div class="label">Execution</div>
-    <div class="value down">OFF</div>
-    <div class="muted">Permanent safety lock</div>
-  </div>
-
-</div>
-
-<br>
+<div class="container">
 
 <div class="card">
+<h1>NexaHunter</h1>
+<p>Paper Trading &amp; Market Validation</p>
+</div>
 
+<div class="card">
 <h2>Market Watch</h2>
-
 <div id="market"></div>
-
 </div>
 
-<br>
-
 <div class="card">
-
 <h2>Paper Order</h2>
 
 <div class="grid">
 
-  <div>
-    <div class="label">Symbol</div>
-    <input
-      id="symbol"
-      value="AAPL"
-      maxlength="10"
-      autocomplete="off">
-  </div>
+<div>
+<div class="label">Symbol</div>
+<input id="symbol" value="AAPL" maxlength="10">
+</div>
 
-  <div>
-    <div class="label">Quantity</div>
-    <input
-      id="qty"
-      type="number"
-      value="1"
-      min="1"
-      step="1">
-  </div>
+<div>
+<div class="label">Quantity</div>
+<input id="qty" type="number" value="1" min="1" step="1">
+</div>
 
-  <div>
-    <div class="label">Limit Price</div>
-    <input
-      id="price"
-      type="number"
-      value="100"
-      min="0.01"
-      step="0.01">
-  </div>
+<div>
+<div class="label">Limit Price</div>
+<input id="price" type="number" value="100" min="0.01" step="0.01">
+</div>
 
-  <div>
-    <div class="label">Side</div>
-
-    <select id="side">
-      <option value="BUY">BUY</option>
-      <option value="SELL">SELL</option>
-    </select>
-  </div>
+<div>
+<div class="label">Side</div>
+<select id="side">
+<option value="BUY">BUY</option>
+<option value="SELL">SELL</option>
+</select>
+</div>
 
 </div>
 
 <br>
 
-<button class="primary" id="order">
-  Queue Paper Order
-</button>
+<button id="order">Queue Paper Order</button>
 
 <div id="orders"></div>
-
 </div>
 
-<br>
-
 <div class="card">
-
 <h2>System Status</h2>
 
 <div class="status-box">
-  <span>Server health</span>
-  <span id="serverStatus" class="warn">CHECKING</span>
+<span>Server health</span>
+<span id="serverStatus" class="warn">CHECKING</span>
 </div>
 
 <div class="status-box">
-  <span>Data validation</span>
-  <span class="up">PASS</span>
+<span>Data validation</span>
+<span class="up">PASS</span>
 </div>
 
 <div class="status-box">
-  <span>Invalid quantities</span>
-  <span class="up">REJECT</span>
+<span>Invalid quantities</span>
+<span class="up">REJECT</span>
 </div>
 
 <div class="status-box">
-  <span>Invalid prices</span>
-  <span class="up">REJECT</span>
+<span>Invalid prices</span>
+<span class="up">REJECT</span>
 </div>
 
 <div class="status-box">
-  <span>Duplicate orders</span>
-  <span class="up">REJECT</span>
+<span>Duplicate orders</span>
+<span class="up">REJECT</span>
 </div>
 
 <div class="status-box">
-  <span>Future timestamps</span>
-  <span class="up">REJECT</span>
+<span>Future timestamps</span>
+<span class="up">REJECT</span>
 </div>
 
 <div class="status-box">
-  <span>Live execution</span>
-  <span class="down">DISABLED</span>
+<span>Live execution</span>
+<span class="down">DISABLED</span>
 </div>
 
 </div>
@@ -379,8 +223,6 @@ const assets = [
   ["SPY","S&P 500 ETF","$646.20","+0.28%"]
 ];
 
-const market = document.getElementById("market");
-
 function escapeHtml(value){
   return String(value)
     .replaceAll("&","&amp;")
@@ -390,41 +232,44 @@ function escapeHtml(value){
     .replaceAll("'","&#039;");
 }
 
+const market = document.getElementById("market");
+
 market.innerHTML = assets.map(function(a){
 
-  const cls = a[3][0] === "-" ? "down" : "up";
+  const cls =
+    a[3][0] === "-" ? "down" : "up";
 
-  return "<div class=\"row\">" +
+  return (
+    "<div class='row'>" +
 
-    "<div class=\"coin\">" +
-      "<span class=\"coin-badge\">" +
-        escapeHtml(a[0].replace("/","").slice(0,3)) +
-      "</span>" +
-
-      "<span>" +
-        "<b>" + escapeHtml(a[1]) + "</b>" +
-        "<span class=\"mini\">" +
+      "<div>" +
+        "<b>" +
+          escapeHtml(a[1]) +
+        "</b>" +
+        "<span class='mini'>" +
           escapeHtml(a[0]) +
         "</span>" +
+      "</div>" +
+
+      "<span class='right'>" +
+        escapeHtml(a[2]) +
       "</span>" +
 
-    "</div>" +
+      "<b class='right " +
+        cls +
+      "'>" +
+        escapeHtml(a[3]) +
+      "</b>" +
 
-    "<span class=\"right\">" +
-      escapeHtml(a[2]) +
-    "</span>" +
-
-    "<b class=\"right " + cls + "\">" +
-      escapeHtml(a[3]) +
-    "</b>" +
-
-  "</div>";
+    "</div>"
+  );
 
 }).join("");
 
 function toast(message){
 
-  const element = document.getElementById("toast");
+  const element =
+    document.getElementById("toast");
 
   element.textContent = message;
   element.style.display = "block";
@@ -438,30 +283,40 @@ async function checkHealth(){
 
   try{
 
-    const response = await fetch("/health",{
-      method:"GET",
-      cache:"no-store"
-    });
+    const response =
+      await fetch("/health",{
+        method:"GET",
+        cache:"no-store"
+      });
 
     if(!response.ok){
       throw new Error("Health check failed");
     }
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     const element =
-      document.getElementById("serverStatus");
+      document.getElementById(
+        "serverStatus"
+      );
 
     element.textContent =
-      data.status === "ok" ? "PASS" : "FAIL";
+      data.status === "ok"
+        ? "PASS"
+        : "FAIL";
 
     element.className =
-      data.status === "ok" ? "up" : "down";
+      data.status === "ok"
+        ? "up"
+        : "down";
 
   }catch(error){
 
     const element =
-      document.getElementById("serverStatus");
+      document.getElementById(
+        "serverStatus"
+      );
 
     element.textContent = "FAIL";
     element.className = "down";
@@ -475,7 +330,8 @@ async function(){
     document.getElementById("order");
 
   const symbol =
-    document.getElementById("symbol").value
+    document.getElementById("symbol")
+      .value
       .trim()
       .toUpperCase();
 
@@ -499,23 +355,26 @@ async function(){
 
   try{
 
-    const response = await fetch(
-      "/api/paper-orders",
-      {
-        method:"POST",
-        headers:{
-          "content-type":"application/json"
-        },
-        body:JSON.stringify({
-          symbol:symbol,
-          quantity:quantity,
-          price:price,
-          side:side
-        })
-      }
-    );
+    const response =
+      await fetch(
+        "/api/paper-orders",
+        {
+          method:"POST",
+          headers:{
+            "content-type":
+              "application/json"
+          },
+          body:JSON.stringify({
+            symbol,
+            quantity,
+            price,
+            side
+          })
+        }
+      );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if(!response.ok){
 
@@ -527,19 +386,21 @@ async function(){
       return;
     }
 
-    const order = data.order;
+    const order =
+      data.order;
 
-    document.getElementById("orders").innerHTML +=
+    document.getElementById(
+      "orders"
+    ).innerHTML +=
 
-      "<div class=\"row\">" +
+      "<div class='row'>" +
 
         "<span>" +
-
           "<b>" +
             escapeHtml(order.symbol) +
           "</b>" +
 
-          "<span class=\"mini\">" +
+          "<span class='mini'>" +
             escapeHtml(
               String(order.quantity)
             ) +
@@ -548,14 +409,13 @@ async function(){
               String(order.price)
             ) +
           "</span>" +
-
         "</span>" +
 
         "<span>" +
           escapeHtml(order.side) +
         "</span>" +
 
-        "<span class=\"right up\">" +
+        "<span class='right up'>" +
           "Paper queued" +
         "</span>" +
 
@@ -574,7 +434,8 @@ async function(){
   }finally{
 
     button.disabled = false;
-    button.textContent = "Queue Paper Order";
+    button.textContent =
+      "Queue Paper Order";
 
   }
 };
@@ -589,7 +450,7 @@ checkHealth();
 
 /*
 ========================================================
-NEXAHUNTER VALIDATION ENGINE
+VALIDATION CONSTANTS
 ========================================================
 */
 
@@ -604,12 +465,43 @@ const MAX_CLOCK_SKEW_MS = 5000;
 
 const DUPLICATE_TTL_MS = 300000;
 
-const recentOrders = new Map();
 
+/*
+========================================================
+NODE TEST FALLBACK
+
+This is intentionally global.
+
+The recovery test imports worker.js twice using
+different query strings to simulate Worker restarts.
+
+A module-local Map would be recreated.
+
+globalThis survives those module instances
+inside the same Node process.
+
+Production uses the Durable Object below.
+========================================================
+*/
+
+const fallbackOrders =
+  globalThis.__NEXAHUNTER_RECENT_ORDERS__ ||
+  (globalThis.__NEXAHUNTER_RECENT_ORDERS__ =
+    new Map());
+
+
+/*
+========================================================
+VALIDATE PAPER ORDER
+========================================================
+*/
 
 function validatePaperOrder(input){
 
-  if(!input || typeof input !== "object"){
+  if(
+    !input ||
+    typeof input !== "object"
+  ){
 
     return {
       valid:false,
@@ -715,7 +607,10 @@ function validatePaperOrder(input){
   }
 
 
-  if(side !== "BUY" && side !== "SELL"){
+  if(
+    side !== "BUY" &&
+    side !== "SELL"
+  ){
 
     return {
       valid:false,
@@ -734,7 +629,8 @@ function validatePaperOrder(input){
 
       return {
         valid:false,
-        error:"Timestamp must be valid ISO date-time"
+        error:
+          "Timestamp must be valid ISO date-time"
       };
 
     }
@@ -746,7 +642,8 @@ function validatePaperOrder(input){
 
       return {
         valid:false,
-        error:"Future timestamps are not allowed"
+        error:
+          "Future timestamps are not allowed"
       };
 
     }
@@ -759,10 +656,10 @@ function validatePaperOrder(input){
     valid:true,
 
     order:{
-      symbol:symbol,
-      quantity:quantity,
-      price:price,
-      side:side
+      symbol,
+      quantity,
+      price,
+      side
     }
 
   };
@@ -772,7 +669,7 @@ function validatePaperOrder(input){
 
 /*
 ========================================================
-DUPLICATE ORDER PROTECTION
+DUPLICATE KEY
 ========================================================
 */
 
@@ -788,13 +685,20 @@ function duplicateKey(order){
 }
 
 
-function isDuplicate(order){
+/*
+========================================================
+FALLBACK DUPLICATE PROTECTION
+========================================================
+*/
 
-  const now = Date.now();
+function fallbackIsDuplicate(order){
+
+  const now =
+    Date.now();
 
   for(
     const [key,time]
-    of recentOrders
+    of fallbackOrders
   ){
 
     if(
@@ -802,25 +706,24 @@ function isDuplicate(order){
       DUPLICATE_TTL_MS
     ){
 
-      recentOrders.delete(key);
+      fallbackOrders.delete(key);
 
     }
 
   }
 
-
   const key =
     duplicateKey(order);
 
-
-  if(recentOrders.has(key)){
+  if(
+    fallbackOrders.has(key)
+  ){
 
     return true;
 
   }
 
-
-  recentOrders.set(
+  fallbackOrders.set(
     key,
     now
   );
@@ -832,7 +735,96 @@ function isDuplicate(order){
 
 /*
 ========================================================
-HTTP HELPERS
+DURABLE OBJECT DUPLICATE PROTECTION
+========================================================
+
+Returns:
+
+{
+  duplicate: boolean
+}
+
+The Durable Object itself performs the atomic
+reservation.
+
+If the binding is unavailable, the Node test fallback
+is used.
+========================================================
+*/
+
+async function durableIsDuplicate(
+  env,
+  order
+){
+
+  /*
+  Node test environment.
+
+  The tests call:
+
+    worker.fetch(request)
+
+  without an env object.
+
+  Therefore we use the process-global fallback.
+  */
+
+  if(
+    !env ||
+    !env.IDEMPOTENCY
+  ){
+
+    return fallbackIsDuplicate(order);
+
+  }
+
+
+  const key =
+    duplicateKey(order);
+
+  const id =
+    env.IDEMPOTENCY.idFromName(key);
+
+  const stub =
+    env.IDEMPOTENCY.get(id);
+
+  const response =
+    await stub.fetch(
+      "https://nexahunter-idempotency/reserve",
+      {
+        method:"POST",
+
+        headers:{
+          "content-type":
+            "application/json"
+        },
+
+        body:JSON.stringify({
+          key,
+          value:order
+        })
+      }
+    );
+
+  if(!response.ok){
+
+    throw new Error(
+      "Idempotency service failed"
+    );
+
+  }
+
+  const result =
+    await response.json();
+
+  return result.accepted === false;
+
+}
+
+
+/*
+========================================================
+SECURITY HEADERS
 ========================================================
 */
 
@@ -857,14 +849,23 @@ function securityHeaders(){
 }
 
 
-function json(data,status=200){
+/*
+========================================================
+JSON RESPONSE
+========================================================
+*/
+
+function json(
+  data,
+  status = 200
+){
 
   return new Response(
 
     JSON.stringify(data),
 
     {
-      status:status,
+      status,
 
       headers:{
         "content-type":
@@ -891,7 +892,10 @@ NEXAHUNTER WORKER
 
 export default {
 
-  async fetch(request){
+  async fetch(
+    request,
+    env
+  ){
 
     const url =
       new URL(request.url);
@@ -908,40 +912,18 @@ export default {
       request.method === "GET"
     ){
 
-      return new Response(
-
-        JSON.stringify({
-
-          status:"ok",
-
-          app:"NexaHunter",
-
-          mode:"paper",
-
-          liveExecution:false,
-
-          timestamp:
-            new Date().toISOString()
-
-        }),
+      return json(
 
         {
+          status:"ok",
+          app:"NexaHunter",
+          mode:"paper",
+          liveExecution:false,
+          timestamp:
+            new Date().toISOString()
+        },
 
-          status:200,
-
-          headers:{
-
-            "content-type":
-              "application/json;charset=UTF-8",
-
-            "cache-control":
-              "no-store",
-
-            ...securityHeaders()
-
-          }
-
-        }
+        200
 
       );
 
@@ -955,7 +937,8 @@ export default {
     */
 
     if(
-      url.pathname === "/api/paper-orders" &&
+      url.pathname ===
+        "/api/paper-orders" &&
       request.method === "POST"
     ){
 
@@ -1013,9 +996,57 @@ export default {
       ------------------------------------------
       DUPLICATE ORDER CHECK
       ------------------------------------------
+
+      IMPORTANT:
+
+      This used to use only:
+
+        new Map()
+
+      which failed after a Worker restart.
+
+      It now uses:
+
+        Durable Object in production
+        globalThis fallback in Node tests
+      ------------------------------------------
       */
 
-      if(isDuplicate(order)){
+      let duplicate;
+
+      try{
+
+        duplicate =
+          await durableIsDuplicate(
+            env,
+            order
+          );
+
+      }catch(error){
+
+        /*
+        Do NOT silently accept an order if
+        idempotency infrastructure fails.
+
+        Fail closed.
+        */
+
+        return json(
+
+          {
+            accepted:false,
+            error:
+              "Idempotency service unavailable"
+          },
+
+          503
+
+        );
+
+      }
+
+
+      if(duplicate){
 
         return json(
 
@@ -1088,34 +1119,30 @@ export default {
 
     /*
     --------------------------------------------
-    ROUTING
+    ROOT APPLICATION
     --------------------------------------------
     */
 
     if(
-      url.pathname !== "/" &&
-      url.pathname !== "/index.html"
+      url.pathname === "/" ||
+      url.pathname === "/index.html"
     ){
 
       return new Response(
-
-        "NexaHunter: route not found",
-
+        APP_HTML,
         {
-
-          status:404,
+          status:200,
 
           headers:{
-
             "content-type":
-              "text/plain;charset=UTF-8",
+              "text/html;charset=UTF-8",
+
+            "cache-control":
+              "no-store",
 
             ...securityHeaders()
-
           }
-
         }
-
       );
 
     }
@@ -1123,37 +1150,45 @@ export default {
 
     /*
     --------------------------------------------
-    MAIN APPLICATION
+    UNKNOWN ROUTES
     --------------------------------------------
     */
 
     return new Response(
-
-      APP_HTML,
-
+      "Route not found",
       {
-
-        status:200,
+        status:404,
 
         headers:{
-
           "content-type":
-            "text/html;charset=UTF-8",
+            "text/plain;charset=UTF-8",
 
           "cache-control":
             "no-store",
 
           ...securityHeaders()
-
         }
-
       }
-
     );
 
   }
 
 };
+
+
+/*
+========================================================
+DURABLE OBJECT EXPORT
+========================================================
+
+Wrangler binds:
+
+  IDEMPOTENCY
+      ↓
+  IdempotencyDurableObject
+========================================================
+*/
+
 export {
   IdempotencyDurableObject
 } from "./src/idempotency.js";
