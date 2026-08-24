@@ -607,8 +607,11 @@ function jsonDepth(value){
     }
   }
 
-  return maxDepth;
+    return maxDepth;
 }
+
+
+/*
 ========================================================
 REQUEST BODY READER
 ========================================================
