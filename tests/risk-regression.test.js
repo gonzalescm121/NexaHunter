@@ -33,7 +33,6 @@ RISK POSITION TRANSITIONS
 ========================================================
 */
 
-
 test(
   "BUY increases projected position",
   () => {
@@ -51,15 +50,8 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      true
-    );
-
-    assert.equal(
-      result.projectedPosition,
-      15
-    );
+    assert.equal(result.allowed, true);
+    assert.equal(result.projectedPosition, 15);
   }
 );
 
@@ -81,15 +73,8 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      true
-    );
-
-    assert.equal(
-      result.projectedPosition,
-      5
-    );
+    assert.equal(result.allowed, true);
+    assert.equal(result.projectedPosition, 5);
   }
 );
 
@@ -100,7 +85,6 @@ BOUNDARY:
 Exactly at the absolute position limit is allowed.
 --------------------------------------------------------
 */
-
 
 test(
   "SELL can cross from long to short at the absolute limit",
@@ -119,10 +103,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      true
-    );
+    assert.equal(result.allowed, true);
 
     assert.deepEqual(
       result.reasons,
@@ -144,7 +125,6 @@ One unit beyond the absolute position limit is rejected.
 --------------------------------------------------------
 */
 
-
 test(
   "SELL beyond the absolute limit is rejected",
   () => {
@@ -162,10 +142,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      false
-    );
+    assert.equal(result.allowed, false);
 
     assert.ok(
       result.reasons.includes(
@@ -186,7 +163,6 @@ test(
 SIDE NORMALIZATION
 ========================================================
 */
-
 
 test(
   "BUY and SELL side matching is case insensitive",
@@ -217,25 +193,11 @@ test(
         }
       );
 
-    assert.equal(
-      buy.allowed,
-      true
-    );
+    assert.equal(buy.allowed, true);
+    assert.equal(buy.projectedPosition, 1);
 
-    assert.equal(
-      buy.projectedPosition,
-      1
-    );
-
-    assert.equal(
-      sell.allowed,
-      true
-    );
-
-    assert.equal(
-      sell.projectedPosition,
-      0
-    );
+    assert.equal(sell.allowed, true);
+    assert.equal(sell.projectedPosition, 0);
   }
 );
 
@@ -245,7 +207,6 @@ test(
 RISK LIMIT BOUNDARIES
 ========================================================
 */
-
 
 test(
   "position notional exactly at the limit is allowed",
@@ -262,10 +223,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      true
-    );
+    assert.equal(result.allowed, true);
 
     assert.equal(
       result.projectedNotional,
@@ -290,10 +248,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      false
-    );
+    assert.equal(result.allowed, false);
 
     assert.ok(
       result.reasons.includes(
@@ -319,10 +274,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      true
-    );
+    assert.equal(result.allowed, true);
 
     assert.equal(
       result.orderNotional,
@@ -347,10 +299,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      false
-    );
+    assert.equal(result.allowed, false);
 
     assert.ok(
       result.reasons.includes(
@@ -367,7 +316,6 @@ DAILY LOSS
 ========================================================
 */
 
-
 test(
   "daily loss exactly at the configured threshold is rejected",
   () => {
@@ -382,10 +330,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      false
-    );
+    assert.equal(result.allowed, false);
 
     assert.ok(
       result.reasons.includes(
@@ -410,10 +355,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.allowed,
-      false
-    );
+    assert.equal(result.allowed, false);
 
     assert.ok(
       result.reasons.includes(
@@ -430,7 +372,6 @@ EXECUTION REGRESSION
 ========================================================
 */
 
-
 test(
   "execution defaults remain valid for a normal BUY",
   () => {
@@ -444,25 +385,10 @@ test(
         {}
       );
 
-    assert.equal(
-      result.valid,
-      true
-    );
-
-    assert.equal(
-      result.executionPrice,
-      100
-    );
-
-    assert.equal(
-      result.grossNotional,
-      1000
-    );
-
-    assert.equal(
-      result.estimatedNotional,
-      1000
-    );
+    assert.equal(result.valid, true);
+    assert.equal(result.executionPrice, 100);
+    assert.equal(result.grossNotional, 1000);
+    assert.equal(result.estimatedNotional, 1000);
   }
 );
 
@@ -480,25 +406,10 @@ test(
         {}
       );
 
-    assert.equal(
-      result.valid,
-      true
-    );
-
-    assert.equal(
-      result.executionPrice,
-      100
-    );
-
-    assert.equal(
-      result.grossNotional,
-      1000
-    );
-
-    assert.equal(
-      result.estimatedNotional,
-      1000
-    );
+    assert.equal(result.valid, true);
+    assert.equal(result.executionPrice, 100);
+    assert.equal(result.grossNotional, 1000);
+    assert.equal(result.estimatedNotional, 1000);
   }
 );
 
@@ -520,20 +431,9 @@ test(
         }
       );
 
-    assert.equal(
-      result.valid,
-      true
-    );
-
-    assert.equal(
-      result.executionPrice,
-      250
-    );
-
-    assert.equal(
-      result.estimatedCost,
-      0
-    );
+    assert.equal(result.valid, true);
+    assert.equal(result.executionPrice, 250);
+    assert.equal(result.estimatedCost, 0);
   }
 );
 
@@ -543,7 +443,6 @@ test(
 EXECUTION HARDENING
 ========================================================
 */
-
 
 test(
   "invalid execution quantity fails closed",
@@ -556,10 +455,7 @@ test(
         {}
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.error,
@@ -580,10 +476,7 @@ test(
         {}
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.error,
@@ -604,10 +497,7 @@ test(
         {}
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.error,
@@ -628,10 +518,7 @@ test(
         {}
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.error,
@@ -652,10 +539,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.error,
@@ -676,10 +560,7 @@ test(
         }
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.error,
@@ -700,14 +581,545 @@ test(
         }
       );
 
-    assert.equal(
-      result.valid,
-      false
-    );
+    assert.equal(result.valid, false);
 
     assert.equal(
       result.error,
       "INVALID_EXECUTION_MARKET"
+    );
+  }
+);
+
+
+/*
+========================================================
+RISK HARDENING REGRESSION
+========================================================
+*/
+
+test(
+  "NaN current position fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state({
+          currentPosition: NaN
+        }),
+        {
+          maxAbsolutePosition: 100
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_STATE"
+      )
+    );
+  }
+);
+
+
+test(
+  "infinite current position fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state({
+          currentPosition: Infinity
+        }),
+        {
+          maxAbsolutePosition: 100
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_STATE"
+      )
+    );
+  }
+);
+
+
+test(
+  "infinite daily loss state fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state({
+          dailyLoss: Infinity
+        }),
+        {
+          maxDailyLoss: 1000
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_STATE"
+      )
+    );
+  }
+);
+
+
+test(
+  "negative infinite daily loss state fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state({
+          dailyLoss: -Infinity
+        }),
+        {
+          maxDailyLoss: 1000
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_STATE"
+      )
+    );
+  }
+);
+
+
+test(
+  "NaN risk limit fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state(),
+        {
+          maxOrderNotional: NaN
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_LIMIT_MAXORDERNOTIONAL"
+      )
+    );
+  }
+);
+
+
+test(
+  "infinite risk limit fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state(),
+        {
+          maxOrderNotional: Infinity
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_LIMIT_MAXORDERNOTIONAL"
+      )
+    );
+  }
+);
+
+
+test(
+  "negative risk limit fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state(),
+        {
+          maxAbsolutePosition: -1
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_LIMIT_MAXABSOLUTEPOSITION"
+      )
+    );
+  }
+);
+
+
+test(
+  "negative max order notional fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state(),
+        {
+          maxOrderNotional: -1
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_LIMIT_MAXORDERNOTIONAL"
+      )
+    );
+  }
+);
+
+
+test(
+  "negative max position notional fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state(),
+        {
+          maxPositionNotional: -1
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_LIMIT_MAXPOSITIONNOTIONAL"
+      )
+    );
+  }
+);
+
+
+test(
+  "negative max daily loss fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order(),
+        state(),
+        {
+          maxDailyLoss: -1
+        }
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_LIMIT_MAXDAILYLOSS"
+      )
+    );
+  }
+);
+
+
+test(
+  "zero quantity fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          quantity: 0
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_QUANTITY"
+      )
+    );
+  }
+);
+
+
+test(
+  "negative quantity fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          quantity: -1
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_QUANTITY"
+      )
+    );
+  }
+);
+
+
+test(
+  "fractional quantity fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          quantity: 1.5
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_QUANTITY"
+      )
+    );
+  }
+);
+
+
+test(
+  "NaN risk quantity fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          quantity: NaN
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_QUANTITY"
+      )
+    );
+  }
+);
+
+
+test(
+  "infinite risk quantity fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          quantity: Infinity
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_QUANTITY"
+      )
+    );
+  }
+);
+
+
+test(
+  "invalid risk side fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          side: "HOLD"
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_SIDE"
+      )
+    );
+  }
+);
+
+
+test(
+  "empty risk side fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          side: ""
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_SIDE"
+      )
+    );
+  }
+);
+
+
+test(
+  "NaN risk price fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          price: NaN
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_PRICE"
+      )
+    );
+  }
+);
+
+
+test(
+  "zero risk price fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          price: 0
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_PRICE"
+      )
+    );
+  }
+);
+
+
+test(
+  "negative risk price fails closed",
+  () => {
+    const result =
+      evaluateRisk(
+        order({
+          price: -100
+        }),
+        state(),
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_PRICE"
+      )
     );
   }
 );
