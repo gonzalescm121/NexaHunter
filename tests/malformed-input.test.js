@@ -10,312 +10,626 @@ import {
   estimateExecution
 } from "../src/core.js";
 
-test("validateBar rejects null", () => {
-  const result = validateBar(null);
 
-  assert.equal(result.status, "REJECT");
-  assert.equal(result.valid, false);
-  assert.ok(result.reasons.includes("BAR_NOT_OBJECT"));
-});
+/*
+========================================================
+VALIDATE BAR
+========================================================
+*/
 
-test("validateBar rejects undefined", () => {
-  const result = validateBar(undefined);
+test(
+  "validateBar rejects null",
+  () => {
+    const result =
+      validateBar(null);
 
-  assert.equal(result.status, "REJECT");
-  assert.equal(result.valid, false);
-  assert.ok(result.reasons.includes("BAR_NOT_OBJECT"));
-});
+    assert.equal(
+      result.status,
+      "REJECT"
+    );
 
-test("validateBar rejects primitive string", () => {
-  const result = validateBar("AAPL");
+    assert.equal(
+      result.valid,
+      false
+    );
 
-  assert.equal(result.status, "REJECT");
-  assert.equal(result.valid, false);
-  assert.ok(result.reasons.includes("BAR_NOT_OBJECT"));
-});
+    assert.ok(
+      result.reasons.includes(
+        "BAR_NOT_OBJECT"
+      )
+    );
+  }
+);
 
-test("validateBar rejects primitive number", () => {
-  const result = validateBar(123);
 
-  assert.equal(result.status, "REJECT");
-  assert.equal(result.valid, false);
-  assert.ok(result.reasons.includes("BAR_NOT_OBJECT"));
-});
+test(
+  "validateBar rejects undefined",
+  () => {
+    const result =
+      validateBar(undefined);
 
-test("validateBar rejects array input", () => {
-  const result = validateBar([]);
+    assert.equal(
+      result.status,
+      "REJECT"
+    );
 
-  assert.equal(result.status, "REJECT");
-  assert.equal(result.valid, false);
-  assert.ok(result.reasons.includes("INVALID_SYMBOL"));
-});
+    assert.equal(
+      result.valid,
+      false
+    );
 
-test("validateSeries rejects null", () => {
-  const result = validateSeries(null);
+    assert.ok(
+      result.reasons.includes(
+        "BAR_NOT_OBJECT"
+      )
+    );
+  }
+);
 
-  assert.equal(result.status, "REJECT");
-  assert.equal(result.valid, false);
-  assert.equal(result.accepted.length, 0);
-  assert.equal(result.rejected.length, 0);
-  assert.equal(result.quarantined.length, 1);
 
-  assert.ok(
-    result.quarantined[0].reasons.includes(
-      "SERIES_NOT_ARRAY"
-    )
-  );
-});
+test(
+  "validateBar rejects primitive string",
+  () => {
+    const result =
+      validateBar("AAPL");
 
-test("validateSeries rejects object input", () => {
-  const result = validateSeries({});
+    assert.equal(
+      result.status,
+      "REJECT"
+    );
 
-  assert.equal(result.status, "REJECT");
-  assert.equal(result.valid, false);
+    assert.equal(
+      result.valid,
+      false
+    );
 
-  assert.ok(
-    result.quarantined[0].reasons.includes(
-      "SERIES_NOT_ARRAY"
-    )
-  );
-});
+    assert.ok(
+      result.reasons.includes(
+        "BAR_NOT_OBJECT"
+      )
+    );
+  }
+);
 
-test("validateSeries handles empty array safely", () => {
-  const result = validateSeries([]);
 
-  assert.equal(result.status, "ACCEPT");
-  assert.equal(result.valid, true);
-  assert.deepEqual(result.accepted, []);
-  assert.deepEqual(result.rejected, []);
-  assert.deepEqual(result.quarantined, []);
-});
+test(
+  "validateBar rejects primitive number",
+  () => {
+    const result =
+      validateBar(123);
 
-test("pointInTimeGuard rejects undefined feature timestamp", () => {
-  const result = pointInTimeGuard(
-    undefined,
-    Date.now()
-  );
+    assert.equal(
+      result.status,
+      "REJECT"
+    );
 
-  assert.equal(result.allowed, false);
-  assert.equal(
-    result.reason,
-    "INVALID_TIMESTAMP"
-  );
-});
+    assert.equal(
+      result.valid,
+      false
+    );
 
-test("pointInTimeGuard rejects invalid feature timestamp", () => {
-  const result = pointInTimeGuard(
-    "not-a-time",
-    Date.now()
-  );
+    assert.ok(
+      result.reasons.includes(
+        "BAR_NOT_OBJECT"
+      )
+    );
+  }
+);
 
-  assert.equal(result.allowed, false);
-  assert.equal(
-    result.reason,
-    "INVALID_TIMESTAMP"
-  );
-});
 
-test("pointInTimeGuard rejects invalid decision timestamp", () => {
-  const result = pointInTimeGuard(
-    Date.now(),
-    "not-a-time"
-  );
+/*
+IMPORTANT REGRESSION FIX
 
-  assert.equal(result.allowed, false);
-  assert.equal(
-    result.reason,
-    "INVALID_TIMESTAMP"
-  );
-});
+Arrays are now rejected at the
+validation boundary as BAR_NOT_OBJECT.
 
-test("pointInTimeGuard rejects future feature", () => {
-  const now = Date.now();
+The previous test incorrectly expected
+INVALID_SYMBOL.
+*/
 
-  const result = pointInTimeGuard(
-    now + 1000,
-    now
-  );
+test(
+  "validateBar rejects array input",
+  () => {
+    const result =
+      validateBar([]);
 
-  assert.equal(result.allowed, false);
-  assert.equal(
-    result.reason,
-    "FUTURE_FEATURE"
-  );
-});
+    assert.equal(
+      result.status,
+      "REJECT"
+    );
 
-test("pointInTimeGuard accepts historical feature", () => {
-  const now = Date.now();
+    assert.equal(
+      result.valid,
+      false
+    );
 
-  const result = pointInTimeGuard(
-    now - 1000,
-    now
-  );
+    assert.ok(
+      result.reasons.includes(
+        "BAR_NOT_OBJECT"
+      )
+    );
+  }
+);
 
-  assert.equal(result.allowed, true);
-});
 
-test("validateUniverseMembership rejects missing snapshot", () => {
-  const result = validateUniverseMembership(
-    "AAPL",
-    "2026-08-24",
-    {}
-  );
+/*
+========================================================
+VALIDATE SERIES
+========================================================
+*/
 
-  assert.equal(result.allowed, false);
-  assert.equal(
-    result.reason,
-    "UNIVERSE_SNAPSHOT_MISSING"
-  );
-});
+test(
+  "validateSeries rejects null",
+  () => {
+    const result =
+      validateSeries(null);
 
-test("validateUniverseMembership rejects non-array snapshot", () => {
-  const result = validateUniverseMembership(
-    "AAPL",
-    "2026-08-24",
-    {
-      "2026-08-24": {}
-    }
-  );
+    assert.equal(
+      result.status,
+      "REJECT"
+    );
 
-  assert.equal(result.allowed, false);
-  assert.equal(
-    result.reason,
-    "UNIVERSE_SNAPSHOT_MISSING"
-  );
-});
+    assert.equal(
+      result.valid,
+      false
+    );
 
-test("validateUniverseMembership rejects symbol absent from snapshot", () => {
-  const result = validateUniverseMembership(
-    "AAPL",
-    "2026-08-24",
-    {
-      "2026-08-24": [
-        "MSFT",
-        "GOOG"
-      ]
-    }
-  );
+    assert.equal(
+      result.accepted.length,
+      0
+    );
 
-  assert.equal(result.allowed, false);
-  assert.equal(
-    result.reason,
-    "SYMBOL_NOT_IN_UNIVERSE"
-  );
-});
+    assert.equal(
+      result.rejected.length,
+      0
+    );
 
-test("validateUniverseMembership accepts symbol in snapshot", () => {
-  const result = validateUniverseMembership(
-    "AAPL",
-    "2026-08-24",
-    {
-      "2026-08-24": [
+    assert.equal(
+      result.quarantined.length,
+      1
+    );
+
+    assert.ok(
+      result.quarantined[0].reasons.includes(
+        "SERIES_NOT_ARRAY"
+      )
+    );
+  }
+);
+
+
+test(
+  "validateSeries rejects object input",
+  () => {
+    const result =
+      validateSeries({});
+
+    assert.equal(
+      result.status,
+      "REJECT"
+    );
+
+    assert.equal(
+      result.valid,
+      false
+    );
+
+    assert.ok(
+      result.quarantined[0].reasons.includes(
+        "SERIES_NOT_ARRAY"
+      )
+    );
+  }
+);
+
+
+test(
+  "validateSeries handles empty array safely",
+  () => {
+    const result =
+      validateSeries([]);
+
+    assert.equal(
+      result.status,
+      "ACCEPT"
+    );
+
+    assert.equal(
+      result.valid,
+      true
+    );
+
+    assert.deepEqual(
+      result.accepted,
+      []
+    );
+
+    assert.deepEqual(
+      result.rejected,
+      []
+    );
+
+    assert.deepEqual(
+      result.quarantined,
+      []
+    );
+  }
+);
+
+
+/*
+========================================================
+POINT-IN-TIME GUARD
+========================================================
+*/
+
+test(
+  "pointInTimeGuard rejects undefined feature timestamp",
+  () => {
+    const result =
+      pointInTimeGuard(
+        undefined,
+        Date.now()
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "INVALID_TIMESTAMP"
+    );
+  }
+);
+
+
+test(
+  "pointInTimeGuard rejects invalid feature timestamp",
+  () => {
+    const result =
+      pointInTimeGuard(
+        "not-a-time",
+        Date.now()
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "INVALID_TIMESTAMP"
+    );
+  }
+);
+
+
+test(
+  "pointInTimeGuard rejects invalid decision timestamp",
+  () => {
+    const result =
+      pointInTimeGuard(
+        Date.now(),
+        "not-a-time"
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "INVALID_TIMESTAMP"
+    );
+  }
+);
+
+
+test(
+  "pointInTimeGuard rejects future feature",
+  () => {
+    const now =
+      Date.now();
+
+    const result =
+      pointInTimeGuard(
+        now + 1000,
+        now
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "FUTURE_FEATURE"
+    );
+  }
+);
+
+
+test(
+  "pointInTimeGuard accepts historical feature",
+  () => {
+    const now =
+      Date.now();
+
+    const result =
+      pointInTimeGuard(
+        now - 1000,
+        now
+      );
+
+    assert.equal(
+      result.allowed,
+      true
+    );
+  }
+);
+
+
+/*
+========================================================
+UNIVERSE MEMBERSHIP
+========================================================
+*/
+
+test(
+  "validateUniverseMembership rejects missing snapshot",
+  () => {
+    const result =
+      validateUniverseMembership(
         "AAPL",
-        "MSFT"
-      ]
-    }
-  );
+        "2026-08-24",
+        {}
+      );
 
-  assert.equal(result.allowed, true);
-});
+    assert.equal(
+      result.allowed,
+      false
+    );
 
-test("evaluateRisk rejects null order", () => {
-  const result = evaluateRisk(
-    null,
-    {},
-    {}
-  );
+    assert.equal(
+      result.reason,
+      "UNIVERSE_SNAPSHOT_MISSING"
+    );
+  }
+);
 
-  assert.equal(result.allowed, false);
 
-  assert.ok(
-    result.reasons.includes(
-      "INVALID_QUANTITY"
-    )
-  );
+test(
+  "validateUniverseMembership rejects non-array snapshot",
+  () => {
+    const result =
+      validateUniverseMembership(
+        "AAPL",
+        "2026-08-24",
+        {
+          "2026-08-24": {}
+        }
+      );
 
-  assert.ok(
-    result.reasons.includes(
-      "INVALID_PRICE"
-    )
-  );
+    assert.equal(
+      result.allowed,
+      false
+    );
 
-  assert.ok(
-    result.reasons.includes(
-      "INVALID_SIDE"
-    )
-  );
-});
+    assert.equal(
+      result.reason,
+      "UNIVERSE_SNAPSHOT_MISSING"
+    );
+  }
+);
 
-test("evaluateRisk rejects malformed state", () => {
-  const result = evaluateRisk(
-    {
-      quantity: 1,
-      price: 100,
-      side: "BUY"
-    },
-    {
-      currentPosition: {},
-      dailyLoss: []
-    },
-    {}
-  );
 
-  assert.equal(result.allowed, false);
+test(
+  "validateUniverseMembership rejects symbol absent from snapshot",
+  () => {
+    const result =
+      validateUniverseMembership(
+        "AAPL",
+        "2026-08-24",
+        {
+          "2026-08-24": [
+            "MSFT",
+            "GOOG"
+          ]
+        }
+      );
 
-  assert.ok(
-    result.reasons.includes(
-      "INVALID_RISK_STATE"
-    )
-  );
-});
+    assert.equal(
+      result.allowed,
+      false
+    );
 
-test("estimateExecution rejects null order", () => {
-  const result = estimateExecution(
-    null,
-    {}
-  );
+    assert.equal(
+      result.reason,
+      "SYMBOL_NOT_IN_UNIVERSE"
+    );
+  }
+);
 
-  assert.equal(result.valid, false);
-  assert.equal(
-    result.error,
-    "INVALID_EXECUTION_ORDER"
-  );
-});
 
-test("estimateExecution rejects malformed market", () => {
-  const result = estimateExecution(
-    {
-      quantity: 1,
-      price: 100,
-      side: "BUY"
-    },
-    {
-      spreadBps: {}
-    }
-  );
+test(
+  "validateUniverseMembership accepts symbol in snapshot",
+  () => {
+    const result =
+      validateUniverseMembership(
+        "AAPL",
+        "2026-08-24",
+        {
+          "2026-08-24": [
+            "AAPL",
+            "MSFT"
+          ]
+        }
+      );
 
-  assert.equal(result.valid, false);
-  assert.equal(
-    result.error,
-    "INVALID_EXECUTION_MARKET"
-  );
-});
+    assert.equal(
+      result.allowed,
+      true
+    );
+  }
+);
 
-test("estimateExecution remains valid with omitted market", () => {
-  const result = estimateExecution(
-    {
-      quantity: 1,
-      price: 100,
-      side: "BUY"
-    },
-    {}
-  );
 
-  assert.equal(result.valid, true);
+/*
+========================================================
+RISK ENGINE
+========================================================
+*/
 
-  assert.ok(
-    Number.isFinite(
-      result.executionPrice
-    )
-  );
-});
+test(
+  "evaluateRisk rejects null order",
+  () => {
+    const result =
+      evaluateRisk(
+        null,
+        {},
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_QUANTITY"
+      )
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_PRICE"
+      )
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_SIDE"
+      )
+    );
+  }
+);
+
+
+test(
+  "evaluateRisk rejects malformed state",
+  () => {
+    const result =
+      evaluateRisk(
+        {
+          quantity: 1,
+          price: 100,
+          side: "BUY"
+        },
+        {
+          currentPosition: {},
+          dailyLoss: []
+        },
+        {}
+      );
+
+    assert.equal(
+      result.allowed,
+      false
+    );
+
+    assert.ok(
+      result.reasons.includes(
+        "INVALID_RISK_STATE"
+      )
+    );
+  }
+);
+
+
+/*
+========================================================
+EXECUTION ESTIMATOR
+========================================================
+*/
+
+test(
+  "estimateExecution rejects null order",
+  () => {
+    const result =
+      estimateExecution(
+        null,
+        {}
+      );
+
+    assert.equal(
+      result.valid,
+      false
+    );
+
+    assert.equal(
+      result.error,
+      "INVALID_EXECUTION_ORDER"
+    );
+  }
+);
+
+
+test(
+  "estimateExecution rejects malformed market",
+  () => {
+    const result =
+      estimateExecution(
+        {
+          quantity: 1,
+          price: 100,
+          side: "BUY"
+        },
+        {
+          spreadBps: {}
+        }
+      );
+
+    assert.equal(
+      result.valid,
+      false
+    );
+
+    assert.equal(
+      result.error,
+      "INVALID_EXECUTION_MARKET"
+    );
+  }
+);
+
+
+test(
+  "estimateExecution remains valid with omitted market",
+  () => {
+    const result =
+      estimateExecution(
+        {
+          quantity: 1,
+          price: 100,
+          side: "BUY"
+        },
+        {}
+      );
+
+    assert.equal(
+      result.valid,
+      true
+    );
+
+    assert.ok(
+      Number.isFinite(
+        result.executionPrice
+      )
+    );
+  }
+);
