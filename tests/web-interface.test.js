@@ -7,10 +7,10 @@ const read=file=>fs.readFileSync(file,'utf8');
 test('dashboard controls have explicit click routing including mobile navigation',()=>{
   const html=read('public/index.html');
   const router=read('public/button-router.js');
-  assert.doesNotMatch(html,/id="mobile-menu"/);
-  assert.doesNotMatch(html,/data-action="mobile-menu"/);
-  assert.doesNotMatch(router,/case\s*'mobile-menu'/);
-  assert.doesNotMatch(router,/NexaHunterToggleMenu=toggleMenu/);
+  assert.match(html,/id="mobile-menu"/);
+  assert.match(html,/data-action="mobile-menu"/);
+  assert.match(router,/case'mobile-menu'/);
+  assert.match(router,/function toggleMenu\(\)/);
   for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(html,new RegExp(`id="${id}"`));
   for(const action of ['analysis','notifications','positions','trade']) assert.match(router,new RegExp(`case'${action}'`));
   assert.match(html,/id="mobile-bottom-nav"/);
