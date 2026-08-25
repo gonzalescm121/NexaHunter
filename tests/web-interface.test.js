@@ -7,7 +7,18 @@ const root=process.cwd();
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 test('web interface files exist',()=>{
-  for(const file of ['public/index.html','public/styles.css','public/app.js','public/panels.js','public/realtime.js']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
+  for(const file of ['public/index.html','public/styles.css','public/fix.css','public/master-visual.css','public/app.js','public/panels.js','public/realtime.js','public/assets/nexahunter-master-logo.svg']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
+});
+
+test('master visual uses the approved wolf wordmark',()=>{
+  const css=read('public/master-visual.css');
+  const fix=read('public/fix.css');
+  const logo=read('public/assets/nexahunter-master-logo.svg');
+  assert.match(css,/nexahunter-master-logo\.svg/);
+  assert.match(fix,/nexahunter-master-logo\.svg/);
+  assert.match(logo,/NexaHunter/);
+  assert.match(logo,/HUNT SMARTER, TRADE BETTER\./);
+  assert.match(logo,/fill="#f4f8ff"/);
 });
 
 test('navigation exposes dashboard sections and trade/backtest controls',()=>{
