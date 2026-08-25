@@ -107,3 +107,10 @@ test('dashboard navigation targets are either real sections or panel actions',()
     }
   }
 });
+
+test('index has no external stylesheet dependency outside the CSP boundary',()=>{
+  const html=read('public/index.html');
+  assert.doesNotMatch(html,/<link[^>]+href=["']https?:\/\//i);
+  assert.doesNotMatch(html,/fonts\.googleapis\.com/i);
+  assert.doesNotMatch(html,/fonts\.gstatic\.com/i);
+});
