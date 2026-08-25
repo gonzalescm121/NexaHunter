@@ -1,5 +1,5 @@
 name = "nexahunter"
-main = "worker-app.js"
+main = "worker-entry.js"
 compatibility_date = "2026-08-24"
 
 [assets]
