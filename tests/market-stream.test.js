@@ -56,3 +56,10 @@ test('stream validates subscribed symbols before forwarding upstream',()=>{
   assert.match(source,/\^\[A-Z\]\[A-Z0-9\.\-\]\{0,9\}\$/);
   assert.match(source,/\^\[A-Z0-9\]\+\\\/USD\$/);
 });
+
+test('stream bounds per-client and aggregate subscriptions',()=>{
+  assert.match(source,/record\.stocks\.size >= 50/);
+  assert.match(source,/record\.crypto\.size >= 25/);
+  assert.match(source,/\.slice\(0, 200\)/);
+  assert.match(source,/\.slice\(0, 100\)/);
+});
