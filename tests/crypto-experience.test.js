@@ -13,9 +13,26 @@ test('crypto experience is wired into production UI',()=>{
 
 test('crypto experience provides interactive history and recurring investments',()=>{
  const js=read('public/crypto-experience.js');
- for(const term of ['52 wk high','52 wk low','24h volume','Market cap','History','Recurring investment','pointermove','nexahunter.recurring']) assert.match(js,new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')),`missing ${term}`);
+ for(const term of ['52 wk high','52 wk low','24h volume','Market cap','History','Recurring investment','pointermove','nexahunter.recurring']) assert.match(js,new RegExp(term.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')),`missing ${term}`);
  assert.match(js,/api\/market\/crypto-bars/);
  assert.match(js,/api\/crypto\/metadata/);
+});
+
+test('crypto experience action buttons have concrete handlers',()=>{
+ const js=read('public/crypto-experience.js');
+ assert.match(js,/cx-recurring.*onclick/);
+ assert.match(js,/cx-save-plan.*onclick=savePlan/);
+ assert.match(js,/cx-watch.*onclick/);
+ assert.match(js,/cx-history-more.*onclick/);
+ assert.match(js,/localStorage\.setItem\('nexahunter\.recurring\./);
+ assert.match(js,/classList\.toggle\('expanded'\)/);
+});
+
+test('crypto experience uses white text on dark surfaces',()=>{
+ const css=read('public/crypto-experience.css');
+ assert.match(css,/\.crypto-experience\{[^}]*background:#071221[^}]*color:#fff/);
+ assert.match(css,/\.crypto-experience \*\{color:#fff\}/);
+ assert.match(css,/\.cx-recurring\{[^}]*background:#0a1728/);
 });
 
 test('crypto API gateway exposes historical bars and metadata',()=>{
