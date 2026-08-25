@@ -1,74 +1,72 @@
 const INITIAL_CASH = 100000;
 const MAX_ORDERS = 200;
 
-function emptyState() {
-  return { cash: INITIAL_CASH, positions: {}, orders: [] };
-}
-
-function cleanSymbol(value) {
-  return String(value || '').trim().toUpperCase();
-}
+function cleanSymbol(value) { return String(value ?? '').trim().toUpperCase(); }
+function json(data, status=200) { return Response.json(data, { status, headers: { 'cache-control': 'no-store' } }); }
 
 export class PortfolioDurableObject {
-  constructor(state, env) {
-    this.state = state;
+  constructor(ctx, env) {
+    this.ctx = ctx;
     this.env = env;
+    ctx.blockConcurrencyWhile(async () => {
+      ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS account (id INTEGER PRIMARY KEY CHECK (id=1), cash REAL NOT NULL);`);
+      ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS positions (symbol TEXT PRIMARY KEY, quantity INTEGER NOT NULL CHECK (quantity >= 0));`);
+      ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, symbol TEXT NOT NULL, side TEXT NOT NULL, quantity INTEGER NOT NULL, price REAL NOT NULL, status TEXT NOT NULL, mode TEXT NOT NULL, live_execution INTEGER NOT NULL, timestamp TEXT NOT NULL);`);
+      ctx.storage.sql.exec(`CREATE INDEX IF NOT EXISTS idx_orders_timestamp ON orders(timestamp DESC);`);
+      const account = ctx.storage.sql.exec('SELECT cash FROM account WHERE id=1').one();
+      if (!account) ctx.storage.sql.exec('INSERT INTO account (id, cash) VALUES (1, ?)', INITIAL_CASH);
+    });
   }
 
-  async load() {
-    return (await this.state.storage.get('portfolio')) || emptyState();
-  }
-
-  async save(value) {
-    await this.state.storage.put('portfolio', value);
-    return value;
+  snapshot() {
+    const account = this.ctx.storage.sql.exec('SELECT cash FROM account WHERE id=1').one();
+    const positionRows = this.ctx.storage.sql.exec('SELECT symbol, quantity FROM positions ORDER BY symbol').toArray();
+    const orderRows = this.ctx.storage.sql.exec('SELECT id, symbol, side, quantity, price, status, mode, live_execution AS liveExecution, timestamp FROM orders ORDER BY timestamp DESC LIMIT ?', MAX_ORDERS).toArray();
+    const positions = Object.fromEntries(positionRows.map(row => [row.symbol, row.quantity]));
+    const orders = orderRows.map(row => ({ ...row, liveExecution: Boolean(row.liveExecution) }));
+    return { cash: Number(account?.cash ?? INITIAL_CASH), positions, orders, mode: 'PAPER', liveExecution: false, persistent: true };
   }
 
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname !== '/portfolio') return new Response('Not found', { status: 404 });
-    if (request.method === 'GET') {
-      const state = await this.load();
-      return Response.json({ ...state, mode: 'PAPER', liveExecution: false }, { headers: { 'cache-control': 'no-store' } });
-    }
+    if (request.method === 'GET') return json(this.snapshot());
     if (request.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: { allow: 'GET, POST' } });
 
     let order;
-    try { order = await request.json(); } catch { return Response.json({ accepted: false, error: 'Invalid JSON' }, { status: 400 }); }
-    if (!order || typeof order !== 'object') return Response.json({ accepted: false, error: 'Invalid order' }, { status: 400 });
+    try { order = await request.json(); } catch { return json({ accepted: false, error: 'Invalid JSON' }, 400); }
+    const id = String(order?.id ?? '');
+    const symbol = cleanSymbol(order?.symbol);
+    const side = String(order?.side ?? '').toUpperCase();
+    const quantity = Number(order?.quantity);
+    const price = Number(order?.price);
+    if (!id || !symbol || !['BUY', 'SELL'].includes(side) || !Number.isInteger(quantity) || quantity <= 0 || !Number.isFinite(price) || price <= 0) return json({ accepted: false, error: 'Invalid order' }, 400);
 
-    const state = await this.load();
-    const id = String(order.id || '');
-    if (!id) return Response.json({ accepted: false, error: 'Order id is required' }, { status: 400 });
-    if (state.orders.some(item => item.id === id)) {
-      return Response.json({ accepted: false, duplicate: true, order: state.orders.find(item => item.id === id) });
-    }
+    const result = this.ctx.storage.transactionSync(() => {
+      const duplicate = this.ctx.storage.sql.exec('SELECT id, symbol, side, quantity, price, status, mode, live_execution AS liveExecution, timestamp FROM orders WHERE id=?', id).one();
+      if (duplicate) return { duplicate: true, order: { ...duplicate, liveExecution: Boolean(duplicate.liveExecution) } };
+      const account = this.ctx.storage.sql.exec('SELECT cash FROM account WHERE id=1').one();
+      const cash = Number(account.cash);
+      const currentRow = this.ctx.storage.sql.exec('SELECT quantity FROM positions WHERE symbol=?', symbol).one();
+      const current = Number(currentRow?.quantity ?? 0);
+      const notional = quantity * price;
+      if (!Number.isFinite(notional)) return { error: 'Order calculation overflow', status: 400 };
+      if (side === 'BUY' && notional > cash) return { error: 'Insufficient buying power', status: 409 };
+      if (side === 'SELL' && quantity > current) return { error: 'Insufficient paper position', status: 409 };
+      const nextCash = side === 'BUY' ? cash - notional : cash + notional;
+      const nextPosition = side === 'BUY' ? current + quantity : current - quantity;
+      this.ctx.storage.sql.exec('UPDATE account SET cash=? WHERE id=1', nextCash);
+      if (nextPosition === 0) this.ctx.storage.sql.exec('DELETE FROM positions WHERE symbol=?', symbol);
+      else if (current === 0) this.ctx.storage.sql.exec('INSERT INTO positions(symbol,quantity) VALUES(?,?)', symbol, nextPosition);
+      else this.ctx.storage.sql.exec('UPDATE positions SET quantity=? WHERE symbol=?', nextPosition, symbol);
+      const timestamp = new Date().toISOString();
+      this.ctx.storage.sql.exec('INSERT INTO orders(id,symbol,side,quantity,price,status,mode,live_execution,timestamp) VALUES(?,?,?,?,?,?,?,?,?)', id, symbol, side, quantity, price, 'FILLED_PAPER', 'PAPER', 0, timestamp);
+      return { order: { id, symbol, side, quantity, price, status: 'FILLED_PAPER', mode: 'PAPER', liveExecution: false, timestamp } };
+    });
 
-    const symbol = cleanSymbol(order.symbol);
-    const quantity = Number(order.quantity);
-    const price = Number(order.price);
-    const side = String(order.side || '').toUpperCase();
-    const notional = quantity * price;
-    const current = Number(state.positions[symbol] || 0);
-
-    if (!symbol || !Number.isInteger(quantity) || quantity <= 0 || !Number.isFinite(price) || price <= 0 || !['BUY', 'SELL'].includes(side)) {
-      return Response.json({ accepted: false, error: 'Invalid order' }, { status: 400 });
-    }
-    if (!Number.isFinite(notional)) return Response.json({ accepted: false, error: 'Order calculation overflow' }, { status: 400 });
-    if (side === 'BUY' && notional > state.cash) return Response.json({ accepted: false, error: 'Insufficient buying power' }, { status: 409 });
-    if (side === 'SELL' && quantity > current) return Response.json({ accepted: false, error: 'Insufficient paper position' }, { status: 409 });
-
-    const signed = side === 'BUY' ? quantity : -quantity;
-    state.cash = side === 'BUY' ? state.cash - notional : state.cash + notional;
-    const nextPosition = current + signed;
-    if (nextPosition === 0) delete state.positions[symbol];
-    else state.positions[symbol] = nextPosition;
-
-    const record = { ...order, symbol, quantity, price, side, status: 'FILLED_PAPER', mode: 'PAPER', liveExecution: false };
-    state.orders.unshift(record);
-    state.orders = state.orders.slice(0, MAX_ORDERS);
-    await this.save(state);
-    return Response.json({ accepted: true, order: record, portfolio: state }, { headers: { 'cache-control': 'no-store' } });
+    if (result.error) return json({ accepted: false, error: result.error }, result.status);
+    if (result.duplicate) return json({ accepted: false, duplicate: true, order: result.order }, 409);
+    return json({ accepted: true, order: result.order, portfolio: this.snapshot() });
   }
 }
 
