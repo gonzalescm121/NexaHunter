@@ -40,9 +40,12 @@ test('recurring investment and alerts remain paper/local only', () => {
   assert.doesNotMatch(js, /liveOrder/);
 });
 
-test('mobile hamburger is intentionally absent from the iPhone concept', () => {
+test('mobile hamburger is functional and routed', () => {
   const html = read('public/index.html');
   const router = read('public/button-router.js');
-  assert.doesNotMatch(html, /id="mobile-menu"|data-action="mobile-menu"/);
-  assert.doesNotMatch(router, /NexaHunterToggleMenu=toggleMenu|case\s*'mobile-menu'/);
+  assert.match(html, /id="mobile-menu"/);
+  assert.match(html, /data-action="mobile-menu"/);
+  assert.match(html, /aria-controls="sidebar"/);
+  assert.match(router, /case\s*'mobile-menu'/);
+  assert.match(router, /function toggleMenu\(\)/);
 });
