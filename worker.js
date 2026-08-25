@@ -783,17 +783,35 @@ function validatePaperOrder(
     };
   }
 
-  const symbol =
-    String(
-      input.symbol || ""
-    )
-      .trim()
-      .toUpperCase();
+  if (
+  input.quantity === null ||
+  typeof input.quantity === "boolean"
+) {
+  return {
+    valid: false,
+    error: "Quantity must be a valid number"
+  };
+}
 
-  const quantity =
-    Number(
-      input.quantity
-    );
+if (
+  input.price === null ||
+  typeof input.price === "boolean"
+) {
+  return {
+    valid: false,
+    error: "Price must be a valid number"
+  };
+}
+
+const quantity =
+  Number(
+    input.quantity
+  );
+
+const price =
+  Number(
+    input.price
+  );
 
   const price =
     Number(
