@@ -40,6 +40,11 @@ jobs:
       - name: Verify production files
         run: |
           test -f public/index.html
+          test -f public/login.html
+          test -f public/privacy.html
+          test -f public/terms.html
+          test -f public/disclaimer.html
+          test -f public/support.html
           test -f public/styles.css
           test -f public/app.js
           test -f public/panels.js
@@ -49,6 +54,7 @@ jobs:
           test -f worker-app.js
           test -f worker-entry.js
           test -f worker.js
+          test -f src/auth.js
           test -f src/core.js
           test -f src/portfolio.js
           test -f src/idempotency.js
@@ -59,12 +65,24 @@ jobs:
           grep -q '^main = "worker-entry.js"' wrangler.toml
           grep -q '^directory = "./public"' wrangler.toml
           grep -q '^binding = "ASSETS"' wrangler.toml
+          grep -q 'name = "RATE_LIMITER"' wrangler.toml
           grep -q 'name = "PORTFOLIO"' wrangler.toml
           grep -q 'name = "MARKET_STREAM"' wrangler.toml
           grep -q 'name = "IDEMPOTENCY"' wrangler.toml
           grep -q 'new_sqlite_classes = \["IdempotencyDurableObject"\]' wrangler.toml
           grep -q 'new_sqlite_classes = \["PortfolioDurableObject"\]' wrangler.toml
           grep -q 'new_sqlite_classes = \["MarketStreamDurableObject"\]' wrangler.toml
+      - name: Verify authentication boundary
+        run: |
+          grep -q 'oauth/cloudflare/login' worker-entry.js
+          grep -q 'oauth/cloudflare/callback' worker-entry.js
+          grep -q 'CLOUDFLARE_OAUTH_CLIENT_ID' worker-entry.js
+          grep -q 'SESSION_SECRET' worker-entry.js
+          grep -q 'S256' src/auth.js
+          grep -q 'HttpOnly' src/auth.js
+          grep -q 'Secure' src/auth.js
+          grep -q 'SameSite=Lax' src/auth.js
+          grep -q 'paper:' worker-entry.js
       - name: Verify paper-only runtime boundary
         run: |
           grep -q "mode:'PAPER'" worker-app.js
