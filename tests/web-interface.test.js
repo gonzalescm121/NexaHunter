@@ -81,8 +81,9 @@ test('dashboard navigation targets are either real sections or panel actions',()
       const name=target.slice(1);
       const expected=panelActions.find(action=>action.toLowerCase()===name.toLowerCase());
       assert.ok(expected,`navigation target ${target} has no section or supported panel action`);
-      assert.match(panels,new RegExp(`text\\.includes\\(.*${expected}.*\\)`));
       assert.match(panels,new RegExp(`name===['"]${expected}['"]`));
+      assert.match(panels,/function wire\(\)/);
+      assert.match(panels,/openPanel\(name\)/);
     }
   }
 });
