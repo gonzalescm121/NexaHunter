@@ -52,7 +52,9 @@ test('dashboard controls have explicit click routing',()=>{
   const html=read('public/index.html');
   const js=read('public/app.js');
   for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(html,new RegExp(`id="${id}"`));
-  for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(js,new RegExp(`#${id}`));
+  // Accept either direct CSS-id lookup (#id) or the equivalent DOM-id helper ($('id')).
+  // Both are explicit routing paths; the previous assertion incorrectly rejected the latter.
+  for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(js,new RegExp(`(?:#${id}|\\$\\(['"]${id}['"]\\))`));
   assert.match(js,/document\.querySelectorAll\('\.action-link'\)/);
   assert.match(js,/Explore:'Explore'/);
   assert.match(js,/Trade:'Trade'/);
