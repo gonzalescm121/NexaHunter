@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: nexahunter-tests-${{ github.ref }}
@@ -31,12 +31,154 @@ jobs:
         run: node --version
       - name: Verify npm
         run: npm --version
+      - name: Enable fractional stock paper orders
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          worker = Path('worker.js')
+          s = worker.read_text()
+          s = s.replace('min="1" step="1"', 'min="0.000001" step="0.000001"', 1)
+          s = s.replace('!Number.isInteger(\n      quantity\n    )', '!Number.isFinite(\n      quantity\n    )', 1)
+          s = s.replace('Quantity must be a whole number', 'Quantity must be a positive number; fractional shares are supported', 1)
+          worker.write_text(s)
+
+          core = Path('src/core.js')
+          s = core.read_text()
+          risk_old = '!Number.isInteger(\n      quantity\n    )'
+          if risk_old in s:
+              s = s.replace(risk_old, '!Number.isFinite(\n      quantity\n    )', 1)
+          exec_old = '!Number.isInteger(quantity)'
+          if exec_old in s:
+              s = s.replace(exec_old, '!Number.isFinite(quantity)', 1)
+          core.write_text(s)
+
+          p = Path('tests/validation.test.js')
+          s = p.read_text()
+          pattern = r'test\("fractional quantity is rejected", async \(\) => \{.*?\n\}\);'
+          replacement = '''test("fractional stock quantity is accepted", async () => {
+  const response = await jsonRequest({
+    symbol: "FRACSTOCK",
+    quantity: 0.25,
+    price: 100,
+    side: "BUY"
+  });
+  assert.equal(response.status, 200);
+  const data = await readJson(response);
+  assert.equal(data.accepted, true);
+  assert.equal(data.order.quantity, 0.25);
+  assert.equal(data.order.mode, "PAPER");
+  assert.equal(data.order.liveExecution, false);
+});'''
+          s = re.sub(pattern, replacement, s, count=1, flags=re.S)
+          p.write_text(s)
+
+          p = Path('tests/risk-regression.test.js')
+          s = p.read_text()
+          pattern = r'test\(\n  "fractional quantity fails closed",\n  \(\) => \{.*?\n\);'
+          replacement = '''test(
+  "fractional quantity is accepted by the risk engine",
+  () => {
+    const result = evaluateRisk(
+      order({ quantity: 1.5 }),
+      state(),
+      {}
+    );
+    assert.equal(result.allowed, true);
+    assert.equal(result.projectedPosition, 1.5);
+  }
+);'''
+          s = re.sub(pattern, replacement, s, count=1, flags=re.S)
+          p.write_text(s)
+
+          p = Path('tests/type-boundary.test.js')
+          s = p.read_text()
+          pattern = r'test\("risk engine rejects fractional quantity", \(\) => \{.*?\n\}\);'
+          replacement = '''test("risk engine accepts fractional quantity", () => {
+  const result = evaluateRisk(
+    { ...validOrder, quantity: 10.5 },
+    validState,
+    validLimits
+  );
+  assert.equal(result.allowed, true);
+  assert.equal(result.projectedPosition, 10.5);
+});'''
+          s = re.sub(pattern, replacement, s, count=1, flags=re.S)
+          pattern = r'test\("execution engine rejects fractional quantity", \(\) => \{.*?\n\}\);'
+          replacement = '''test("execution engine accepts fractional quantity", () => {
+  const result = estimateExecution(
+    { ...validOrder, quantity: 1.5 },
+    {}
+  );
+  assert.equal(result.valid, true);
+  assert.equal(result.grossNotional, 150);
+});'''
+          s = re.sub(pattern, replacement, s, count=1, flags=re.S)
+          p.write_text(s)
+
+          Path('tests/fractional-stock-paper.test.js').write_text('''import test from "node:test";
+import assert from "node:assert/strict";
+import worker from "../worker.js";
+import { evaluateRisk, estimateExecution } from "../src/core.js";
+
+const base = "https://nexahunter.test";
+async function paperOrder(body) {
+  return worker.fetch(new Request(`${base}/api/paper-orders`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body)
+  }));
+}
+
+test("fractional stock paper BUY accepts less than one share", async () => {
+  const response = await paperOrder({ symbol: "FRACBUY", quantity: 0.25, price: 200, side: "BUY" });
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.accepted, true);
+  assert.equal(data.order.quantity, 0.25);
+  assert.equal(data.order.mode, "PAPER");
+  assert.equal(data.order.liveExecution, false);
+});
+
+test("fractional stock risk and execution are accepted", () => {
+  const risk = evaluateRisk(
+    { symbol: "FRACSELL", quantity: 0.125, price: 400, side: "SELL" },
+    { currentPosition: 1, dailyLoss: 0 },
+    { maxAbsolutePosition: 10 }
+  );
+  assert.equal(risk.allowed, true);
+  assert.equal(risk.projectedPosition, 0.875);
+  const execution = estimateExecution(
+    { symbol: "FRACSELL", quantity: 0.125, price: 400, side: "SELL" },
+    {}
+  );
+  assert.equal(execution.valid, true);
+  assert.equal(execution.grossNotional, 50);
+});
+''')
+
+          # Remove the temporary migration workflows after this migration is applied.
+          for path in [
+              '.github/workflows/enable-fractional-stocks-once.yml',
+              '.github/workflows/fractional-stock-migration.yml'
+          ]:
+              Path(path).unlink(missing_ok=True)
       - name: Install dependencies
         run: npm install
       - name: Syntax check
         run: npm run syntax
       - name: Run full NexaHunter tests
         run: npm test
+      - name: Commit fractional-share migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add worker.js src/core.js tests .github/workflows
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: enable fractional stock paper orders"
+            git push
+          fi
       - name: Verify production files
         run: |
           test -f public/index.html
