@@ -8,23 +8,23 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 test('primary dashboard controls declare explicit actions',()=>{
   const html=read('public/index.html');
-  for(const action of ['analysis','notifications','explore','trade','backtest','performance','positions','markets','profile']) assert.match(html,new RegExp(`data-action="${action}"`),`missing data-action ${action}`);
-  for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade','mobile-bottom-nav']) assert.match(html,new RegExp(`id="${id}"`),`missing control ${id}`);
-  assert.doesNotMatch(html,/data-action="mobile-menu"/);
-  assert.doesNotMatch(html,/id="mobile-menu"/);
+  for(const action of ['analysis','notifications','explore','trade','backtest','performance','positions','markets','profile','mobile-menu']) assert.match(html,new RegExp(`data-action="${action}"`),`missing data-action ${action}`);
+  for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade','mobile-bottom-nav','mobile-menu']) assert.match(html,new RegExp(`id="${id}"`),`missing control ${id}`);
 });
 
 test('central button router covers every primary action',()=>{
   const router=read('public/button-router.js');
-  for(const action of ['analysis','notifications','positions','trade','backtest','performance','explore']) assert.match(router,new RegExp(`case\\s*'${action}'`),`missing router case ${action}`);
+  for(const action of ['analysis','notifications','positions','trade','backtest','performance','explore','mobile-menu']) assert.match(router,new RegExp(`case\\s*'${action}'`),`missing router case ${action}`);
   assert.match(router,/stopImmediatePropagation/);
 });
 
-test('hamburger menu is intentionally absent from the iPhone concept',()=>{
+test('hamburger menu is functional and routed on mobile',()=>{
   const html=read('public/index.html');
   const router=read('public/button-router.js');
-  assert.doesNotMatch(html,/id="mobile-menu"|data-action="mobile-menu"/);
-  assert.doesNotMatch(router,/case\s*'mobile-menu'/);
+  assert.match(html,/id="mobile-menu"/);
+  assert.match(html,/data-action="mobile-menu"/);
+  assert.match(router,/case\s*'mobile-menu'/);
+  assert.match(router,/function toggleMenu\(\)/);
 });
 
 test('dashboard controls have touch-friendly styling',()=>{
