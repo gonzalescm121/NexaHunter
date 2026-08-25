@@ -44,7 +44,10 @@ jobs:
           test -f public/app.js
           test -f public/panels.js
           test -f public/realtime.js
+          test -f public/crypto-experience.js
+          test -f public/crypto-experience.css
           test -f worker-app.js
+          test -f worker-entry.js
           test -f worker.js
           test -f src/core.js
           test -f src/portfolio.js
@@ -53,7 +56,7 @@ jobs:
           test -f wrangler.toml
       - name: Verify deployment configuration
         run: |
-          grep -q '^main = "worker-app.js"' wrangler.toml
+          grep -q '^main = "worker-entry.js"' wrangler.toml
           grep -q '^directory = "./public"' wrangler.toml
           grep -q '^binding = "ASSETS"' wrangler.toml
           grep -q 'name = "PORTFOLIO"' wrangler.toml
