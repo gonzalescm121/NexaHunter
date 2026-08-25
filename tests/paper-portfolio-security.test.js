@@ -10,9 +10,12 @@ const panels=read('public/panels.js');
 test('paper orders are explicitly non-live at both API and persistence layers',()=>{
   assert.match(worker,/mode:'PAPER'/);
   assert.match(worker,/liveExecution:false/);
+  assert.match(worker,/paper-orders/);
+  assert.doesNotMatch(worker,/live-orders/);
   assert.match(portfolio,/mode: 'PAPER'/);
   assert.match(portfolio,/liveExecution: false/);
   assert.match(portfolio,/live_execution INTEGER NOT NULL/);
+  assert.match(portfolio,/live_execution,.*0/s);
 });
 
 test('paper portfolio persists positions, cash and order history transactionally',()=>{
@@ -22,6 +25,17 @@ test('paper portfolio persists positions, cash and order history transactionally
   assert.match(portfolio,/transactionSync/);
   assert.match(portfolio,/UPDATE account SET cash/);
   assert.match(portfolio,/INSERT INTO orders/);
+  assert.match(portfolio,/return \{ accepted: true, order: result\.order, portfolio: this\.snapshot\(\) \}/);
+});
+
+test('paper order submission generates an id, validates it, fills it as PAPER, and returns the updated portfolio',()=>{
+  assert.match(worker,/crypto\.randomUUID\(\)/);
+  assert.match(worker,/const order=\{id:crypto\.randomUUID\(\),\.\.\.result\.order,mode:'PAPER',liveExecution:false/);
+  assert.match(worker,/portfolioRequest\(env,'\/portfolio','POST',order\)/);
+  assert.match(portfolio,/status: 'FILLED_PAPER'/);
+  assert.match(portfolio,/mode: 'PAPER'/);
+  assert.match(portfolio,/liveExecution: false/);
+  assert.match(portfolio,/portfolio: this\.snapshot\(\)/);
 });
 
 test('paper order validation rejects malformed and unsafe values',()=>{
@@ -47,7 +61,12 @@ test('security headers and browser escaping remain enforced',()=>{
   assert.match(app,/replaceAll\('<'/);
 });
 
-test('trade UI labels the workflow as paper trading',()=>{
+test('trade UI closes the paper loop and never submits a live order',()=>{
   assert.match(panels,/Paper trading only/);
   assert.match(panels,/\/api\/paper-orders/);
+  assert.doesNotMatch(panels,/\/api\/live-orders/);
+  assert.match(panels,/FILLED — PAPER/);
+  assert.match(panels,/Live execution: false/);
+  assert.match(panels,/refreshPaperPortfolio/);
+  assert.match(panels,/\/api\/portfolio/);
 });
