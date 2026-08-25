@@ -15,6 +15,13 @@ test('navigation exposes core pages',()=>{
   for(const target of ['#markets','#portfolio','#orders','#trade']) assert.match(html,new RegExp(target.replace('#','\\#')));
 });
 
+test('market workspace exposes search, selection, watchlist, and detail views',()=>{
+  const html=read('public/index.html');
+  const js=read('public/app.js');
+  for(const target of ['market-search','reset-watchlist','detail-symbol','detail-price','sparkline']) assert.match(html,new RegExp(target));
+  for(const target of ['watchKey','loadWatchlist','saveWatchlist','setDetail','renderMarkets']) assert.match(js,new RegExp(target));
+});
+
 test('paper trading safety is visible in UI',()=>{
   const html=read('public/index.html');
   assert.match(html,/Live execution off/);
@@ -48,4 +55,6 @@ test('responsive and branded styles are present',()=>{
   assert.match(css,/--green:#00c805/);
   assert.match(css,/--bg:#050505/);
   assert.match(css,/@media\(max-width:800px\)/);
+  assert.match(css,/spark-wrap/);
+  assert.match(css,/market-toolbar/);
 });
