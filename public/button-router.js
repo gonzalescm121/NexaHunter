@@ -4,8 +4,13 @@
   const route=(action,el)=>{
     switch(action){
       case 'mobile-menu':{
+        if(typeof window.NexaHunterToggleMenu==='function'){
+          window.NexaHunterToggleMenu();
+          return true;
+        }
         const sidebar=$('sidebar');
         const openState=sidebar?.classList.toggle('open')??false;
+        document.body.classList.toggle('mobile-nav-open',openState);
         el.setAttribute('aria-expanded',String(openState));
         el.setAttribute('aria-label',openState?'Close navigation menu':'Open navigation menu');
         return true;
