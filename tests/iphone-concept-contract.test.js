@@ -44,8 +44,11 @@ test('mobile concept provides five-button bottom navigation and functional hambu
 });
 
 test('hamburger exposes the core mobile account menu actions',()=>{
-  const html=read('public/index.html');
-  for(const action of ['settings','profile','edit','favorites','watchlist']) {
-    assert.match(html,new RegExp(`data-action="${action}"`),`missing hamburger action ${action}`);
+  const router=read('public/button-router.js');
+  for(const action of ['settings','profile','appearance','favorites','watchlist','holdings']) {
+    assert.match(router,new RegExp(`data-action=\\"${action}\\"`),`missing hamburger action ${action}`);
+  }
+  for(const action of ['settings','profile','appearance','favorites','watchlist','holdings']) {
+    assert.match(router,new RegExp(`case'${action}'`),`missing route ${action}`);
   }
 });
