@@ -55,7 +55,7 @@ jobs:
         run: |
           grep -q '^main = "worker-app.js"' wrangler.toml
           grep -q '^directory = "./public"' wrangler.toml
-          grep -q 'name = "ASSETS"' wrangler.toml
+          grep -q '^binding = "ASSETS"' wrangler.toml
           grep -q 'name = "PORTFOLIO"' wrangler.toml
           grep -q 'name = "MARKET_STREAM"' wrangler.toml
           grep -q 'name = "IDEMPOTENCY"' wrangler.toml
