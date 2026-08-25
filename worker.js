@@ -803,6 +803,13 @@ if (
   };
 }
 
+const symbol =
+  String(
+    input.symbol || ""
+  )
+    .trim()
+    .toUpperCase();
+
 const quantity =
   Number(
     input.quantity
@@ -813,13 +820,12 @@ const price =
     input.price
   );
 
-  const side =
+const side =
     String(
       input.side || ""
     )
       .trim()
       .toUpperCase();
-
 
   if(!symbol){
 
