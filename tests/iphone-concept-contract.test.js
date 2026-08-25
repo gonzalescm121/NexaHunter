@@ -28,12 +28,17 @@ test('iPhone concept keeps red and green market candles',()=>{
   assert.match(css,/candles rect:nth-child\(even\)/);
 });
 
-test('mobile concept provides five-button bottom navigation and removes hamburger',()=>{
+test('mobile concept provides five-button bottom navigation and functional hamburger',()=>{
   const html=read('public/index.html');
   const css=read('public/mobile-concept.css');
-  assert.doesNotMatch(html,/id="mobile-menu"/);
+  const router=read('public/button-router.js');
+  assert.match(html,/id="mobile-menu"/);
+  assert.match(html,/data-action="mobile-menu"/);
+  assert.match(html,/aria-controls="sidebar"/);
   assert.match(html,/id="mobile-bottom-nav"/);
   for(const action of ['markets','positions','trade','profile']) assert.match(html,new RegExp(`data-action="${action}"`));
   assert.match(css,/\.mobile-bottom-nav/);
   assert.match(css,/grid-template-columns:repeat\(5,1fr\)/);
+  assert.match(router,/case\s*'mobile-menu'/);
+  assert.match(router,/function toggleMenu\(\)/);
 });
