@@ -9,9 +9,10 @@ NexaHunter is a Cloudflare Workers market-validation platform with a dark broker
 - Paper BUY/SELL order ticket
 - Persistent cash, positions, and paper order history
 - SQLite-backed Durable Object portfolio storage
-- **Per-user paper accounts** keyed from authenticated Cloudflare OAuth identities
-- Cloudflare OAuth 2.0 Authorization Code + PKCE authentication
-- Signed, HTTP-only, secure session cookies
+- **Per-user paper accounts** keyed from authenticated Cloudflare identity
+- Cloudflare Access identity support for public authentication
+- Optional Cloudflare OAuth 2.0 Authorization Code + PKCE login flow
+- Signed, HTTP-only, secure session cookies for the optional OAuth flow
 - OAuth state and PKCE verifier protection
 - Logout and authenticated `/api/auth/me`
 - Authenticated API boundary
@@ -31,20 +32,25 @@ NexaHunter is intentionally paper-only. Orders are recorded as `FILLED_PAPER`; t
 
 ## Authentication configuration
 
-Set these Cloudflare Worker secrets/variables before production use:
+For a public launch, the recommended Cloudflare-native route is **Cloudflare Access** protecting the Worker/custom domain. The Worker reads the authenticated identity through `ctx.access` and uses that stable identity to isolate the paper account. Cloudflare documents that Access can protect a specific Worker or hostname and expose the signed-in identity to the Worker. This avoids granting public users unnecessary Cloudflare API permissions just to sign in.
+
+The repository also contains an optional self-managed Cloudflare OAuth flow for cases where the application specifically needs Cloudflare OAuth authorization. Set these Worker secrets/variables only if using that flow:
 
 - `CLOUDFLARE_OAUTH_CLIENT_ID` — OAuth client ID created in Cloudflare
 - `SESSION_SECRET` — high-entropy secret used to sign application sessions
 - `PUBLIC_ORIGIN` — production origin, for example `https://your-domain.example`
 - `CLOUDFLARE_OAUTH_SCOPES` — optional; defaults to `openid profile email`
-- `ALPACA_API_KEY` — market-data credential
-- `ALPACA_API_SECRET` — market-data credential
 
-The Cloudflare OAuth redirect URI is:
+For market data:
+
+- `ALPACA_API_KEY`
+- `ALPACA_API_SECRET`
+
+The self-managed OAuth redirect URI is:
 
 `https://YOUR_PUBLIC_ORIGIN/oauth/cloudflare/callback`
 
-For a public Cloudflare OAuth client, Cloudflare requires the client URL domain to be verified before the client can be promoted to public visibility.
+Cloudflare's self-managed OAuth clients are intended to authorize access to Cloudflare resources. Public visibility has additional requirements, including verified client-domain ownership and appropriate scopes, so do not add broad Cloudflare permissions solely for application login.
 
 ## Development
 
@@ -67,15 +73,16 @@ Then run the **NexaHunter Deploy** workflow manually and enter `DEPLOY` as the c
 
 ## Launch checklist
 
-1. Deploy to the final Cloudflare Worker/custom domain.
-2. Set the Worker secrets listed above.
-3. Create the Cloudflare OAuth client with Authorization Code + PKCE (`none`, S256).
-4. Register `/oauth/cloudflare/callback` exactly.
-5. Verify the OAuth client domain and promote it to public only after the required public-client fields are complete.
+1. Select the final public domain/custom domain.
+2. Deploy the Worker and Assets.
+3. Configure Cloudflare Access on the production Worker or hostname with the desired public sign-in policy, or configure the optional self-managed OAuth flow.
+4. Set the Worker secrets listed above.
+5. Verify the production rate-limit binding and Durable Object migrations.
 6. Run CI and the guarded deployment workflow.
 7. Test sign-in, logout, per-user portfolio isolation, market data, WebSocket streaming, paper BUY, paper SELL, duplicate rejection, and insufficient-buying-power rejection.
 8. Confirm `/health` reports authentication, market-data, rate-limit, and Durable Object configuration correctly.
 9. Confirm no live-order route or live-trading toggle exists.
+10. Complete the final mobile/browser smoke test and public launch review.
 
 ## Test coverage
 
