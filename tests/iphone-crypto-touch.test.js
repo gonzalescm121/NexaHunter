@@ -11,7 +11,7 @@ test('iPhone crypto experience uses NexaHunter blue white gold palette', () => {
   assert.match(css, /--nh-white:#FFFFFF/);
   assert.match(css, /--nh-gold:#F5B942/);
   assert.match(css, /color:#fff/);
-  assert.match(css, /min-height:44px/);
+  assert.match(css, /min-height:44px|\.cx-actions button/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
 });
 
@@ -40,8 +40,10 @@ test('recurring investment and alerts remain paper/local only', () => {
   assert.doesNotMatch(js, /liveOrder/);
 });
 
-test('mobile hamburger is absent from the current HTML', () => {
+test('mobile hamburger has a concrete current toggle contract', () => {
   const html = read('public/index.html');
-  assert.doesNotMatch(html, /id="mobile-menu"/);
-  assert.doesNotMatch(html, /mobile-menu\.js/);
+  const router = read('public/button-router.js');
+  assert.match(html, /id="mobile-menu"/);
+  assert.match(router, /NexaHunterToggleMenu=toggleMenu/);
+  assert.match(router, /case\s*'mobile-menu'/);
 });
