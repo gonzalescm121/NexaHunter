@@ -28,6 +28,8 @@ jobs:
         run: npm --version
       - name: Install dependencies
         run: npm install
+      - name: Syntax check
+        run: npm run syntax
       - name: Run full NexaHunter tests
         run: npm test
       - name: Verify production files
@@ -36,4 +38,6 @@ jobs:
           test -f public/styles.css
           test -f public/app.js
           test -f worker-app.js
+          test -f src/portfolio.js
+          test -f src/idempotency.js
           test -f wrangler.toml
