@@ -21,9 +21,10 @@ test('paper trading safety is visible in UI',()=>{
   assert.match(html,/Paper trading only/);
 });
 
-test('frontend uses paper order endpoint and health endpoint',()=>{
+test('frontend uses paper order, portfolio, and health endpoints',()=>{
   const js=read('public/app.js');
   assert.match(js,/\/api\/paper-orders/);
+  assert.match(js,/\/api\/portfolio/);
   assert.match(js,/\/health/);
   assert.match(js,/content-type/);
 });
@@ -32,6 +33,14 @@ test('frontend escapes rendered server values',()=>{
   const js=read('public/app.js');
   assert.match(js,/escapeHtml/);
   assert.match(js,/replaceAll\('&'/);
+});
+
+test('dashboard renders cash, positions, and order history',()=>{
+  const js=read('public/app.js');
+  assert.match(js,/portfolio-value/);
+  assert.match(js,/buying-power/);
+  assert.match(js,/position-count/);
+  assert.match(js,/renderOrders/);
 });
 
 test('responsive and branded styles are present',()=>{
