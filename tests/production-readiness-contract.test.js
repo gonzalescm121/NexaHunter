@@ -23,7 +23,7 @@ test('market read endpoints enforce GET and stream endpoint enforces WebSocket u
   assert.match(worker, /url\.pathname==='\/api\/market\/clock'/);
   assert.match(worker, /url\.pathname==='\/api\/market\/stream-config'/);
   assert.match(worker, /request\.headers\.get\('Upgrade'\)!=='websocket'/);
-  assert.match(worker, /json\(\{error:'WebSocket upgrade required'\},426\)/);
+  assert.match(worker, /json\(\{error:'WebSocket upgrade required'\},\s*426\)/);
 });
 
 test('production workflow validates source syntax, full tests and required deployment files', () => {
