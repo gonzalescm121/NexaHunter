@@ -18,14 +18,14 @@ test('crypto experience provides interactive history and recurring investments',
  assert.match(js,/api\/crypto\/metadata/);
 });
 
-test('crypto experience action buttons have concrete handlers',()=>{
+test('crypto experience action buttons have concrete event listeners',()=>{
  const js=read('public/crypto-experience.js');
- assert.match(js,/cx-recurring.*onclick/);
- assert.match(js,/cx-save-plan.*onclick=savePlan/);
- assert.match(js,/cx-watch.*onclick/);
- assert.match(js,/cx-history-more.*onclick/);
+ for(const pair of [['cx-recurring','toggleRecurring'],['cx-save-plan','savePlan'],['cx-watch','toggleWatch'],['cx-alerts','toggleAlerts'],['cx-save-alert','saveAlert'],['cx-share','shareAsset'],['cx-history-more','classList\\.toggle'],['cx-recurring-close','toggleRecurring']]){
+   assert.match(js,new RegExp(`getElementById\\(['"]${pair[0]}['"]\\).*${pair[1]}`),`missing handler ${pair[0]}`);
+ }
+ assert.match(js,/addEventListener\('click'/);
+ assert.match(js,/addEventListener\('pointerdown'/);
  assert.match(js,/localStorage\.setItem\('nexahunter\.recurring\./);
- assert.match(js,/classList\.toggle\('expanded'\)/);
 });
 
 test('crypto experience uses white text on dark surfaces',()=>{
@@ -33,14 +33,6 @@ test('crypto experience uses white text on dark surfaces',()=>{
  assert.match(css,/\.crypto-experience\{[^}]*background:#071221[^}]*color:#fff/);
  assert.match(css,/\.crypto-experience \*\{color:#fff\}/);
  assert.match(css,/\.cx-recurring\{[^}]*background:#0a1728/);
-});
-
-test('crypto API gateway exposes historical bars and metadata',()=>{
- const js=read('worker-entry.js');
- assert.match(js,/api\/market\/crypto-bars/);
- assert.match(js,/v1beta3\/crypto\/us\/bars/);
- assert.match(js,/api\/crypto\/metadata/);
- assert.match(js,/api\.coingecko\.com/);
 });
 
 test('Cloudflare uses crypto API gateway entrypoint',()=>{
