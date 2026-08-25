@@ -9,7 +9,7 @@ const realtime=read('public/realtime.js');
 const html=read('public/index.html');
 
 test('mobile layout uses the iPhone safe viewport and responsive cards',()=>{
-  assert.match(html,/viewport-fit=\"cover\"/);
+  assert.match(html,/viewport-fit=cover/);
   assert.match(css,/100dvh/);
   assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/env\(safe-area-inset-bottom\)/);
@@ -21,9 +21,11 @@ test('chart sizing is fluid instead of fixed to desktop width',()=>{
 });
 
 test('Home, Explore and Copilot mobile navigation map to real dashboard anchors',()=>{
-  assert.match(css,/\.nav-item:nth-child\(1\)/);
-  assert.match(css,/\.nav-item:nth-child\(4\)/);
-  assert.match(css,/\.nav-item:nth-child\(5\)/);
+  assert.match(css,/\.side-nav \.nav-item:nth-child\(1\)/);
+  assert.match(css,/\.side-nav \.nav-item:nth-child\(4\)/);
+  assert.match(css,/\.side-nav \.nav-item:nth-child\(5\)/);
+  assert.match(css,/content:'Explore'/);
+  assert.match(css,/content:'Copilot'/);
   assert.match(html,/href=\"#home\"/);
   assert.match(html,/href=\"#screener\"/);
   assert.match(html,/href=\"#nexaai\"/);
