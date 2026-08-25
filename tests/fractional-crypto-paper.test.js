@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../worker-entry.js';
 
+const context={access:{async getIdentity(){return {id:'fractional-paper-test-user',email:'test@nexahunter.local',name:'Paper Test User'};}}};
 const request = body => worker.fetch(new Request('https://nexahunter.test/api/paper-orders', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify(body)
-}), {});
+}), {}, context);
 
 test('fractional crypto BUY is accepted as PAPER', async () => {
   const response = await request({ symbol: 'BTC/USD', assetType: 'CRYPTO', quantity: 0.01, price: 100000, side: 'BUY' });
