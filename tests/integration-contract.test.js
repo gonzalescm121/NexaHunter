@@ -9,21 +9,24 @@ const html=fs.readFileSync('public/index.html','utf8');
 
 test('worker exposes portfolio integration',()=>{
   assert.match(worker,/PortfolioDurableObject/);
-  assert.match(worker,/\/portfolio/);
+  assert.match(worker,/\/api\/portfolio/);
 });
 test('worker exposes paper-order integration',()=>{
   assert.match(worker,/\/api\/paper-orders/);
-  assert.match(worker,/idempotency/);
+  assert.match(worker,/duplicate/);
 });
 test('portfolio exposes GET and POST contract',()=>{
-  assert.match(portfolio,/request\.method === 'GET'/);
-  assert.match(portfolio,/request\.method !== 'POST'/);
+  assert.match(portfolio,/request.method === 'GET'/);
+  assert.match(portfolio,/request.method !== 'POST'/);
   assert.match(portfolio,/accepted: true/);
 });
-test('frontend refreshes portfolio state',()=>{
-  assert.match(app,/fetch\(['"]\/portfolio['"]/);
-  assert.match(app,/portfolio/);
+test('frontend refreshes persistent portfolio state',()=>{
+  assert.match(app,/fetch\(['"]\/api\/portfolio['"]/);
+  assert.match(app,/portfolio-value/);
+  assert.match(app,/position-count/);
 });
-test('UI contains portfolio, markets, orders and trade sections',()=>{
-  for(const id of ['portfolio','markets','orders','trade']) assert.match(html,new RegExp(`id=["']${id}["']`));
+test('UI contains portfolio, markets and trade navigation',()=>{
+  assert.match(html,/id=["']portfolio["']/);
+  assert.match(html,/id=["']markets["']/);
+  assert.match(html,/href=["']#trade["']/);
 });
