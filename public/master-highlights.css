@@ -1,0 +1,57 @@
+/* NexaHunter MASTER PIECE — highlights, ambient backgrounds & watermark layer */
+:root{--nh-hi:#2e92ff;--nh-hi2:#5bdcff;--nh-green:#29e990;--nh-deep:#020711}
+html,body{background:#020711}
+body{position:relative;isolation:isolate;background:radial-gradient(900px 420px at 52% -10%,rgba(24,105,190,.25),transparent 68%),radial-gradient(700px 360px at 88% 42%,rgba(13,78,151,.11),transparent 72%),radial-gradient(650px 380px at 8% 72%,rgba(0,95,185,.08),transparent 74%),linear-gradient(180deg,#061326 0,#020711 42%,#01040a 100%)}
+body:before{content:"";position:fixed;inset:-20%;z-index:-2;pointer-events:none;background:radial-gradient(ellipse at 50% 0,rgba(60,170,255,.12),transparent 35%),linear-gradient(115deg,transparent 0 38%,rgba(27,126,255,.025) 44%,transparent 51% 100%);filter:blur(10px)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0,transparent 119px,rgba(54,126,205,.018) 120px),repeating-linear-gradient(0deg,transparent 0,transparent 119px,rgba(54,126,205,.014) 120px);mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),transparent 88%)}
+.app-shell{position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(1,5,13,.985),rgba(3,11,23,.90) 18%,rgba(3,12,24,.76) 100%)}
+.app-shell:before{content:"";position:absolute;left:176px;top:-180px;width:720px;height:420px;pointer-events:none;background:radial-gradient(ellipse,rgba(21,120,255,.13),transparent 68%);filter:blur(8px)}
+.sidebar{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(1,7,16,.995),rgba(2,10,21,.97));box-shadow:18px 0 60px rgba(0,0,0,.28)}
+.sidebar:before{content:"";position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,#1763a4 16%,#1e80ce 50%,transparent 88%);opacity:.55}
+.sidebar:after{content:"";position:absolute;left:-80px;top:80px;width:240px;height:300px;background:radial-gradient(ellipse,rgba(18,117,255,.09),transparent 70%);pointer-events:none}
+.brand-block{position:relative;z-index:2}
+.brand-block:after{content:"";position:absolute;left:10%;right:10%;bottom:0;height:1px;background:linear-gradient(90deg,transparent,#287fc1,transparent);box-shadow:0 0 12px rgba(40,127,193,.45)}
+.topbar{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(3,12,25,.94),rgba(2,8,17,.88));box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.topbar:before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent 4%,#1667a8 28%,#42aaff 50%,#1667a8 72%,transparent 96%);opacity:.5;box-shadow:0 0 14px #1688ff}
+.topbar:after{content:"";position:absolute;left:0;right:0;bottom:-30px;height:45px;background:radial-gradient(ellipse at 50% 0,rgba(19,111,219,.08),transparent 65%);pointer-events:none}
+.global-search{box-shadow:inset 0 0 18px rgba(10,67,126,.25),0 0 0 1px rgba(28,108,176,.16),0 0 24px rgba(0,96,255,.06)}
+.dashboard{position:relative}
+.dashboard:before{content:"";position:absolute;top:0;left:15%;width:60%;height:180px;pointer-events:none;background:radial-gradient(ellipse,rgba(27,128,255,.055),transparent 68%);filter:blur(4px)}
+.market-strip{position:relative;z-index:1}
+.ticker-card{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(9,26,48,.98),rgba(3,12,24,.99));box-shadow:0 16px 38px rgba(0,0,0,.48),inset 0 1px 0 rgba(91,190,255,.09),inset 0 -30px 50px rgba(0,70,150,.035)}
+.ticker-card:before{content:"";position:absolute;left:10%;right:10%;top:0;height:1px;background:linear-gradient(90deg,transparent,#287fd0,#64c9ff,#287fd0,transparent);box-shadow:0 0 13px rgba(45,157,255,.55)}
+.ticker-card:after{content:"";position:absolute;right:-35px;bottom:-60px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(27,131,255,.14),transparent 67%);pointer-events:none}
+.ticker-card:hover{border-color:#1e5e93;box-shadow:0 18px 42px rgba(0,0,0,.5),0 0 24px rgba(19,115,232,.08),inset 0 1px 0 rgba(91,190,255,.13)}
+.panel{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(8,23,43,.985),rgba(2,10,20,.99));box-shadow:0 16px 40px rgba(0,0,0,.48),inset 0 1px 0 rgba(72,154,224,.07),inset 0 -45px 70px rgba(0,56,120,.025)}
+.panel:before{content:"";position:absolute;left:5%;right:5%;top:0;height:1px;background:linear-gradient(90deg,transparent,#145c96,#3aa7ff,#145c96,transparent);opacity:.7;box-shadow:0 0 15px rgba(44,157,255,.35);pointer-events:none}
+.panel:after{content:"";position:absolute;right:-80px;top:-80px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(18,118,238,.08),transparent 68%);pointer-events:none}
+.chart-panel{background:radial-gradient(ellipse at 50% 38%,rgba(15,74,137,.07),transparent 56%),linear-gradient(145deg,rgba(8,23,43,.99),rgba(2,10,20,1));box-shadow:0 20px 55px rgba(0,0,0,.55),inset 0 1px 0 rgba(68,160,239,.10)}
+.chart-panel:after{width:420px;height:260px;right:18%;top:14%;background:radial-gradient(ellipse,rgba(23,127,255,.045),transparent 68%)}
+.chart-stage{position:relative;background:radial-gradient(ellipse at 47% 46%,rgba(11,66,125,.07),transparent 55%)}
+.chart-stage:before{background:repeating-linear-gradient(to bottom,transparent 0,transparent 64px,rgba(29,74,111,.34) 65px),repeating-linear-gradient(to right,transparent 0,transparent 89px,rgba(24,64,100,.25) 90px);box-shadow:inset 0 0 80px rgba(0,10,24,.20)}
+.chart-watermark{z-index:1;pointer-events:none;opacity:.14!important}
+.watermark-wolf{position:relative;background:url('/assets/nexahunter-master-logo.svg') center/contain no-repeat!important;filter:drop-shadow(0 0 25px rgba(23,132,255,.8)) drop-shadow(0 0 55px rgba(13,91,200,.35));opacity:1!important}
+.watermark-wolf:after{content:"";position:absolute;inset:18%;background:radial-gradient(circle,rgba(36,153,255,.13),transparent 68%);filter:blur(18px);z-index:-1}
+.asset-heading{position:relative;z-index:4;background:linear-gradient(90deg,rgba(8,24,44,.35),transparent 60%)}
+.asset-heading:after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,#174d79,transparent);opacity:.6}
+.chart-candle-up{filter:drop-shadow(0 0 4px rgba(41,214,140,.18))}.chart-candle-down{filter:drop-shadow(0 0 4px rgba(255,80,100,.18))}
+.ma-line{filter:drop-shadow(0 0 5px rgba(58,154,255,.45))}.price-line{filter:drop-shadow(0 0 5px rgba(55,238,155,.45))}.price-tag{filter:drop-shadow(0 0 7px rgba(36,220,145,.35))}
+.watchlist-panel,.portfolio-panel,.ai-panel,.alerts-panel,.movers-panel,.status-panel{isolation:isolate}
+.watchlist-panel:after{background:radial-gradient(circle,rgba(21,116,238,.08),transparent 70%)}
+.portfolio-panel:after{background:radial-gradient(circle,rgba(42,216,146,.055),transparent 70%)}
+.ai-panel{background:radial-gradient(ellipse at 75% 12%,rgba(23,135,255,.12),transparent 50%),linear-gradient(145deg,#081a30,#030c18)}
+.ai-panel:before{background:linear-gradient(90deg,transparent,#1e8fff,#5dd9ff,#1e8fff,transparent);box-shadow:0 0 20px rgba(30,143,255,.7)}
+.ai-panel:after{right:-40px;top:-50px;width:190px;height:190px;background:radial-gradient(circle,rgba(31,145,255,.13),transparent 68%)}
+.signal-pill{box-shadow:0 0 14px rgba(42,230,154,.14),inset 0 0 12px rgba(42,230,154,.05)}
+.alerts-panel:before{background:linear-gradient(90deg,transparent,#1b5b91,#278cff,#1b5b91,transparent)}
+.movers-panel:before{background:linear-gradient(90deg,transparent,#1762a0,#3ca6ff,#1762a0,transparent)}
+.status-panel{background:radial-gradient(ellipse at 50% 0,rgba(19,112,216,.10),transparent 58%),linear-gradient(145deg,#071629,#030c18)}
+.status-panel:after{right:30%;top:-110px;width:360px;height:220px;background:radial-gradient(ellipse,rgba(23,127,255,.08),transparent 70%)}
+.footer{position:relative;overflow:hidden;border-top:1px solid #0c2b49!important;box-shadow:0 -15px 45px rgba(0,0,0,.22)}
+.footer:before{content:"";position:absolute;left:20%;right:20%;top:0;height:1px;background:linear-gradient(90deg,transparent,#1c72b8,#4db7ff,#1c72b8,transparent);box-shadow:0 0 12px rgba(34,132,224,.5)}
+.footer:after{content:"";position:absolute;left:35%;right:35%;bottom:-70px;height:120px;background:radial-gradient(ellipse,rgba(15,111,220,.08),transparent 70%);pointer-events:none}
+.pro-card{position:relative;overflow:hidden;box-shadow:0 15px 38px rgba(0,0,0,.45),inset 0 1px 0 rgba(71,165,255,.10),0 0 30px rgba(14,107,228,.07)}
+.pro-card:before{content:"";position:absolute;left:-20%;right:-20%;top:-40px;height:90px;background:radial-gradient(ellipse,rgba(34,139,255,.16),transparent 68%);pointer-events:none}
+.pro-card:after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:1px;background:linear-gradient(90deg,transparent,#2b8fff,transparent);box-shadow:0 0 10px rgba(43,143,255,.45)}
+@media(max-width:900px){body:after{opacity:.5}.app-shell:before{left:0;width:100%;top:-130px}.dashboard:before{left:0;width:100%}.panel:after{width:150px;height:150px}.chart-watermark{opacity:.11!important}.watermark-wolf{filter:drop-shadow(0 0 18px rgba(23,132,255,.65))}}
+@media(prefers-reduced-motion:no-preference){.ticker-card,.panel,.global-search{transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}.ticker-card:hover{transform:translateY(-1px)}.ai-panel:before,.topbar:before{animation:nhPulse 5s ease-in-out infinite}@keyframes nhPulse{0%,100%{opacity:.42}50%{opacity:.85}}}
