@@ -21,7 +21,8 @@ test('crypto experience provides interactive history and recurring investments',
 test('crypto experience action buttons have concrete event listeners',()=>{
  const js=read('public/crypto-experience.js');
  for(const pair of [['cx-recurring','toggleRecurring'],['cx-save-plan','savePlan'],['cx-watch','toggleWatch'],['cx-alerts','toggleAlerts'],['cx-save-alert','saveAlert'],['cx-share','shareAsset'],['cx-history-more','classList\\.toggle'],['cx-recurring-close','toggleRecurring']]){
-   assert.match(js,new RegExp(`getElementById\\(['"]${pair[0]}['"]\\).*${pair[1]}`),`missing handler ${pair[0]}`);
+   const id=new RegExp(`(?:getElementById\\(['"]${pair[0]}['"]\\]|\\$\\(['"]${pair[0]}['"]\\))`);
+   assert.match(js,new RegExp(`${id.source}[^\\n]{0,120}${pair[1]}`),`missing handler ${pair[0]}`);
  }
  assert.match(js,/addEventListener\('click'/);
  assert.match(js,/addEventListener\('pointerdown'/);
