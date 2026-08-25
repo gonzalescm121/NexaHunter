@@ -48,6 +48,13 @@ test('dashboard reads persistent portfolio state',()=>{
   assert.match(app,/portfolio-value/);
 });
 
+test('portfolio exposes persistent buying power to the dashboard',()=>{
+  assert.match(portfolio,/const cash = Number\(account\?\.cash \?\? INITIAL_CASH\)/);
+  assert.match(portfolio,/buyingPower: cash/);
+  assert.match(app,/buyingPower/);
+  assert.match(app,/\$'\+money\(d\.buyingPower\)/);
+});
+
 test('duplicate order ids are rejected transactionally',()=>{
   assert.match(portfolio,/SELECT id, symbol, side, quantity, price/);
   assert.match(portfolio,/duplicate: true/);
