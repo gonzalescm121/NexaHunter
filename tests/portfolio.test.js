@@ -7,18 +7,27 @@ const portfolio=fs.readFileSync('src/portfolio.js','utf8');
 const config=fs.readFileSync('wrangler.toml','utf8');
 const app=fs.readFileSync('public/app.js','utf8');
 
-test('persistent portfolio class is exported and bound',()=>{
+test('SQLite portfolio class is exported and bound',()=>{
   assert.match(worker,/PortfolioDurableObject/);
   assert.match(config,/name = "PORTFOLIO"/);
   assert.match(config,/class_name = "PortfolioDurableObject"/);
   assert.match(config,/new_sqlite_classes = \["PortfolioDurableObject"\]/);
+  assert.match(portfolio,/storage\.sql\.exec/);
 });
 
-test('portfolio persists cash, positions, and orders',()=>{
-  assert.match(portfolio,/storage\.get\('portfolio'\)/);
-  assert.match(portfolio,/storage\.put\('portfolio'/);
-  assert.match(portfolio,/positions/);
-  assert.match(portfolio,/orders/);
+test('portfolio initializes relational tables and index',()=>{
+  assert.match(portfolio,/CREATE TABLE IF NOT EXISTS account/);
+  assert.match(portfolio,/CREATE TABLE IF NOT EXISTS positions/);
+  assert.match(portfolio,/CREATE TABLE IF NOT EXISTS orders/);
+  assert.match(portfolio,/CREATE INDEX IF NOT EXISTS idx_orders_timestamp/);
+});
+
+test('portfolio initializes before requests',()=>assert.match(portfolio,/blockConcurrencyWhile/));
+
+test('paper order mutation is atomic',()=>{
+  assert.match(portfolio,/transactionSync/);
+  assert.match(portfolio,/UPDATE account SET cash/);
+  assert.match(portfolio,/INSERT INTO orders/);
 });
 
 test('paper portfolio prevents overspending and naked sells',()=>{
@@ -36,4 +45,10 @@ test('dashboard reads persistent portfolio state',()=>{
   assert.match(worker,/\/api\/portfolio/);
   assert.match(app,/\/api\/portfolio/);
   assert.match(app,/renderPortfolio/);
+});
+
+test('duplicate order ids are rejected transactionally',()=>{
+  assert.match(portfolio,/SELECT id, symbol, side, quantity, price/);
+  assert.match(portfolio,/duplicate: true/);
+  assert.match(portfolio,/status: 409/);
 });
