@@ -39,16 +39,9 @@
       <div class="asset-heading"><strong id="detail-symbol">AAPL</strong><span id="detail-price">—</span><span id="detail-change" class="gain">—</span><span id="realtime-pill">POLLING</span></div>
       <div class="chart-stage">
         <svg viewBox="0 0 900 390" preserveAspectRatio="none" aria-label="Market chart">
-          <defs>
-            <linearGradient id="chartAreaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#1fe08a" stop-opacity="0.18"></stop>
-              <stop offset="70%" stop-color="#1fe08a" stop-opacity="0.05"></stop>
-              <stop offset="100%" stop-color="#1fe08a" stop-opacity="0"></stop>
-            </linearGradient>
-          </defs>
+          <defs><linearGradient id="chartAreaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1fe08a" stop-opacity="0.18"></stop><stop offset="70%" stop-color="#1fe08a" stop-opacity="0.05"></stop><stop offset="100%" stop-color="#1fe08a" stop-opacity="0"></stop></linearGradient></defs>
           <g id="candles"></g><polyline id="ma-line" fill="none" points=""></polyline><path id="chart-area" fill="url(#chartAreaGradient)" stroke="none"></path><line id="price-line" x1="0" x2="900" y1="200" y2="200"></line>
-        </svg>
-        <span id="price-tag" class="price-tag">—</span>
+        </svg><span id="price-tag" class="price-tag">—</span>
       </div>
     </section>
     <aside class="right-column">
@@ -68,6 +61,7 @@
 <script src="/app.js"></script>
 <script src="/panels.js"></script>
 <script src="/button-router.js"></script>
+<script src="/mobile-menu.js"></script>
 <script src="/realtime.js" defer></script>
 </body>
 </html>
