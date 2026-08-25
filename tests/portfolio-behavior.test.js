@@ -19,9 +19,13 @@ test('risk controls reject invalid paper trades',()=>{
   assert.match(source,/Insufficient paper position/);
   assert.match(source,/Order calculation overflow/);
 });
-test('duplicate IDs are rejected transactionally',()=>assert.match(source,/Duplicate paper order rejected/));
+test('duplicate IDs are rejected transactionally',()=>{
+  assert.match(source,/SELECT id, symbol, side, quantity, price/);
+  assert.match(source,/duplicate: true/);
+  assert.match(source,/status: 409/);
+});
 test('live execution is hard-disabled',()=>{
   assert.match(source,/mode: 'PAPER'/);
   assert.match(source,/liveExecution: false/);
-  assert.match(source,/VALUES\(?,?,?,?,?,?,?,?,\?\)/);
+  assert.match(source,/VALUES\(?,?,?,?,?,?,?,?,\)/);
 });
