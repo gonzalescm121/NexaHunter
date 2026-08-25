@@ -5,6 +5,8 @@ export class MarketStreamDurableObject {
     this.clients = new Set();
     this.stockSocket = null;
     this.cryptoSocket = null;
+    this.stockAuthenticated = false;
+    this.cryptoAuthenticated = false;
     this.symbols = new Set(['AAPL','NVDA','TSLA','AMZN','AMD','PLTR','CRWD']);
     this.crypto = new Set(['BTC/USD','ETH/USD']);
     this.lastUpstreamAttempt = 0;
@@ -22,7 +24,10 @@ export class MarketStreamDurableObject {
     const record = { socket: server, stocks: new Set(), crypto: new Set() };
     this.clients.add(record);
     server.addEventListener('message', event => this.onClientMessage(record, event.data));
-    const remove = () => this.clients.delete(record);
+    const remove = () => {
+      this.clients.delete(record);
+      if (this.clients.size === 0) this.closeUpstreams();
+    };
     server.addEventListener('close', remove);
     server.addEventListener('error', remove);
     server.send(JSON.stringify({ type: 'ready', transport: 'durable-object', timestamp: Date.now() }));
@@ -62,10 +67,10 @@ export class MarketStreamDurableObject {
 
   pushSubscriptions() {
     try {
-      if (this.stockSocket?.readyState === 1) this.stockSocket.send(JSON.stringify({ action:'subscribe', trades:[...this.symbols], quotes:[...this.symbols], bars:[...this.symbols] }));
+      if (this.stockSocket?.readyState === 1 && this.stockAuthenticated) this.stockSocket.send(JSON.stringify({ action:'subscribe', trades:[...this.symbols], quotes:[...this.symbols], bars:[...this.symbols] }));
     } catch {}
     try {
-      if (this.cryptoSocket?.readyState === 1) this.cryptoSocket.send(JSON.stringify({ action:'subscribe', trades:[...this.crypto], quotes:[...this.crypto], bars:[...this.crypto] }));
+      if (this.cryptoSocket?.readyState === 1 && this.cryptoAuthenticated) this.cryptoSocket.send(JSON.stringify({ action:'subscribe', trades:[...this.crypto], quotes:[...this.crypto], bars:[...this.crypto] }));
     } catch {}
   }
 
@@ -73,36 +78,51 @@ export class MarketStreamDurableObject {
     try {
       const ws = new WebSocket('wss://stream.data.alpaca.markets/v2/iex');
       this.stockSocket = ws;
+      this.stockAuthenticated = false;
       ws.addEventListener('open', () => {
         ws.send(JSON.stringify({ action:'auth', key:this.env.ALPACA_API_KEY, secret:this.env.ALPACA_API_SECRET }));
-        this.pushSubscriptions();
-        this.broadcast({ type:'stream', market:'stocks', state:'connected' });
       });
-      ws.addEventListener('message', event => this.forward('stocks', event.data));
-      ws.addEventListener('close', () => { if (this.stockSocket === ws) this.stockSocket = null; this.broadcast({ type:'stream', market:'stocks', state:'reconnecting' }); this.scheduleReconnect(); });
+      ws.addEventListener('message', event => {
+        this.handleUpstream('stocks', event.data);
+      });
+      ws.addEventListener('close', () => { if (this.stockSocket === ws) { this.stockSocket = null; this.stockAuthenticated = false; } this.broadcast({ type:'stream', market:'stocks', state:'reconnecting' }); this.scheduleReconnect(); });
       ws.addEventListener('error', () => this.broadcast({ type:'stream', market:'stocks', state:'error' }));
-    } catch { this.stockSocket = null; this.scheduleReconnect(); }
+    } catch { this.stockSocket = null; this.stockAuthenticated = false; this.scheduleReconnect(); }
   }
 
   connectCrypto() {
     try {
       const ws = new WebSocket('wss://stream.data.alpaca.markets/v1beta3/crypto/us');
       this.cryptoSocket = ws;
+      this.cryptoAuthenticated = false;
       ws.addEventListener('open', () => {
         ws.send(JSON.stringify({ action:'auth', key:this.env.ALPACA_API_KEY, secret:this.env.ALPACA_API_SECRET }));
-        this.pushSubscriptions();
-        this.broadcast({ type:'stream', market:'crypto', state:'connected' });
       });
-      ws.addEventListener('message', event => this.forward('crypto', event.data));
-      ws.addEventListener('close', () => { if (this.cryptoSocket === ws) this.cryptoSocket = null; this.broadcast({ type:'stream', market:'crypto', state:'reconnecting' }); this.scheduleReconnect(); });
+      ws.addEventListener('message', event => {
+        this.handleUpstream('crypto', event.data);
+      });
+      ws.addEventListener('close', () => { if (this.cryptoSocket === ws) { this.cryptoSocket = null; this.cryptoAuthenticated = false; } this.broadcast({ type:'stream', market:'crypto', state:'reconnecting' }); this.scheduleReconnect(); });
       ws.addEventListener('error', () => this.broadcast({ type:'stream', market:'crypto', state:'error' }));
-    } catch { this.cryptoSocket = null; this.scheduleReconnect(); }
+    } catch { this.cryptoSocket = null; this.cryptoAuthenticated = false; this.scheduleReconnect(); }
   }
 
-  forward(market, raw) {
+  handleUpstream(market, raw) {
     try {
       const messages = JSON.parse(raw);
-      for (const message of Array.isArray(messages) ? messages : [messages]) this.broadcast({ type:'market', market, data:message, receivedAt:Date.now() });
+      for (const message of Array.isArray(messages) ? messages : [messages]) {
+        if (message?.T === 'success' && message?.msg === 'authenticated') {
+          if (market === 'stocks') this.stockAuthenticated = true;
+          else this.cryptoAuthenticated = true;
+          this.pushSubscriptions();
+          this.broadcast({ type:'stream', market, state:'authenticated' });
+          continue;
+        }
+        if (message?.T === 'error') {
+          this.broadcast({ type:'stream', market, state:'error', code:message.code, message:message.msg });
+          continue;
+        }
+        this.broadcast({ type:'market', market, data:message, receivedAt:Date.now() });
+      }
     } catch {}
   }
 
@@ -111,6 +131,17 @@ export class MarketStreamDurableObject {
     for (const record of [...this.clients]) {
       try { record.socket.send(encoded); } catch { this.clients.delete(record); }
     }
+  }
+
+  closeUpstreams() {
+    if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+    for (const socket of [this.stockSocket, this.cryptoSocket]) {
+      try { if (socket && socket.readyState <= 1) socket.close(1000, 'No connected clients'); } catch {}
+    }
+    this.stockSocket = null;
+    this.cryptoSocket = null;
+    this.stockAuthenticated = false;
+    this.cryptoAuthenticated = false;
   }
 
   scheduleReconnect() {
