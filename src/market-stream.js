@@ -42,13 +42,19 @@ export class MarketStreamDurableObject {
       const stocks = Array.isArray(msg.stocks) ? msg.stocks : [];
       const crypto = Array.isArray(msg.crypto) ? msg.crypto : [];
       for (const value of stocks) {
+        if (record.stocks.size >= 50) break;
         const symbol = String(value).trim().toUpperCase();
-        if (/^[A-Z][A-Z0-9.-]{0,9}$/.test(symbol)) { record.stocks.add(symbol); this.symbols.add(symbol); }
+        if (/^[A-Z][A-Z0-9.-]{0,9}$/.test(symbol)) { record.stocks.add(symbol); }
       }
       for (const value of crypto) {
+        if (record.crypto.size >= 25) break;
         const symbol = String(value).trim().toUpperCase();
-        if (/^[A-Z0-9]+\/USD$/.test(symbol)) { record.crypto.add(symbol); this.crypto.add(symbol); }
+        if (/^[A-Z0-9]+\/USD$/.test(symbol)) { record.crypto.add(symbol); }
       }
+      const allStocks = [...this.clients].flatMap(client => [...client.stocks]);
+      const allCrypto = [...this.clients].flatMap(client => [...client.crypto]);
+      this.symbols = new Set([...this.symbols, ...allStocks].slice(0, 200));
+      this.crypto = new Set([...this.crypto, ...allCrypto].slice(0, 100));
       record.socket.send(JSON.stringify({ type: 'subscribed', stocks: [...record.stocks], crypto: [...record.crypto] }));
       this.pushSubscriptions();
       this.ensureUpstreams();
