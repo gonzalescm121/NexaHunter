@@ -5,7 +5,7 @@ import fs from 'node:fs';
 const source=fs.readFileSync('worker-app.js','utf8');
 
 test('health endpoint declares paper mode',()=>{
-  assert.match(source,/path === '\/health'/);
+  assert.match(source,/url\.pathname===['"]\/health['"]/);
   assert.match(source,/mode:'paper'/);
   assert.match(source,/liveExecution:false/);
 });
