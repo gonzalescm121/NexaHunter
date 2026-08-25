@@ -27,7 +27,7 @@ test('stream subscribes to trades, quotes and bars and reconnects after upstream
   assert.match(stream,/quotes:\[\.\.\.this\.symbols\]/);
   assert.match(stream,/bars:\[\.\.\.this\.symbols\]/);
   assert.match(stream,/scheduleReconnect\(\)/);
-  assert.match(stream,/setTimeout\(\(\)=>\{ this\.reconnectTimer=null; this\.ensureUpstreams\(\); \},1500\)/);
+  assert.match(stream,/reconnectTimer = setTimeout\(\(\) => \{ this\.reconnectTimer = null; this\.ensureUpstreams\(\); \}, 1500\)/);
 });
 
 test('browser stream handles trades quotes bars and reconnect fallback',()=>{
@@ -35,7 +35,7 @@ test('browser stream handles trades quotes bars and reconnect fallback',()=>{
   assert.match(realtime,/d\?\.T==='t'/);
   assert.match(realtime,/d\?\.T==='b'/);
   assert.match(realtime,/d\?\.T==='q'/);
-  assert.match(realtime,/setTimeout\(\(\)=>\{refreshFallback\(\);connect\(\)\},1500\)/);
+  assert.match(realtime,/reconnectTimer=setTimeout\(\(\)=>\{refreshFallback\(\);connect\(\)\},1500\)/);
 });
 
 test('market endpoints are no-store and reject malformed symbols',()=>{
