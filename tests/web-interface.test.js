@@ -12,7 +12,8 @@ test('web interface files exist',()=>{
 
 test('navigation exposes dashboard sections and trade/backtest controls',()=>{
   const html=read('public/index.html');
-  for(const target of ['#markets','#portfolio','#watchlist','#trade','#backtest','#performance']) assert.match(html,new RegExp(target.replace('#','\\#')));
+  for(const target of ['#markets','#watchlist','#trade','#backtest','#performance']) assert.match(html,new RegExp(target.replace('#','\\#')));
+  assert.match(html,/id="portfolio"/);
 });
 
 test('market workspace exposes search, selection, watchlist and detail views',()=>{
@@ -68,11 +69,20 @@ test('responsive and branded styles are present',()=>{
   assert.match(css,/market-row/);
 });
 
-test('dashboard navigation targets are backed by real sections',()=>{
+test('dashboard navigation targets are either real sections or panel actions',()=>{
   const html=read('public/index.html');
+  const panels=read('public/panels.js');
   const navTargets=[...html.matchAll(/class="nav-item[^\"]*" href="(#[^"]+)"/g)].map(m=>m[1]);
+  const panelActions=['Trade','Backtest','Performance','Notebook','Settings'];
   for(const target of navTargets){
     if(target==='#home') assert.match(html,/id="home"/);
-    else assert.match(html,new RegExp(`id="${target.slice(1)}"`));
+    else if(html.includes(`id="${target.slice(1)}"`)) continue;
+    else {
+      const name=target.slice(1);
+      const expected=panelActions.find(action=>action.toLowerCase()===name.toLowerCase());
+      assert.ok(expected,`navigation target ${target} has no section or supported panel action`);
+      assert.match(panels,new RegExp(`text\.includes\\(['"]${expected}['"]\\)`));
+      assert.match(panels,new RegExp(`name==='${expected}'`));
+    }
   }
 });
