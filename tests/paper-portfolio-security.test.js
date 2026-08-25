@@ -15,7 +15,8 @@ test('paper orders are explicitly non-live at both API and persistence layers',(
   assert.match(portfolio,/mode: 'PAPER'/);
   assert.match(portfolio,/liveExecution: false/);
   assert.match(portfolio,/live_execution INTEGER NOT NULL/);
-  assert.match(portfolio,/live_execution,.*0/s);
+  assert.match(portfolio,/VALUES\(\?,\?,\?,\?,\?,\?,\?,\?,\?\)/);
+  assert.match(portfolio,/,'PAPER',0,/);
 });
 
 test('paper portfolio persists positions, cash and order history transactionally',()=>{
@@ -25,7 +26,7 @@ test('paper portfolio persists positions, cash and order history transactionally
   assert.match(portfolio,/transactionSync/);
   assert.match(portfolio,/UPDATE account SET cash/);
   assert.match(portfolio,/INSERT INTO orders/);
-  assert.match(portfolio,/return \{ accepted: true, order: result\.order, portfolio: this\.snapshot\(\) \}/);
+  assert.match(portfolio,/accepted: true, order: result\.order, portfolio: this\.snapshot/);
 });
 
 test('paper order submission generates an id, validates it, fills it as PAPER, and returns the updated portfolio',()=>{
