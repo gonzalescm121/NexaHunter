@@ -1,15 +1,140 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#050505"><meta name="description" content="NexaHunter paper trading and market validation platform"><title>NexaHunter — Paper Trading</title><link rel="stylesheet" href="/styles.css"></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050b16">
+  <meta name="description" content="NexaHunter — hunt smarter, trade better.">
+  <title>NexaHunter — Smart Trading Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
 <body>
-<header class="topbar"><a class="brand" href="#home" aria-label="NexaHunter home"><span class="brand-mark">N</span><span>NexaHunter</span></a><nav class="topnav" aria-label="Primary navigation"><a href="#markets">Markets</a><a href="#portfolio">Portfolio</a><a href="#orders">Orders</a></nav><div class="account-pill"><span class="status-dot"></span> Paper Account</div></header>
-<main id="home" class="shell">
-<section class="hero"><div><p class="eyebrow">NEXAHUNTER / PAPER MODE</p><h1>Build conviction before you risk capital.</h1><p class="subhead">A fast, focused market workspace for validating ideas with simulated orders.</p></div><div class="hero-actions"><button class="button button-primary" data-scroll="#trade">Trade</button><button class="button button-secondary" data-scroll="#markets">View markets</button></div></section>
-<section id="portfolio" class="metrics" aria-label="Portfolio summary"><article class="metric-card"><span>Portfolio cash</span><strong id="portfolio-value">$100,000.00</strong><small id="portfolio-mode" class="positive">Loading account…</small></article><article class="metric-card"><span>Buying power</span><strong id="buying-power">$100,000.00</strong><small>Persistent paper funds</small></article><article class="metric-card"><span>Open positions</span><strong id="position-count">0</strong><small>Paper holdings</small></article></section>
-<section id="markets" class="workspace-grid"><article class="panel market-panel"><div class="panel-heading"><div><p class="eyebrow">WATCHLIST</p><h2>Markets</h2></div><span id="market-status" class="badge">Checking…</span></div><div class="market-toolbar"><label class="search-label" for="market-search">Search markets<input id="market-search" type="search" placeholder="AAPL, NVDA…" autocomplete="off"></label><button id="reset-watchlist" class="mini-button" type="button">Reset</button></div><div id="market-list" class="market-list" aria-live="polite"></div></article>
-<article class="panel detail-panel"><div class="panel-heading"><div><p class="eyebrow">SELECTED MARKET</p><h2 id="detail-symbol">AAPL</h2></div><span id="detail-change" class="badge badge-safe">+0.82%</span></div><div class="detail-price" id="detail-price">$227.16</div><div class="spark-wrap"><svg id="sparkline" viewBox="0 0 520 150" role="img" aria-label="Illustrative paper-mode price trend"><polyline id="sparkline-line" points="0,118 40,105 80,110 120,88 160,96 200,72 240,80 280,52 320,60 360,42 400,50 440,30 480,38 520,22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="detail-grid"><span>Mode<strong>PAPER</strong></span><span>Execution<strong>Disabled</strong></span><span>Watchlist<strong id="watch-state">Tracked</strong></span></div></article></section>
-<section id="trade" class="panel trade-panel"><div class="panel-heading"><div><p class="eyebrow">PAPER ORDER</p><h2>Place an order</h2></div><span class="badge badge-safe">Live execution off</span></div><form id="order-form" novalidate><label>Symbol<input id="symbol" name="symbol" value="AAPL" maxlength="10" autocomplete="off" required></label><div class="two-col"><label>Side<select id="side" name="side"><option value="BUY">Buy</option><option value="SELL">Sell</option></select></label><label>Quantity<input id="quantity" name="quantity" type="number" min="1" step="1" value="1" required></label></div><label>Limit price<input id="price" name="price" type="number" min="0.01" step="0.01" value="227.16" required></label><button class="button button-primary full" type="submit">Queue paper order</button><p id="order-message" class="form-message" role="status"></p></form></section>
-<section id="orders" class="panel"><div class="panel-heading"><div><p class="eyebrow">ACTIVITY</p><h2>Recent orders</h2></div><span class="badge">Paper only</span></div><div id="order-list" class="orders-empty">Loading…</div></section>
-<section class="safety-strip"><span><b>✓</b> Input validation</span><span><b>✓</b> Persistent portfolio</span><span><b>✓</b> Duplicate protection</span><span><b>✓</b> Request limits</span><span><b>✓</b> Live trading disabled</span></section>
-</main><footer class="footer">NexaHunter · Market validation platform · Paper trading only</footer><script type="module" src="/app.js"></script>
-</body></html>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-block">
+        <a class="brand" href="#home" aria-label="NexaHunter home">
+          <span class="wolf-logo" aria-hidden="true"><span></span></span>
+          <span><strong>Nexa<span>Hunter</span></strong><small>HUNT SMARTER. TRADE BETTER.</small></span>
+        </a>
+      </div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="#home"><i>⌂</i><span>Home</span></a>
+        <a class="nav-item" href="#watchlist"><i>◉</i><span>Watchlist</span></a>
+        <a class="nav-item" href="#markets"><i>◌</i><span>Markets</span></a>
+        <a class="nav-item" href="#screener"><i>⌕</i><span>Screener</span></a>
+        <a class="nav-item" href="#nexaai"><i>✦</i><span>NexaAI</span><b>PRO</b></a>
+        <a class="nav-item" href="#alerts"><i>♧</i><span>Alerts</span></a>
+        <a class="nav-item" href="#trade"><i>↗</i><span>Trade</span></a>
+        <a class="nav-item" href="#backtest"><i>◫</i><span>Backtest</span></a>
+        <a class="nav-item" href="#performance"><i>↗</i><span>Performance</span></a>
+        <a class="nav-item" href="#notebook"><i>▤</i><span>Notebook</span></a>
+        <a class="nav-item" href="#settings"><i>⚙</i><span>Settings</span></a>
+      </nav>
+      <div class="pro-card">
+        <div class="pro-wolf">◈</div>
+        <strong>NexaHunter Pro</strong>
+        <p>Unlock advanced AI scans, real-time alerts & strategy builder.</p>
+        <button class="blue-btn" type="button" data-toast="Pro upgrade is ready for account integration.">Upgrade to Pro</button>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobile-menu" aria-label="Open navigation">☰</button>
+        <label class="global-search"><span>⌕</span><input id="global-search" type="search" placeholder="Search symbols, charts, or news…" autocomplete="off"></label>
+        <div class="top-status"><span class="live-dot"></span><span>Market Open<small id="clock">09:42:17 AM (CT)</small></span></div>
+        <button class="icon-btn notification" id="notification-btn" aria-label="Notifications">♧<b>3</b></button>
+        <div class="user-menu"><span class="avatar">NW</span><strong>Gonzales</strong><em>Pro</em></div>
+      </header>
+
+      <main id="home" class="dashboard">
+        <section class="market-strip" aria-label="Market overview">
+          <article class="ticker-card"><div><span class="ticker-icon orange">$</span><strong>S&P 500</strong></div><b>5,432.21</b><span class="gain">+28.47 (+0.53%)</span><svg class="mini-chart green-chart" viewBox="0 0 130 48"><polyline points="0,39 12,37 25,31 37,35 48,28 60,29 72,20 85,24 98,14 110,17 120,7 130,3"/></svg></article>
+          <article class="ticker-card"><div><span class="ticker-icon blue">N</span><strong>NASDAQ</strong></div><b>17,482.91</b><span class="gain">+102.34 (+0.59%)</span><svg class="mini-chart blue-chart" viewBox="0 0 130 48"><polyline points="0,42 10,39 22,33 32,35 44,28 55,31 68,20 80,25 92,15 104,17 116,8 130,2"/></svg></article>
+          <article class="ticker-card"><div><span class="ticker-icon btc">₿</span><strong>BTC</strong></div><b>$67,231.48</b><span class="gain">+1,284.22 (+1.95%)</span><svg class="mini-chart green-chart" viewBox="0 0 130 48"><polyline points="0,42 12,35 23,37 35,30 48,31 60,23 74,26 85,17 98,20 111,11 122,13 130,5"/></svg></article>
+          <article class="ticker-card"><div><span class="ticker-icon eth">◆</span><strong>ETH</strong></div><b>$3,521.66</b><span class="gain">+84.39 (+2.45%)</span><svg class="mini-chart blue-chart" viewBox="0 0 130 48"><polyline points="0,43 12,39 24,35 36,38 49,29 60,30 72,22 83,26 96,16 108,19 119,8 130,4"/></svg></article>
+        </section>
+
+        <section class="content-grid">
+          <div class="center-column">
+            <article class="chart-panel panel" id="markets">
+              <div class="time-tabs"><button class="active">1D</button><button>1W</button><button>1M</button><button>3M</button><button>1Y</button><button>5Y</button><button>MAX</button><div class="chart-actions"><button>↗</button><button>◐</button><button>⌁</button><button>⛶</button></div></div>
+              <div class="asset-heading"><span class="asset-logo">●</span><div><h1 id="detail-symbol">AAPL</h1><small>Apple Inc.</small></div><strong id="detail-price">$187.32</strong><span id="detail-change" class="gain">+2.47 (+1.34%)</span></div>
+              <div class="chart-stage">
+                <div class="chart-watermark"><span class="watermark-wolf">◈</span></div>
+                <div class="y-axis"><span>189.00</span><span>188.00</span><span>187.00</span><span>186.00</span><span>185.00</span><span>184.00</span></div>
+                <svg id="main-chart" viewBox="0 0 900 390" preserveAspectRatio="none" aria-label="AAPL price chart">
+                  <defs><linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-opacity=".18"/><stop offset="1" stop-opacity="0"/></linearGradient></defs>
+                  <g class="grid-lines"><path d="M0 40H900M0 105H900M0 170H900M0 235H900M0 300H900M0 365H900"/><path d="M90 0V390M180 0V390M270 0V390M360 0V390M450 0V390M540 0V390M630 0V390M720 0V390M810 0V390"/></g>
+                  <path id="chart-area" class="chart-area" d=""/>
+                  <polyline id="ma-line" class="ma-line" points=""/>
+                  <g id="candles"></g>
+                  <line id="price-line" class="price-line" x1="0" x2="900" y1="180" y2="180"/>
+                </svg>
+                <div class="price-tag" id="price-tag">187.32</div>
+                <div class="x-axis"><span>9:30</span><span>10:30</span><span>11:30</span><span>12:30</span><span>1:30</span><span>2:30</span><span>3:30</span></div>
+              </div>
+            </article>
+
+            <section class="bottom-grid">
+              <article class="panel watchlist-panel" id="watchlist">
+                <div class="panel-title"><h2>Watchlist</h2><button class="link-btn" id="positions-tab">My Positions</button></div>
+                <div id="market-list" class="compact-list"></div>
+                <button class="add-symbol" id="add-symbol">＋ Add Symbol</button>
+              </article>
+              <article class="panel portfolio-panel" id="portfolio">
+                <div class="panel-title"><h2>Portfolio</h2><span class="live-label">● Live</span></div>
+                <div class="portfolio-value" id="portfolio-value">$42,891.32</div><div class="gain portfolio-gain" id="portfolio-gain">+1,284.47 (+3.09%)</div>
+                <svg class="portfolio-chart" viewBox="0 0 300 100"><path d="M0 82L20 79L40 82L60 68L80 71L100 58L120 63L140 51L160 56L180 43L200 47L220 32L240 35L260 20L280 25L300 10"/></svg>
+                <div class="portfolio-stats"><span>Buying Power<b id="buying-power">$12,450.00</b></span><span>Day Trade BP<b>$49,800.00</b></span><span>Cash<b>$8,120.33</b></span><span>Total Return<b class="gain">+12.47%</b></span></div>
+                <div class="allocation"><div class="donut"><span id="position-count">12</span><small>Holdings</small></div><ul><li><i></i>Tech <b>68%</b></li><li><i></i>Crypto <b>18%</b></li><li><i></i>Other <b>14%</b></li></ul></div>
+              </article>
+            </section>
+          </div>
+
+          <aside class="right-column">
+            <article class="panel ai-panel" id="nexaai">
+              <div class="panel-title"><h2>NexaAI Signal</h2><span class="signal-pill">STRONG BUY</span></div>
+              <div class="ai-symbol"><div><strong>NVDA</strong><small>NVIDIA Corporation</small></div><span class="gain">+4.21 (+3.27%)</span></div>
+              <div class="ai-price">$132.84</div>
+              <div class="confidence">AI Confidence: <b>92%</b><div><span style="width:92%"></span></div></div>
+              <button class="blue-btn full" id="analysis-btn">View Analysis</button>
+              <div class="carousel-dots"><b></b><i></i><i></i></div>
+            </article>
+
+            <article class="panel alerts-panel" id="alerts">
+              <div class="panel-title"><h2>Recent Alerts</h2><button class="link-btn">View All</button></div>
+              <div class="alert-row"><span class="alert-icon red">T</span><div><b>TSLA</b><small>Breakout Detected</small></div><strong class="gain">+2.84%</strong><time>2m ago</time></div>
+              <div class="alert-row"><span class="alert-icon white">●</span><div><b>AAPL</b><small>Support Bounce</small></div><strong class="gain">+1.21%</strong><time>4m ago</time></div>
+              <div class="alert-row"><span class="alert-icon green">N</span><div><b>NVDA</b><small>AI Signal</small></div><strong class="gain">+3.27%</strong><time>7m ago</time></div>
+              <div class="alert-row"><span class="alert-icon amber">a</span><div><b>AMZN</b><small>Volume Spike</small></div><strong class="gain">+1.89%</strong><time>12m ago</time></div>
+              <div class="alert-row"><span class="alert-icon orange">₿</span><div><b>BTC</b><small>Trend Continuation</small></div><strong class="gain">+1.95%</strong><time>25m ago</time></div>
+            </article>
+
+            <article class="panel movers-panel" id="screener">
+              <div class="panel-title"><h2>Top Movers</h2><div class="segmented"><button class="active">Gainers</button><button>Losers</button><button>Volume</button></div></div>
+              <div class="mover-row"><span class="coin green">N</span><b>NVDA</b><svg><polyline points="0,16 10,13 20,15 30,9 40,10 50,4 60,6"/></svg><strong>$132.84</strong><em class="gain">+3.27%</em></div>
+              <div class="mover-row"><span class="coin red">T</span><b>TSLA</b><svg><polyline points="0,4 10,6 20,9 30,7 40,12 50,11 60,17"/></svg><strong>$248.91</strong><em class="negative">-2.84%</em></div>
+              <div class="mover-row"><span class="coin orange">A</span><b>AMD</b><svg><polyline points="0,18 10,13 20,14 30,8 40,11 50,5 60,3"/></svg><strong>$156.32</strong><em class="gain">+2.41%</em></div>
+              <div class="mover-row"><span class="coin gray">P</span><b>PLTR</b><svg><polyline points="0,18 10,14 20,16 30,12 40,8 50,9 60,5"/></svg><strong>$28.47</strong><em class="gain">+2.18%</em></div>
+              <div class="mover-row"><span class="coin purple">C</span><b>CRWD</b><svg><polyline points="0,17 10,15 20,11 30,13 40,7 50,8 60,2"/></svg><strong>$398.21</strong><em class="gain">+2.05%</em></div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="status-panel panel" id="performance">
+          <div class="panel-title"><h2>NexaHunter Status</h2><span class="health">System Health <b>100%</b></span></div>
+          <div class="status-grid"><span><i></i>AI Engine <b>Online</b></span><span><i></i>Data Feed <b>Live</b></span><span><i></i>Alert System <b>Active</b></span><span><i></i>Strategy Bot <b>Running</b></span></div>
+          <div class="health-bar"><span></span></div>
+        </section>
+      </main>
+      <footer class="footer"><span>◈ NexaHunter <small>HUNT SMARTER. TRADE BETTER.</small></span><span>© 2026 NexaHunter. All rights reserved.</span><nav><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#support">Support</a></nav></footer>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
