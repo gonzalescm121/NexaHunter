@@ -42,7 +42,41 @@ test('market workspace exposes search, selection, watchlist and detail views',()
   assert.match(html,/global-search/);
   assert.match(html,/market-list/);
   for(const target of ['detail-symbol','detail-price','price-tag']) assert.match(html,new RegExp(target));
-  for(const target of ['watchKey','saveWatch','setDetail','renderMarkets']) assert.match(js,new RegExp(target));
+  for(const target of ['watchKey','saveWatch','setDetail','renderMarkets','searchMarketSymbol','handleSearchKey']) assert.match(js,new RegExp(target));
+  assert.match(js,/search\.oninput/);
+  assert.match(js,/search\.onkeydown=handleSearchKey/);
+  assert.match(js,/\/api\/market\/snapshot/);
+});
+
+test('dashboard controls have explicit click routing',()=>{
+  const html=read('public/index.html');
+  const js=read('public/app.js');
+  for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(html,new RegExp(`id="${id}"`));
+  for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(js,new RegExp(`#${id}`));
+  assert.match(js,/document\.querySelectorAll\('\.action-link'\)/);
+  assert.match(js,/Explore:'Explore'/);
+  assert.match(js,/Trade:'Trade'/);
+  assert.match(js,/Backtest:'Backtest'/);
+  assert.match(js,/Performance:'Performance'/);
+});
+
+test('timeframe buttons update chart data and active state',()=>{
+  const html=read('public/index.html');
+  const js=read('public/app.js');
+  assert.match(html,/class="time-tabs"/);
+  assert.match(js,/document\.querySelectorAll\('\.time-tabs button'\)/);
+  assert.match(js,/chartTimeframe=/);
+  assert.match(js,/loadBars\(selected\)/);
+});
+
+test('dropdown controls have functional change paths',()=>{
+  const panels=read('public/panels.js');
+  assert.match(panels,/id="nh-side"/);
+  assert.match(panels,/id="bt-strategy"/);
+  assert.match(panels,/id="nh-refresh"/);
+  assert.match(panels,/m\.querySelector\('#nh-refresh'\)\.value=localStorage/);
+  assert.match(panels,/m\.querySelector\('#bt-run'\)\.onclick=async/);
+  assert.match(panels,/m\.querySelector\('#nh-submit'\)\.onclick=async/);
 });
 
 test('paper trading safety is visible in UI and worker',()=>{
@@ -106,6 +140,12 @@ test('dashboard navigation targets are either real sections or panel actions',()
       assert.match(panels,/openPanel\(name\)/);
     }
   }
+});
+
+test('panel router is exported for dashboard controls',()=>{
+  const panels=read('public/panels.js');
+  assert.match(panels,/window\.NexaHunter=\{openPanel,openScreener,modal\}/);
+  for(const name of ['Trade','Backtest','Performance','My Positions','Alerts','NexaAI Analysis']) assert.match(panels,new RegExp(`name==='${name}'`));
 });
 
 test('index has no external stylesheet dependency outside the CSP boundary',()=>{
