@@ -4,12 +4,12 @@ import fs from 'node:fs';
 
 const read = file => fs.readFileSync(file, 'utf8');
 
-test('iPhone crypto experience uses NexaHunter dark and orange-green palette', () => {
-  const css = read('public/crypto-experience.css');
-  assert.match(css, /@media\(max-width:700px\)/);
-  assert.match(css, /background:#030303/);
-  assert.match(css, /#f15b2a/);
-  assert.match(css, /#51c832/);
+test('iPhone crypto experience uses NexaHunter blue white gold palette', () => {
+  const css = read('public/nexahunter-iphone-theme.css');
+  assert.match(css, /BLUE \+ WHITE \+ GOLD/);
+  assert.match(css, /--nh-blue:#0A5CFF/);
+  assert.match(css, /--nh-white:#FFFFFF/);
+  assert.match(css, /--nh-gold:#F5B942/);
   assert.match(css, /color:#fff/);
   assert.match(css, /min-height:44px/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
@@ -23,10 +23,12 @@ test('iPhone crypto experience contains concept actions and bottom navigation', 
 
 test('iPhone crypto controls have explicit touch/click handlers', () => {
   const js = read('public/crypto-experience.js');
-  for (const token of ['toggleRecurring','savePlan','toggleWatch','toggleAlerts','saveAlert','shareAsset','navTo']) assert.match(js, new RegExp(`${token}`));
+  const css = read('public/crypto-experience.css');
+  for (const token of ['toggleRecurring','savePlan','toggleWatch','toggleAlerts','saveAlert','shareAsset','navTo']) assert.match(js, new RegExp(token));
   assert.match(js, /addEventListener\('pointerdown'/);
   assert.match(js, /addEventListener\('pointermove'/);
-  assert.match(js, /touch-action:none/);
+  assert.match(js, /addEventListener\('click'/);
+  assert.match(css, /touch-action:none/);
 });
 
 test('recurring investment and alerts remain paper/local only', () => {
