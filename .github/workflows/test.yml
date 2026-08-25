@@ -2,13 +2,9 @@ name: NexaHunter Tests
 
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
   pull_request:
-    branches:
-      - main
-
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -18,25 +14,26 @@ jobs:
   test:
     name: Validation Test Suite
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: "24"
           package-manager-cache: false
-
       - name: Verify Node.js
         run: node --version
-
       - name: Verify npm
         run: npm --version
-
       - name: Install dependencies
         run: npm install
-
-      - name: Run NexaHunter tests
+      - name: Run full NexaHunter tests
         run: npm test
+      - name: Verify production files
+        run: |
+          test -f public/index.html
+          test -f public/styles.css
+          test -f public/app.js
+          test -f worker-app.js
+          test -f wrangler.toml
