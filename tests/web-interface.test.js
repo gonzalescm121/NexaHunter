@@ -8,7 +8,6 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 test('web interface files exist',()=>{
   for(const file of ['public/index.html','public/styles.css','public/fix.css','public/master-visual.css','public/master-highlights.css','public/app.js','public/panels.js','public/realtime.js','public/assets/nexahunter-master-logo.svg']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
-  assert.equal(fs.existsSync(path.join(root,'public/mobile-menu.js')),false,'obsolete hamburger controller');
 });
 
 test('master visual uses the approved wolf wordmark',()=>{
@@ -49,18 +48,17 @@ test('market workspace exposes search, selection, watchlist and detail views',()
   assert.match(js,/\/api\/market\/snapshot/);
 });
 
-test('dashboard controls have explicit click routing without hamburger',()=>{
+test('dashboard controls have explicit click routing including mobile navigation',()=>{
   const html=read('public/index.html');
-  const js=read('public/app.js');
-  assert.doesNotMatch(html,/id="mobile-menu"/);
-  assert.doesNotMatch(html,/mobile-menu\.js/);
+  const router=read('public/button-router.js');
+  assert.match(html,/id="mobile-menu"/);
+  assert.match(html,/data-action="mobile-menu"/);
+  assert.match(router,/case\s*'mobile-menu'/);
+  assert.match(router,/NexaHunterToggleMenu=toggleMenu/);
+  assert.match(router,/classList\.toggle\('open'/);
   for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(html,new RegExp(`id="${id}"`));
-  for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(js,new RegExp(`(?:#${id}|\\$\\(['"]${id}['"]\\))`));
-  assert.match(js,/document\.querySelectorAll\('\.action-link'\)/);
-  assert.match(js,/Explore:'Explore'/);
-  assert.match(js,/Trade:'Trade'/);
-  assert.match(js,/Backtest:'Backtest'/);
-  assert.match(js,/Performance:'Performance'/);
+  for(const action of ['analysis','notifications','positions','trade']) assert.match(router,new RegExp(`case'${action}'`));
+  assert.match(router,/document\.addEventListener\('click'/);
 });
 
 test('timeframe buttons update chart data and active state',()=>{
