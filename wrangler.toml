@@ -14,6 +14,10 @@ class_name = "IdempotencyDurableObject"
 name = "PORTFOLIO"
 class_name = "PortfolioDurableObject"
 
+[[durable_objects.bindings]]
+name = "MARKET_STREAM"
+class_name = "MarketStreamDurableObject"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["IdempotencyDurableObject"]
@@ -21,3 +25,7 @@ new_sqlite_classes = ["IdempotencyDurableObject"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["PortfolioDurableObject"]
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["MarketStreamDurableObject"]
