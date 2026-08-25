@@ -7,7 +7,7 @@ const root=process.cwd();
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 test('web interface files exist',()=>{
-  for(const file of ['public/index.html','public/styles.css','public/fix.css','public/master-visual.css','public/master-highlights.css','public/app.js','public/panels.js','public/realtime.js','public/assets/nexahunter-master-logo.svg']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
+  for(const file of ['public/index.html','public/styles.css','public/fix.css','public/master-visual.css','public/master-highlights.css','public/app.js','public/panels.js','public/realtime.js','public/mobile-menu.js','public/assets/nexahunter-master-logo.svg']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
 });
 
 test('master visual uses the approved wolf wordmark',()=>{
@@ -51,8 +51,13 @@ test('market workspace exposes search, selection, watchlist and detail views',()
 test('dashboard controls have explicit click routing',()=>{
   const html=read('public/index.html');
   const js=read('public/app.js');
+  const mobile=read('public/mobile-menu.js');
   for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(html,new RegExp(`id="${id}"`));
-  for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(js,new RegExp(`(?:#${id}|\\$\\(['"]${id}['"]\\))`));
+  for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(js,new RegExp(`(?:#${id}|\\$\\(['"]${id}['"]\\))`));
+  assert.match(mobile,/getElementById\('mobile-menu'\)/);
+  assert.match(mobile,/addEventListener\('click',toggle/);
+  assert.match(mobile,/classList\.toggle\('open',open\)/);
+  assert.match(mobile,/aria-expanded/);
   assert.match(js,/document\.querySelectorAll\('\.action-link'\)/);
   assert.match(js,/Explore:'Explore'/);
   assert.match(js,/Trade:'Trade'/);
