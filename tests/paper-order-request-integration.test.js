@@ -119,7 +119,9 @@ test('request-level paper boundary never enables live execution', async () => {
   const data = await response.json();
   assert.equal(data.order.mode, 'PAPER');
   assert.equal(data.order.liveExecution, false);
-  assert.doesNotMatch(JSON.stringify(data), /liveExecution[^f]/i);
+  assert.equal(data.portfolio.mode, 'PAPER');
+  assert.equal(data.portfolio.liveExecution, false);
+  assert.equal(data.order.status, 'FILLED_PAPER');
 });
 
 // Keep the integration fixture honest about the production implementation it exercises.
