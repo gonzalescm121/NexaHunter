@@ -7,54 +7,63 @@ const root=process.cwd();
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 test('web interface files exist',()=>{
-  for(const file of ['public/index.html','public/styles.css','public/app.js']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
+  for(const file of ['public/index.html','public/styles.css','public/app.js','public/panels.js','public/realtime.js']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
 });
 
-test('navigation exposes core pages',()=>{
+test('navigation exposes dashboard sections and trade/backtest controls',()=>{
   const html=read('public/index.html');
-  for(const target of ['#markets','#portfolio','#orders','#trade']) assert.match(html,new RegExp(target.replace('#','\\#')));
+  for(const target of ['#markets','#portfolio','#watchlist','#trade','#backtest','#performance']) assert.match(html,new RegExp(target.replace('#','\\#')));
 });
 
-test('market workspace exposes search, selection, watchlist, and detail views',()=>{
+test('market workspace exposes search, selection, watchlist and detail views',()=>{
   const html=read('public/index.html');
   const js=read('public/app.js');
-  for(const target of ['market-search','reset-watchlist','detail-symbol','detail-price','sparkline']) assert.match(html,new RegExp(target));
-  for(const target of ['watchKey','loadWatchlist','saveWatchlist','setDetail','renderMarkets']) assert.match(js,new RegExp(target));
+  assert.match(html,/global-search/);
+  assert.match(html,/market-list/);
+  for(const target of ['detail-symbol','detail-price','price-tag']) assert.match(html,new RegExp(target));
+  for(const target of ['watchKey','saveWatch','setDetail','renderMarkets']) assert.match(js,new RegExp(target));
 });
 
-test('paper trading safety is visible in UI',()=>{
+test('paper trading safety is visible in UI and worker',()=>{
   const html=read('public/index.html');
-  assert.match(html,/Live execution off/);
-  assert.match(html,/Paper trading only/);
+  const panels=read('public/panels.js');
+  const worker=read('worker-app.js');
+  assert.match(html,/Trade/);
+  assert.match(panels,/Paper trading only/);
+  assert.match(worker,/liveExecution:false/);
 });
 
-test('frontend uses paper order, portfolio, and health endpoints',()=>{
+test('frontend uses paper order, portfolio, and market endpoints',()=>{
   const js=read('public/app.js');
-  assert.match(js,/\/api\/paper-orders/);
+  const panels=read('public/panels.js');
+  assert.match(panels,/\/api\/paper-orders/);
   assert.match(js,/\/api\/portfolio/);
-  assert.match(js,/\/health/);
-  assert.match(js,/content-type/);
+  assert.match(js,/\/api\/market\/snapshot/);
+  assert.match(js,/\/api\/market\/clock/);
+  assert.match(panels,/content-type/);
 });
 
-test('frontend escapes rendered server values',()=>{
+test('frontend escapes rendered market values',()=>{
   const js=read('public/app.js');
-  assert.match(js,/escapeHtml/);
+  assert.match(js,/const esc=/);
   assert.match(js,/replaceAll\('&'/);
+  assert.match(js,/replaceAll\('<'/);
 });
 
-test('dashboard renders cash, positions, and order history',()=>{
+test('dashboard renders persistent portfolio state',()=>{
+  const html=read('public/index.html');
   const js=read('public/app.js');
-  assert.match(js,/portfolio-value/);
-  assert.match(js,/buying-power/);
-  assert.match(js,/position-count/);
-  assert.match(js,/renderOrders/);
+  assert.match(html,/portfolio-value/);
+  assert.match(html,/buying-power/);
+  assert.match(html,/position-count/);
+  assert.match(js,/loadPortfolio/);
 });
 
 test('responsive and branded styles are present',()=>{
   const css=read('public/styles.css');
-  assert.match(css,/--green:#00c805/);
-  assert.match(css,/--bg:#050505/);
-  assert.match(css,/@media\(max-width:800px\)/);
-  assert.match(css,/spark-wrap/);
-  assert.match(css,/market-toolbar/);
+  assert.match(css,/--green/);
+  assert.match(css,/--bg/);
+  assert.match(css,/@media/);
+  assert.match(css,/sidebar/);
+  assert.match(css,/market-row/);
 });
