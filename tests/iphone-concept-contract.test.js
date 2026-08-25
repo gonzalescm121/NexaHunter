@@ -42,3 +42,10 @@ test('mobile concept provides five-button bottom navigation and functional hambu
   assert.match(router,/case\s*'mobile-menu'/);
   assert.match(router,/function toggleMenu\(\)/);
 });
+
+test('hamburger exposes the core mobile account menu actions',()=>{
+  const html=read('public/index.html');
+  for(const action of ['settings','profile','edit','favorites','watchlist']) {
+    assert.match(html,new RegExp(`data-action="${action}"`),`missing hamburger action ${action}`);
+  }
+});
