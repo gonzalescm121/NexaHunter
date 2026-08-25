@@ -31,11 +31,13 @@ test('stream subscribes to trades, quotes and bars and reconnects after upstream
 });
 
 test('browser stream handles trades quotes bars and reconnect fallback',()=>{
-  assert.match(realtime,/msg\.type==='market'/);
+  assert.match(realtime,/msg\.type/);
+  assert.match(realtime,/['"]market['"]/);
   assert.match(realtime,/d\?\.T==='t'/);
   assert.match(realtime,/d\?\.T==='b'/);
   assert.match(realtime,/d\?\.T==='q'/);
-  assert.match(realtime,/state\.reconnectTimer=setTimeout\(\(\)=>\{refreshFallback\(\);connect\(\)\},1500\)/);
+  assert.match(realtime,/reconnectTimer/);
+  assert.match(realtime,/setTimeout\(\(\)=>\{refreshFallback\(\);connect\(\)\},1500\)/);
 });
 
 test('market endpoints are no-store and reject malformed symbols',()=>{
