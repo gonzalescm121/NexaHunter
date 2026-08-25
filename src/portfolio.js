@@ -21,11 +21,12 @@ export class PortfolioDurableObject {
 
   snapshot() {
     const account = this.ctx.storage.sql.exec('SELECT cash FROM account WHERE id=1').one();
+    const cash = Number(account?.cash ?? INITIAL_CASH);
     const positionRows = this.ctx.storage.sql.exec('SELECT symbol, quantity FROM positions ORDER BY symbol').toArray();
     const orderRows = this.ctx.storage.sql.exec('SELECT id, symbol, side, quantity, price, status, mode, live_execution AS liveExecution, timestamp FROM orders ORDER BY timestamp DESC LIMIT ?', MAX_ORDERS).toArray();
     const positions = Object.fromEntries(positionRows.map(row => [row.symbol, Number(row.quantity)]));
     const orders = orderRows.map(row => ({ ...row, quantity: Number(row.quantity), liveExecution: Boolean(row.liveExecution) }));
-    return { cash: Number(account?.cash ?? INITIAL_CASH), positions, orders, mode: 'PAPER', liveExecution: false, persistent: true };
+    return { cash, buyingPower: cash, positions, orders, mode: 'PAPER', liveExecution: false, persistent: true };
   }
 
   async fetch(request) {
