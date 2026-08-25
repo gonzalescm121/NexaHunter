@@ -15,7 +15,7 @@ NexaHunter is a Cloudflare Workers market-validation platform with a dark broker
 - Request-size, JSON-depth, symbol, quantity, price, and side validation
 - Security response headers and restrictive Content Security Policy
 - Live execution hard-disabled
-- Node 24 regression test suite
+- Node 24 regression and integration-contract test suite
 - GitHub Actions validation on pushes and pull requests
 
 ## Safety boundary
@@ -33,4 +33,4 @@ The production entry point is `worker-app.js` and static web assets are served f
 
 ## Test coverage
 
-The suite covers interface/navigation contracts, frontend escaping, API validation, security headers, paper-only enforcement, persistent portfolio schema, transactional state changes, buying-power checks, position checks, duplicate protection, and production-file checks.
+The suite covers interface/navigation contracts, frontend escaping, API validation, security headers, paper-only enforcement, persistent portfolio schema, transactional state changes, buying-power checks, position checks, duplicate protection, Worker/frontend integration contracts, and production-file checks.
