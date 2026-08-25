@@ -35,7 +35,7 @@ test('browser stream handles trades quotes bars and reconnect fallback',()=>{
   assert.match(realtime,/d\?\.T==='t'/);
   assert.match(realtime,/d\?\.T==='b'/);
   assert.match(realtime,/d\?\.T==='q'/);
-  assert.match(realtime,/reconnectTimer=setTimeout\(\(\)=>\{refreshFallback\(\);connect\(\)\},1500\)/);
+  assert.match(realtime,/state\.reconnectTimer=setTimeout\(\(\)=>\{refreshFallback\(\);connect\(\)\},1500\)/);
 });
 
 test('market endpoints are no-store and reject malformed symbols',()=>{
