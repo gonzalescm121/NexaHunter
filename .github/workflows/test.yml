@@ -37,7 +37,12 @@ jobs:
           test -f public/index.html
           test -f public/styles.css
           test -f public/app.js
+          test -f public/panels.js
+          test -f public/realtime.js
           test -f worker-app.js
+          test -f worker.js
+          test -f src/core.js
           test -f src/portfolio.js
           test -f src/idempotency.js
+          test -f src/market-stream.js
           test -f wrangler.toml
