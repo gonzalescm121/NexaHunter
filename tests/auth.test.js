@@ -25,7 +25,7 @@ test('OAuth state and session cookies are hardened',()=>{
 
 test('API boundary requires an authenticated identity',()=>{
   assert.match(entry,/authenticatedUser\(request,env,ctx\)/);
-  assert.match(entry,/Authentication required/);
+  assert.match(auth,/Authentication required/);
   assert.match(entry,/\/api\/auth\/me/);
   assert.match(entry,/ctx\?\.access/);
   assert.match(entry,/getIdentity/);
@@ -33,7 +33,8 @@ test('API boundary requires an authenticated identity',()=>{
 
 test('paper accounts are isolated by authenticated subject',()=>{
   assert.match(entry,/idFromName\(`paper:\$\{userId\}`\)/);
-  assert.match(entry,/idFromName\(`paper:\$\{user\.sub\}`\)/);
+  assert.match(entry,/paperPortfolio\(env,user\.sub,order\)/);
+  assert.match(entry,/portfolioSnapshot\(env,user\.sub\)/);
 });
 
 test('rate limiting is configured',()=>{
