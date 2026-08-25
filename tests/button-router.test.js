@@ -20,12 +20,19 @@ test('central button router covers every primary action',()=>{
   assert.match(router,/NexaHunterToggleMenu/);
 });
 
+test('mobile menu has exactly one click routing path',()=>{
+  const html=read('public/index.html');
+  const router=read('public/button-router.js');
+  assert.doesNotMatch(html,/onclick\s*=|NexaHunterToggleMenu\s*=\s*function/,'mobile menu must not have a competing inline handler');
+  assert.match(router,/case\s*'mobile-menu'/);
+  assert.match(router,/NexaHunterToggleMenu=toggleMenu/);
+});
+
 test('mobile menu wiring has a concrete toggle path',()=>{
   const html=read('public/index.html');
   const router=read('public/button-router.js');
   const controller=read('public/mobile-menu.js');
   assert.match(html,/id="mobile-menu"/);
-  assert.match(html,/NexaHunterToggleMenu/);
   assert.match(router,/NexaHunterToggleMenu/);
   assert.match(router,/classList\.toggle\('open'/);
   assert.match(controller,/getElementById\('mobile-menu'\)/);
