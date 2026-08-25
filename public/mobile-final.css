@@ -8,7 +8,7 @@ body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
 .search-wrap input::placeholder{color:#6d839b}
 .market-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;overflow-x:auto;max-width:100%;padding-bottom:1px;scrollbar-width:none}
 .market-actions::-webkit-scrollbar{display:none}
-.action-link{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:#081a2d;color:#b9d7f2;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap}
+.action-link{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:#081a2d;color:#b9d7f2;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer}
 .action-link:active,.action-link:focus-visible{background:#0c3d76;color:#fff;outline:none}
 .market-strip{min-width:0;width:100%}
 .market-strip #market-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
@@ -19,6 +19,11 @@ body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
 .chart-stage svg{display:block;width:100%;height:100%;overflow:hidden}
 #chart-area{fill:url(#chartAreaGradient)!important;stroke:none}
 .workspace-panels{min-width:0}
+.icon-btn{width:40px;height:40px;min-width:40px;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;border-radius:10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#mobile-menu{display:inline-flex;position:relative;z-index:30;font-size:22px}
+#mobile-menu[aria-expanded="true"]{background:#0c3d76;color:#fff}
+button:disabled{opacity:.55;cursor:not-allowed}
+button:focus-visible,.action-link:focus-visible{outline:2px solid #42a5ff;outline-offset:2px}
 @media(max-width:900px){
   .dashboard{padding:10px 10px calc(110px + env(safe-area-inset-bottom))}
   .topbar{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
@@ -48,6 +53,8 @@ body{min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
   .sidebar.open{left:0}
   .side-nav{height:auto;padding:12px 10px}
   .side-nav .nav-item{height:38px}
+  .icon-btn{width:42px;height:42px;min-width:42px}
+  #mobile-menu{font-size:22px}
 }
 @media(max-width:390px){
   .market-strip #market-list{grid-template-columns:1fr}
