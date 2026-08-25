@@ -14,7 +14,7 @@ test('all primary dashboard controls declare explicit actions',()=>{
 
 test('central button router covers every primary action',()=>{
   const router=read('public/button-router.js');
-  for(const action of ['mobile-menu','analysis','notifications','positions','trade','backtest','performance','explore']) assert.match(router,new RegExp(`case '${action}'`),`missing router case ${action}`);
+  for(const action of ['mobile-menu','analysis','notifications','positions','trade','backtest','performance','explore']) assert.match(router,new RegExp(`case\\s*'${action}'`),`missing router case ${action}`);
   assert.match(router,/stopImmediatePropagation/);
   assert.match(router,/aria-expanded/);
   assert.match(router,/NexaHunterToggleMenu/);
