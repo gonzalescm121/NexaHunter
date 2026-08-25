@@ -52,8 +52,6 @@ test('dashboard controls have explicit click routing',()=>{
   const html=read('public/index.html');
   const js=read('public/app.js');
   for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(html,new RegExp(`id="${id}"`));
-  // Accept either direct CSS-id lookup (#id) or the equivalent DOM-id helper ($('id')).
-  // Both are explicit routing paths; the previous assertion incorrectly rejected the latter.
   for(const id of ['mobile-menu','analysis-btn','notification-btn','positions-tab','open-trade']) assert.match(js,new RegExp(`(?:#${id}|\\$\\(['"]${id}['"]\\))`));
   assert.match(js,/document\.querySelectorAll\('\.action-link'\)/);
   assert.match(js,/Explore:'Explore'/);
@@ -107,6 +105,13 @@ test('frontend escapes rendered market values',()=>{
   assert.match(js,/replaceAll\('<'/);
 });
 
+test('market cards do not ship hard-coded demo prices',()=>{
+  const js=read('public/app.js');
+  for(const value of ['187.32','132.84','248.91','42,891.32','5,432.21','67,231.48']) assert.doesNotMatch(js,new RegExp(value.replace(',','\\,')));
+  assert.match(js,/FALLBACK_ASSETS=\[\['AAPL','Apple Inc\.','—','—'\]/);
+  assert.match(js,/\/api\/market\/snapshot/);
+});
+
 test('dashboard renders persistent portfolio state',()=>{
   const html=read('public/index.html');
   const js=read('public/app.js');
@@ -114,6 +119,7 @@ test('dashboard renders persistent portfolio state',()=>{
   assert.match(html,/buying-power/);
   assert.match(html,/position-count/);
   assert.match(js,/loadPortfolio/);
+  assert.match(js,/d\.buyingPower/);
 });
 
 test('responsive and branded styles are present',()=>{
