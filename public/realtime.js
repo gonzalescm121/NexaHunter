@@ -1,4 +1,5 @@
 (()=>{
+const master=document.createElement('link');master.rel='stylesheet';master.href='/master-visual.css?v=master-20260824';document.head.appendChild(master);
 const state={symbol:'AAPL',timer:null,bars:[],last:null,ws:null,reconnectTimer:null,connected:false,sequence:0};
 const $=id=>document.getElementById(id);
 const set=(id,v)=>{const e=$(id);if(e)e.textContent=v};
