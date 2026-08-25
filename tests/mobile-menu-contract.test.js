@@ -4,15 +4,21 @@ import fs from 'node:fs';
 
 const read = file => fs.readFileSync(file, 'utf8');
 
-test('mobile header intentionally has no hamburger menu', () => {
+test('mobile header exposes an accessible hamburger menu with a concrete toggle path', () => {
   const html = read('public/index.html');
-  assert.doesNotMatch(html, /id="mobile-menu"/);
-  assert.doesNotMatch(html, /mobile-menu\.js/);
-  assert.match(html, /id="analysis-btn"[^>]*data-action="analysis"/);
-  assert.match(html, /id="notification-btn"[^>]*data-action="notifications"/);
+  const router = read('public/button-router.js');
+  const css = read('public/mobile-final.css');
+  assert.match(html, /id="mobile-menu"/);
+  assert.match(html, /data-action="mobile-menu"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(router, /case\s*'mobile-menu'/);
+  assert.match(router, /NexaHunterToggleMenu=toggleMenu/);
+  assert.match(router, /classList\.toggle\('open'/);
+  assert.match(router, /aria-expanded/);
+  assert.match(css, /\.sidebar\.open/);
 });
 
-test('account and investing controls remain wired without hamburger navigation', () => {
+test('account and investing controls remain wired with mobile navigation', () => {
   const router = read('public/button-router.js');
   for (const action of ['profile','settings','appearance','favorites','watchlist','holdings','markets','trade']) {
     assert.match(router, new RegExp(`data-action=\\"${action}\\"`), action);
