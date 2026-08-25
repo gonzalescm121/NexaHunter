@@ -7,18 +7,27 @@ const root=process.cwd();
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 test('web interface files exist',()=>{
-  for(const file of ['public/index.html','public/styles.css','public/fix.css','public/master-visual.css','public/app.js','public/panels.js','public/realtime.js','public/assets/nexahunter-master-logo.svg']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
+  for(const file of ['public/index.html','public/styles.css','public/fix.css','public/master-visual.css','public/master-highlights.css','public/app.js','public/panels.js','public/realtime.js','public/assets/nexahunter-master-logo.svg']) assert.equal(fs.existsSync(path.join(root,file)),true,file);
 });
 
 test('master visual uses the approved wolf wordmark',()=>{
   const css=read('public/master-visual.css');
+  const highlights=read('public/master-highlights.css');
   const fix=read('public/fix.css');
   const logo=read('public/assets/nexahunter-master-logo.svg');
   assert.match(css,/nexahunter-master-logo\.svg/);
+  assert.match(highlights,/nexahunter-master-logo\.svg/);
   assert.match(fix,/nexahunter-master-logo\.svg/);
   assert.match(logo,/NexaHunter/);
   assert.match(logo,/HUNT SMARTER, TRADE BETTER\./);
   assert.match(logo,/fill="#f4f8ff"/);
+});
+
+test('master concept includes layered highlights, backgrounds and watermark effects',()=>{
+  const css=read('public/master-highlights.css');
+  for(const token of ['radial-gradient','repeating-linear-gradient','ticker-card:before','panel:before','chart-stage:before','chart-watermark','watermark-wolf','ai-panel','footer:before']) assert.match(css,new RegExp(token.replace(':','\\:')));
+  assert.match(css,/drop-shadow/);
+  assert.match(css,/@media\(max-width:900px\)/);
 });
 
 test('navigation exposes dashboard sections and trade/backtest controls',()=>{
