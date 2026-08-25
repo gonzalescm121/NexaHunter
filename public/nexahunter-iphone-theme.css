@@ -1,0 +1,87 @@
+/* NexaHunter iPhone concept theme: BLUE + WHITE + GOLD */
+:root{
+  --nh-blue:#0A5CFF;
+  --nh-blue-dark:#061A3A;
+  --nh-blue-deep:#020B1F;
+  --nh-white:#FFFFFF;
+  --nh-gold:#F5B942;
+  --nh-gold-bright:#FFD66B;
+  --nh-gold-dark:#B98212;
+  --nh-line:#183A73;
+  --nh-muted:#A9BAD6;
+}
+
+body{
+  background:radial-gradient(circle at 50% -12%,#123D86 0,#061A3A 34%,#020B1F 76%,#010611 100%)!important;
+  color:var(--nh-white)!important;
+}
+.app-shell{background:linear-gradient(90deg,rgba(2,11,31,.98),rgba(5,23,53,.9))!important}
+.sidebar,.topbar{background:rgba(3,14,38,.96)!important;border-color:var(--nh-line)!important}
+.brand strong,.brand strong span{color:var(--nh-white)!important}
+.brand small{color:var(--nh-gold)!important}
+.wolf-logo{border-color:var(--nh-gold)!important;background:radial-gradient(circle,#1558B7,#061A3A)!important;box-shadow:0 0 16px rgba(245,185,66,.35)!important}
+.wolf-logo:after,.wolf-logo:before{background:var(--nh-gold)!important;box-shadow:16px 0 var(--nh-gold)!important;filter:drop-shadow(0 0 3px rgba(245,185,66,.7))!important}
+.nav-item{color:#A9BAD6!important}
+.nav-item:hover{background:#0A2856!important;color:#fff!important}
+.nav-item.active{background:linear-gradient(90deg,#0A5CFF,#1247A7)!important;color:#fff!important;box-shadow:inset 0 0 0 1px rgba(255,214,107,.38),0 4px 18px rgba(10,92,255,.28)!important}
+.nav-item b{background:var(--nh-gold)!important;color:#07142D!important}
+.blue-btn,.action-link:active,.action-link:focus-visible{background:linear-gradient(180deg,#176DFF,#0A5CFF)!important;color:#fff!important}
+.pro-card{border-color:#27529A!important;background:radial-gradient(circle at 50% 0,#103C7C,#061A3A 64%)!important}
+.pro-wolf{color:var(--nh-gold)!important;text-shadow:0 0 18px rgba(245,185,66,.45)!important}
+.global-search,.search-wrap{border-color:#27529A!important;background:#061A3A!important;color:#fff!important}
+.global-search input,.search-wrap input{color:#fff!important}
+.global-search input::placeholder,.search-wrap input::placeholder{color:#A9BAD6!important}
+.live-dot,.status-grid i{background:var(--nh-gold)!important;box-shadow:0 0 8px rgba(245,185,66,.7)!important}
+.ticker-card,.panel{background:linear-gradient(145deg,rgba(8,29,66,.97),rgba(3,15,38,.98))!important;border-color:var(--nh-line)!important}
+.ticker-card>div,.company,.top-status,.top-status small,.asset-heading small,.y-axis,.x-axis,.portfolio-stats,.allocation ul,.confidence{color:var(--nh-muted)!important}
+.ticker-card>b,.portfolio-value,.asset-heading>strong,.ai-price{color:#fff!important}
+.gain,.live-label,.watch-button.active{color:var(--nh-gold)!important}
+.negative{color:#FFD1D1!important}
+.ticker-icon.orange,.ticker-icon.btc{background:var(--nh-gold)!important;color:#07142D!important}
+.ticker-icon.blue,.ticker-icon.eth{background:var(--nh-blue)!important}
+.green-chart{color:var(--nh-gold)!important}
+.green-chart polyline{stroke:var(--nh-gold)!important}
+.blue-chart polyline{stroke:#4D9BFF!important}
+.time-tabs button.active,.segmented button.active{background:#0A5CFF!important;color:#fff!important}
+.chart-stage:before{background:repeating-linear-gradient(to bottom,transparent 0,transparent 64px,#183A73 65px),repeating-linear-gradient(to right,transparent 0,transparent 89px,#102E5D 90px)!important}
+.ma-line{stroke:#4D9BFF!important}
+.chart-candle-up{fill:var(--nh-gold)!important;stroke:var(--nh-gold)!important}
+.chart-candle-down{fill:#7F9BC7!important;stroke:#7F9BC7!important}
+.price-line{stroke:var(--nh-gold)!important}
+.price-tag{background:var(--nh-gold)!important;color:#07142D!important}
+.watermark-wolf{color:#176DFF!important;text-shadow:0 0 40px rgba(10,92,255,.6)!important}
+.signal-pill{background:#0A2856!important;color:var(--nh-gold)!important;border-color:#3C5C98!important}
+.confidence>div span{background:linear-gradient(90deg,#0A5CFF,var(--nh-gold))!important}
+.link-btn,.add-symbol{color:#5CA2FF!important}
+
+/* iPhone crypto concept */
+.crypto-experience{background:linear-gradient(180deg,#071A3A,#030D24)!important;border-color:#234A8D!important}
+.crypto-experience .cx-price,.crypto-experience h2,.crypto-experience h3{color:#fff!important}
+.crypto-experience .cx-actions button:first-child,
+.crypto-experience .cx-recurring button#cx-save-plan,
+.crypto-experience .cx-alert-panel button{background:var(--nh-gold)!important;border-color:var(--nh-gold)!important;color:#07142D!important}
+.crypto-experience .cx-actions button:nth-child(2){background:#0A5CFF!important;border-color:#0A5CFF!important;color:#fff!important}
+.crypto-experience .cx-actions button,
+.crypto-experience .cx-history-head button{background:#0B2857!important;border-color:#2A5598!important;color:#fff!important}
+.crypto-experience .cx-chart-wrap{background:#020B1F!important;border-color:#1C4382!important}
+.crypto-experience .cx-chart-wrap path{stroke:var(--nh-gold)!important}
+.crypto-experience .cx-chart-wrap circle{fill:var(--nh-gold)!important;stroke:#fff!important}
+.crypto-experience .cx-chart-wrap line{stroke:#6F86AE!important}
+.crypto-experience .cx-timeframes{border-color:#234A8D!important}
+.crypto-experience .cx-timeframes button.active{background:var(--nh-gold)!important;color:#07142D!important}
+.crypto-experience .cx-stats,.crypto-experience .cx-history-row{border-color:#1C3D76!important}
+.crypto-experience .cx-history-row{background:#061A3A!important}
+.crypto-experience .cx-history-row:hover{background:#0A2856!important}
+.crypto-experience .cx-recurring,.crypto-experience .cx-alert-panel{background:#061A3A!important;border-color:#234A8D!important}
+.crypto-experience .cx-form input,.crypto-experience .cx-form select,.crypto-experience .cx-alert-form input{background:#020B1F!important;border-color:#2A5598!important;color:#fff!important}
+.crypto-experience .paper-only-badge{background:#0A5CFF!important;color:#fff!important}
+.crypto-experience .cx-toast{background:#fff!important;color:#07142D!important}
+
+@media(max-width:700px){
+  body{background:#020B1F!important}
+  .crypto-experience{background:linear-gradient(180deg,#061A3A 0,#020B1F 70%)!important}
+  .cx-bottom-nav{background:rgba(3,14,38,.98)!important;border-top-color:#234A8D!important}
+  .cx-bottom-nav button{color:#fff!important}
+  .cx-bottom-nav button.active{color:var(--nh-gold)!important}
+  .cx-chart-wrap{background:#010611!important}
+}
