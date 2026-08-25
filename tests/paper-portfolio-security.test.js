@@ -29,7 +29,8 @@ test('paper order validation rejects malformed and unsafe values',()=>{
   assert.match(worker,/MAX_PRICE=1000000000/);
   assert.match(worker,/Order calculation overflow/);
   assert.match(worker,/Duplicate paper order rejected/);
-  assert.match(worker,/Insufficient buying power/);
+  assert.match(portfolio,/Insufficient buying power/);
+  assert.match(portfolio,/Insufficient paper position/);
 });
 
 test('sell orders cannot exceed persisted paper positions',()=>{
