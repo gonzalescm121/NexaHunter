@@ -6,14 +6,14 @@ const auth=fs.readFileSync('src/auth.js','utf8');
 const entry=fs.readFileSync('worker-entry.js','utf8');
 const wrangler=fs.readFileSync('wrangler.toml','utf8');
 
- test('OAuth uses authorization code + PKCE S256',()=>{
+test('OAuth uses authorization code + PKCE S256',()=>{
   assert.match(auth,/authorization|code_challenge/);
   assert.match(auth,/code_challenge_method:'S256'/);
   assert.match(auth,/code_verifier/);
   assert.match(auth,/dash\.cloudflare\.com\/oauth2\/auth/);
   assert.match(auth,/dash\.cloudflare\.com\/oauth2\/token/);
   assert.match(auth,/dash\.cloudflare\.com\/oauth2\/userinfo/);
- });
+});
 
 test('OAuth state and session cookies are hardened',()=>{
   assert.match(auth,/HttpOnly/);
@@ -23,10 +23,12 @@ test('OAuth state and session cookies are hardened',()=>{
   assert.match(auth,/SESSION_SECRET/);
 });
 
-test('API boundary requires an authenticated session',()=>{
-  assert.match(entry,/const user=await session\(request,env\)/);
+test('API boundary requires an authenticated identity',()=>{
+  assert.match(entry,/authenticatedUser\(request,env,ctx\)/);
   assert.match(entry,/Authentication required/);
   assert.match(entry,/\/api\/auth\/me/);
+  assert.match(entry,/ctx\?\.access/);
+  assert.match(entry,/getIdentity/);
 });
 
 test('paper accounts are isolated by authenticated subject',()=>{
