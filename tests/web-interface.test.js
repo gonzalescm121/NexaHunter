@@ -67,3 +67,12 @@ test('responsive and branded styles are present',()=>{
   assert.match(css,/sidebar/);
   assert.match(css,/market-row/);
 });
+
+test('dashboard navigation targets are backed by real sections',()=>{
+  const html=read('public/index.html');
+  const navTargets=[...html.matchAll(/class="nav-item[^\"]*" href="(#[^"]+)"/g)].map(m=>m[1]);
+  for(const target of navTargets){
+    if(target==='#home') assert.match(html,/id="home"/);
+    else assert.match(html,new RegExp(`id="${target.slice(1)}"`));
+  }
+});
