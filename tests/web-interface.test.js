@@ -7,6 +7,7 @@ const read=file=>fs.readFileSync(file,'utf8');
 test('dashboard controls have explicit click routing including mobile navigation',()=>{
   const html=read('public/index.html');
   const router=read('public/button-router.js');
+  const panels=read('public/panels.js');
   assert.match(html,/id="mobile-menu"/);
   assert.match(html,/data-action="mobile-menu"/);
   assert.match(router,/case'mobile-menu'/);
@@ -15,6 +16,11 @@ test('dashboard controls have explicit click routing including mobile navigation
   for(const action of ['analysis','notifications','positions','trade']) assert.match(router,new RegExp(`case'${action}'`));
   assert.match(html,/id="mobile-bottom-nav"/);
   for(const action of ['markets','positions','trade','profile']) assert.match(html,new RegExp(`data-action="${action}"`));
+  assert.match(router,/case'notifications':open\('Alerts'\)/);
+  assert.match(panels,/if\(name==='Alerts'\)return alerts\(\)/);
+  assert.match(panels,/function alerts\(\)/);
+  assert.match(html,/title="Open notifications"/);
+  assert.match(html,/data-action="notifications"[^>]*aria-label="Open notifications"/);
   assert.match(router,/document\.addEventListener\('click'/);
 });
 
