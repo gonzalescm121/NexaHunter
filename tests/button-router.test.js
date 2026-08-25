@@ -25,6 +25,18 @@ test('central button router covers every primary action',()=>{
   assert.match(router,/aria-expanded/);
 });
 
+test('mobile menu has a direct controller independent of delegated routing',()=>{
+  const html=read('public/index.html');
+  const controller=read('public/mobile-menu.js');
+  assert.match(html,/src="\/mobile-menu\.js"/);
+  assert.match(controller,/getElementById\('mobile-menu'\)/);
+  assert.match(controller,/getElementById\('sidebar'\)/);
+  assert.match(controller,/addEventListener\('click'/);
+  assert.match(controller,/classList\.toggle\('open'/);
+  assert.match(controller,/aria-expanded/);
+  assert.match(controller,/mobile-nav-open/);
+});
+
 test('mobile menu has a real touch target and open state styling',()=>{
   const css=read('public/mobile-final.css');
   assert.match(css,/#mobile-menu/);
