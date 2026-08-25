@@ -44,7 +44,8 @@ test('portfolio is permanently paper-only',()=>{
 test('dashboard reads persistent portfolio state',()=>{
   assert.match(worker,/\/api\/portfolio/);
   assert.match(app,/\/api\/portfolio/);
-  assert.match(app,/renderPortfolio/);
+  assert.match(app,/loadPortfolio/);
+  assert.match(app,/portfolio-value/);
 });
 
 test('duplicate order ids are rejected transactionally',()=>{
