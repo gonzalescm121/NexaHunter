@@ -813,11 +813,6 @@ const price =
     input.price
   );
 
-  const price =
-    Number(
-      input.price
-    );
-
   const side =
     String(
       input.side || ""
