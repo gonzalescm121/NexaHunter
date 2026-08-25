@@ -64,7 +64,12 @@ jobs:
           grep -q 'new_sqlite_classes = \["MarketStreamDurableObject"\]' wrangler.toml
       - name: Verify paper-only runtime boundary
         run: |
-          grep -q "mode:'paper'" worker-app.js
+          grep -q "mode:'PAPER'" worker-app.js
           grep -q "liveExecution:false" worker-app.js
+          grep -q "mode: 'PAPER'" src/portfolio.js
+          grep -q "liveExecution: false" src/portfolio.js
+          grep -q "'FILLED_PAPER'" src/portfolio.js
+          ! grep -q "live-orders" worker-app.js
+          ! grep -q "/api/live-orders" public/panels.js
           grep -q "ALPACA_API_KEY" worker-app.js
           grep -q "ALPACA_API_SECRET" worker-app.js
