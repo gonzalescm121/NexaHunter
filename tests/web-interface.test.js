@@ -24,6 +24,21 @@ test('dashboard controls have explicit click routing including mobile navigation
   assert.match(router,/document\.addEventListener\('click'/);
 });
 
+test('visible legacy dashboard controls have explicit interaction fallbacks',()=>{
+  const html=read('public/index.html');
+  const fixes=read('public/interaction-fixes.js');
+  assert.match(html,/interaction-fixes\.js/);
+  for(const label of ['view analysis','view all','gainers','losers','volume','add symbol','my positions','upgrade pro','terms','privacy','support']) assert.match(fixes,new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+  assert.match(fixes,/MutationObserver/);
+  assert.match(fixes,/carousel-dots/);
+  assert.match(fixes,/openPanel\?\.'NexaAI Analysis|panel\('NexaAI Analysis'\)/);
+  assert.match(fixes,/panel\('Alerts'\)/);
+  assert.match(fixes,/panel\('My Positions'\)/);
+  assert.match(fixes,/panel\('NexaHunter Pro'\)/);
+  assert.match(fixes,/function addSymbol\(\)/);
+  assert.match(fixes,/function footerModal\(kind\)/);
+});
+
 test('market UI never presents stale demo prices as live data',()=>{
   const js=read('public/app.js');
   for(const demo of ['187.32','132.84','248.91','42,891.32','5432.21','17482.91']) assert.doesNotMatch(js,new RegExp(demo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
