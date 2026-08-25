@@ -17,7 +17,7 @@ test('paper orders are explicitly non-live at both API and persistence layers',(
   assert.match(portfolio,/live_execution INTEGER NOT NULL/);
   assert.match(portfolio,/VALUES\(\?,\?,\?,\?,\?,\?,\?,\?,\?\)/);
   assert.match(portfolio,/INSERT INTO orders\(id,symbol,side,quantity,price,status,mode,live_execution,timestamp\)/);
-  assert.match(portfolio,/,'FILLED_PAPER','PAPER',0,/);
+  assert.match(portfolio,/id, symbol, side, quantity, price, 'FILLED_PAPER', 'PAPER', 0, timestamp/);
 });
 
 test('paper portfolio persists positions, cash and order history transactionally',()=>{
