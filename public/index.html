@@ -37,7 +37,19 @@
     <section class="chart-panel" id="screener">
       <div class="time-tabs"><button class="active">1D</button><button>1W</button><button>1M</button><button>3M</button><button>1Y</button><button>5Y</button><button>MAX</button></div>
       <div class="asset-heading"><strong id="detail-symbol">AAPL</strong><span id="detail-price">—</span><span id="detail-change" class="gain">—</span><span id="realtime-pill">POLLING</span></div>
-      <div class="chart-stage"><svg viewBox="0 0 900 390" preserveAspectRatio="none" aria-label="Market chart"><g id="candles"></g><polyline id="ma-line" fill="none" points=""></polyline><line id="price-line" x1="0" x2="900" y1="200" y2="200"></line><path id="chart-area"></path></svg><span id="price-tag" class="price-tag">—</span></div>
+      <div class="chart-stage">
+        <svg viewBox="0 0 900 390" preserveAspectRatio="none" aria-label="Market chart">
+          <defs>
+            <linearGradient id="chartAreaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1fe08a" stop-opacity="0.18"></stop>
+              <stop offset="70%" stop-color="#1fe08a" stop-opacity="0.05"></stop>
+              <stop offset="100%" stop-color="#1fe08a" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          <g id="candles"></g><polyline id="ma-line" fill="none" points=""></polyline><path id="chart-area" fill="url(#chartAreaGradient)" stroke="none"></path><line id="price-line" x1="0" x2="900" y1="200" y2="200"></line>
+        </svg>
+        <span id="price-tag" class="price-tag">—</span>
+      </div>
     </section>
     <aside class="right-column">
       <section class="panel" id="portfolio"><span class="paper-only-badge">Paper trading only</span><h3>Portfolio</h3><strong id="portfolio-value" class="portfolio-value">$0.00</strong><div class="portfolio-metrics"><p>Buying power <strong id="buying-power">$100,000.00</strong></p><p><span id="position-count">0</span> positions</p></div><button id="positions-tab" type="button">View positions</button></section>
