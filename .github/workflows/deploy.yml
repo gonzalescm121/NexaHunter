@@ -1,0 +1,44 @@
+name: NexaHunter Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type DEPLOY to confirm production deployment
+        required: true
+        default: DEPLOY
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event.inputs.confirm == 'DEPLOY' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Install dependencies
+        run: npm install
+      - name: Validate before deployment
+        run: npm run syntax && npm test
+      - name: Deploy Worker and Assets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+      - name: Production smoke test
+        env:
+          PUBLIC_ORIGIN: ${{ secrets.NEXAHUNTER_PUBLIC_ORIGIN }}
+        run: |
+          test -n "$PUBLIC_ORIGIN"
+          curl --fail --silent --show-error "$PUBLIC_ORIGIN/health" | grep -q '"status":"ok"'
+          curl --fail --silent --show-error -o /dev/null "$PUBLIC_ORIGIN/login"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/")" = "302"
