@@ -30,7 +30,7 @@
 <section class="dashboard" id="home">
   <div class="market-toolbar" aria-label="Market controls">
     <label class="search-wrap" for="global-search"><span aria-hidden="true">⌕</span><input id="global-search" name="global-search" type="search" placeholder="Search stocks, crypto, symbols" autocomplete="off"></label>
-    <div class="market-actions"><a class="action-link" href="#markets">Explore</a><a class="action-link" href="#trade">Trade</a><a class="action-link" href="#backtest">Backtest</a><a class="action-link" href="#performance">Performance</a></div>
+    <div class="market-actions"><a class="action-link" href="#screener">Explore</a><a class="action-link" href="#trade">Trade</a><a class="action-link" href="#backtest">Backtest</a><a class="action-link" href="#performance">Performance</a></div>
   </div>
   <div class="market-strip" id="markets"><div id="market-list"></div></div>
   <div class="content-grid">
@@ -40,12 +40,7 @@
       <div class="chart-stage"><svg viewBox="0 0 900 390" preserveAspectRatio="none" aria-label="Market chart"><g id="candles"></g><polyline id="ma-line" fill="none" points=""></polyline><line id="price-line" x1="0" x2="900" y1="200" y2="200"></line><path id="chart-area"></path></svg><span id="price-tag" class="price-tag">—</span></div>
     </section>
     <aside class="right-column">
-      <section class="panel" id="portfolio">
-        <span class="paper-only-badge">Paper trading only</span><h3>Portfolio</h3>
-        <strong id="portfolio-value" class="portfolio-value">$0.00</strong>
-        <div class="portfolio-metrics"><p>Buying power <strong id="buying-power">$100,000.00</strong></p><p><span id="position-count">0</span> positions</p></div>
-        <button id="positions-tab" type="button">View positions</button>
-      </section>
+      <section class="panel" id="portfolio"><span class="paper-only-badge">Paper trading only</span><h3>Portfolio</h3><strong id="portfolio-value" class="portfolio-value">$0.00</strong><div class="portfolio-metrics"><p>Buying power <strong id="buying-power">$100,000.00</strong></p><p><span id="position-count">0</span> positions</p></div><button id="positions-tab" type="button">View positions</button></section>
       <section class="panel" id="watchlist"><h3>Watchlist</h3><div id="watchlist-items" aria-live="polite">Select symbols from Markets to add them here.</div></section>
       <section class="panel" id="nexaai"><h3>NexaAI Copilot</h3><p>Market intelligence and paper-trade analysis.</p></section>
     </aside>
