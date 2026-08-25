@@ -27,5 +27,5 @@ test('duplicate IDs are rejected transactionally',()=>{
 test('live execution is hard-disabled',()=>{
   assert.match(source,/mode: 'PAPER'/);
   assert.match(source,/liveExecution: false/);
-  assert.match(source,/VALUES\(?,?,?,?,?,?,?,?,\)/);
+  assert.match(source,/INSERT INTO orders\(id,symbol,side,quantity,price,status,mode,live_execution,timestamp\) VALUES\(\?,\?,\?,\?,\?,\?,\?,\?,\?\)/);
 });
