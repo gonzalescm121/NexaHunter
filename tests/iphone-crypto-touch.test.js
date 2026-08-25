@@ -40,10 +40,9 @@ test('recurring investment and alerts remain paper/local only', () => {
   assert.doesNotMatch(js, /liveOrder/);
 });
 
-test('mobile hamburger has a concrete current toggle contract', () => {
+test('mobile hamburger is intentionally absent from the iPhone concept', () => {
   const html = read('public/index.html');
   const router = read('public/button-router.js');
-  assert.match(html, /id="mobile-menu"/);
-  assert.match(router, /NexaHunterToggleMenu=toggleMenu/);
-  assert.match(router, /case\s*'mobile-menu'/);
+  assert.doesNotMatch(html, /id="mobile-menu"|data-action="mobile-menu"/);
+  assert.doesNotMatch(router, /NexaHunterToggleMenu=toggleMenu|case\s*'mobile-menu'/);
 });
