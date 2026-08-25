@@ -78,6 +78,8 @@ jobs:
           grep -q 'oauth/cloudflare/callback' worker-entry.js
           grep -q 'CLOUDFLARE_OAUTH_CLIENT_ID' worker-entry.js
           grep -q 'SESSION_SECRET' worker-entry.js
+          grep -q 'ctx?.access' worker-entry.js
+          grep -q 'getIdentity' worker-entry.js
           grep -q 'S256' src/auth.js
           grep -q 'HttpOnly' src/auth.js
           grep -q 'Secure' src/auth.js
