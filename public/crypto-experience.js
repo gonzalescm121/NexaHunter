@@ -1,0 +1,86 @@
+(() => {
+  const state = { symbol: 'BTC', timeframe: '1D', bars: [], hover: null, plan: null };
+  const $ = id => document.getElementById(id);
+  const money = (v, max = 2) => Number(v).toLocaleString(undefined, { maximumFractionDigits: max, minimumFractionDigits: max });
+  const pct = (v) => `${v >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`;
+  const dateText = (iso) => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
+  const cryptoPair = s => s.includes('/') ? s : `${s}/USD`;
+  const cryptoIds = { BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', DOGE: 'dogecoin', XRP: 'ripple', ADA: 'cardano', AVAX: 'avalanche-2', LTC: 'litecoin', XCN: 'chain-coin' };
+
+  function inject() {
+    if ($('crypto-experience')) return;
+    const host = document.querySelector('.workspace-panels');
+    if (!host) return;
+    const section = document.createElement('section');
+    section.className = 'crypto-experience panel';
+    section.id = 'crypto-experience';
+    section.innerHTML = `
+      <div class="crypto-head">
+        <div><span class="paper-only-badge">Paper trading only</span><h2 id="cx-name">Bitcoin</h2><div class="cx-price" id="cx-price">—</div><div id="cx-change" class="gain">—</div></div>
+        <div class="cx-actions"><button id="cx-recurring" type="button">Recurring investment</button><button id="cx-watch" type="button">☆ Watch</button></div>
+      </div>
+      <div class="cx-chart-wrap">
+        <div class="cx-hover" id="cx-hover" hidden></div>
+        <svg id="cx-chart" viewBox="0 0 1000 360" preserveAspectRatio="none" role="img" aria-label="Interactive crypto price history"><path id="cx-line" d=""></path><line id="cx-cross" x1="0" x2="0" y1="0" y2="360" hidden></line><circle id="cx-dot" cx="0" cy="0" r="5" hidden></circle></svg>
+      </div>
+      <div class="cx-timeframes" role="tablist" aria-label="Crypto chart timeframe">
+        ${['LIVE','1D','1W','1M','3M','1Y','5Y','MAX'].map((x,i)=>`<button type="button" data-cx-time="${x}" class="${i===1?'active':''}">${x}</button>`).join('')}
+      </div>
+      <div class="cx-stats">
+        <div><span>52 wk high</span><b id="cx-high">—</b></div><div><span>24h volume</span><b id="cx-volume">—</b></div><div><span>52 wk low</span><b id="cx-low">—</b></div><div><span>Market cap</span><b id="cx-cap">—</b></div><div><span>Circulating supply</span><b id="cx-supply">—</b></div><div><span>Data through</span><b id="cx-asof">—</b></div>
+      </div>
+      <div class="cx-history-head"><h3>History</h3><button id="cx-history-more" type="button">Show more</button></div>
+      <div id="cx-history" class="cx-history"></div>
+      <div class="cx-recurring" id="cx-recurring-panel" hidden>
+        <h3>Recurring investment</h3><p>Schedule a paper investment into the selected crypto. No live funds are moved.</p>
+        <div class="cx-form"><label>Amount<input id="cx-amount" type="number" min="1" step="1" value="25"></label><label>Frequency<select id="cx-frequency"><option>Weekly</option><option>Every 2 weeks</option><option>Monthly</option></select></label><label>Start date<input id="cx-start" type="date"></label><button id="cx-save-plan" type="button">Create plan</button></div>
+        <div id="cx-plan" class="cx-plan"></div>
+      </div>`;
+    host.parentNode.insertBefore(section, host);
+    $('cx-start').value = new Date().toISOString().slice(0,10);
+    document.querySelectorAll('[data-cx-time]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-cx-time]').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.timeframe=b.dataset.cxTime; load(); });
+    $('cx-recurring').onclick = () => $('cx-recurring-panel').hidden = !$('cx-recurring-panel').hidden;
+    $('cx-save-plan').onclick = savePlan;
+    $('cx-watch').onclick = () => $('cx-watch').textContent = $('cx-watch').textContent.startsWith('☆') ? '★ Watching' : '☆ Watch';
+    $('cx-history-more').onclick = () => $('cx-history').classList.toggle('expanded');
+    const svg = $('cx-chart');
+    svg.addEventListener('pointermove', e => hover(e, svg)); svg.addEventListener('pointerleave', clearHover); svg.addEventListener('pointerdown', e => svg.setPointerCapture?.(e.pointerId));
+  }
+
+  async function snapshot() {
+    const r = await fetch(`/api/market/snapshot?crypto=${encodeURIComponent(cryptoPair(state.symbol))}`, {cache:'no-store'}); if(!r.ok) throw Error();
+    const d = await r.json(); const s = d.crypto?.[cryptoPair(state.symbol)];
+    if (!s) throw Error();
+    const last = Number(s.latestTrade?.p ?? s.dailyBar?.c), prev = Number(s.prevDailyBar?.c);
+    $('cx-name').textContent = state.symbol === 'BTC' ? 'Bitcoin' : state.symbol;
+    $('cx-price').textContent = Number.isFinite(last) ? `$${money(last, last < 1 ? 6 : 2)}` : '—';
+    $('cx-change').textContent = Number.isFinite(last) && Number.isFinite(prev) ? `${last >= prev ? '▲' : '▼'} $${money(Math.abs(last-prev), last<1?6:2)} (${pct((last/prev-1)*100)}) Today` : '—';
+    $('cx-volume').textContent = Number.isFinite(Number(s.dailyBar?.v)) ? Number(s.dailyBar.v).toLocaleString() : '—';
+  }
+
+  async function metadata() {
+    const id = cryptoIds[state.symbol]; if (!id) return;
+    try { const r=await fetch(`/api/crypto/metadata?ids=${encodeURIComponent(id)}`,{cache:'no-store'}); if(!r.ok) return; const d=await r.json(); const x=d[state.symbol]||d[id]; if(!x)return; $('cx-cap').textContent=x.marketCap?formatCompact(x.marketCap):'—'; $('cx-supply').textContent=x.circulatingSupply?formatCompact(x.circulatingSupply):'—'; } catch {}
+  }
+
+  function formatCompact(v){ const n=Number(v); if(!Number.isFinite(n))return '—'; if(Math.abs(n)>=1e12)return `$${(n/1e12).toFixed(2)}T`; if(Math.abs(n)>=1e9)return `$${(n/1e9).toFixed(2)}B`; if(Math.abs(n)>=1e6)return `${(n/1e6).toFixed(2)}M`; return n.toLocaleString(); }
+
+  async function bars() {
+    const map={LIVE:'1Min','1D':'1Min','1W':'5Min','1M':'15Min','3M':'1Hour','1Y':'1Day','5Y':'1Day','MAX':'1Day'};
+    const limit=['1Y','5Y','MAX'].includes(state.timeframe)?1000:500;
+    const r=await fetch(`/api/market/crypto-bars?symbol=${encodeURIComponent(cryptoPair(state.symbol))}&timeframe=${map[state.timeframe]}&limit=${limit}`,{cache:'no-store'}); if(!r.ok) throw Error();
+    state.bars=(await r.json()).bars||[]; draw(); renderHistory();
+  }
+
+  function draw(){ const bars=state.bars; if(!bars.length)return; const prices=bars.map(x=>Number(x.c)).filter(Number.isFinite), min=Math.min(...prices),max=Math.max(...prices),range=max-min||1; const pts=prices.map((v,i)=>[i*(1000/Math.max(1,prices.length-1)),350-(v-min)/range*315]); $('cx-line').setAttribute('d',pts.map((p,i)=>`${i?'L':'M'} ${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' ')); const hi=Math.max(...prices),lo=Math.min(...prices); $('cx-high').textContent=`$${money(hi,hi<1?6:2)}`; $('cx-low').textContent=`$${money(lo,lo<1?6:2)}`; $('cx-asof').textContent=dateText(bars.at(-1).t); }
+  function renderHistory(){ const rows=state.bars.slice(-30).reverse(); $('cx-history').innerHTML=rows.map((b,i)=>{const p=Number(b.c),prev=Number((rows[i+1]||b).c),ch=prev?p/prev-1:0;return `<button class="cx-history-row" type="button" data-time="${b.t}"><span>${dateText(b.t)}</span><b>$${money(p,p<1?6:2)}</b><em class="${ch>=0?'gain':'negative'}">${pct(ch*100)}</em></button>`}).join(''); document.querySelectorAll('.cx-history-row').forEach(row=>row.onclick=()=>focusDate(row.dataset.time)); }
+  function focusDate(t){ const i=state.bars.findIndex(x=>x.t===t); if(i<0)return; const svg=$('cx-chart'),x=i*(1000/Math.max(1,state.bars.length-1)),p=Number(state.bars[i].c); const min=Math.min(...state.bars.map(x=>Number(x.c))),max=Math.max(...state.bars.map(x=>Number(x.c))),y=350-(p-min)/(max-min||1)*315; showHover(x,y,state.bars[i]); svg.scrollIntoView({behavior:'smooth',block:'center'}); }
+  function hover(e,svg){ const r=svg.getBoundingClientRect(),x=Math.max(0,Math.min(1000,(e.clientX-r.left)/r.width*1000)),i=Math.round(x/1000*(state.bars.length-1)); const b=state.bars[i]; if(!b)return; const p=Number(b.c),min=Math.min(...state.bars.map(x=>Number(x.c))),max=Math.max(...state.bars.map(x=>Number(x.c))),y=350-(p-min)/(max-min||1)*315; showHover(i*(1000/Math.max(1,state.bars.length-1)),y,b); }
+  function showHover(x,y,b){ $('cx-cross').setAttribute('x1',x);$('cx-cross').setAttribute('x2',x);$('cx-cross').hidden=false;$('cx-dot').setAttribute('cx',x);$('cx-dot').setAttribute('cy',y);$('cx-dot').hidden=false; const i=state.bars.indexOf(b),prev=Number(state.bars[Math.max(0,i-1)]?.c),ch=prev?pct((Number(b.c)/prev-1)*100):'—'; const h=$('cx-hover');h.hidden=false;h.innerHTML=`<b>${dateText(b.t)}</b><span>Price $${money(Number(b.c),Number(b.c)<1?6:2)}</span><span class="${Number(b.c)>=prev?'gain':'negative'}">${ch}</span>`;h.style.left=`${Math.min(72,Math.max(3,x/10))}%`; }
+  function clearHover(){ $('cx-cross').hidden=true;$('cx-dot').hidden=true;$('cx-hover').hidden=true; }
+  function savePlan(){ const plan={symbol:state.symbol,amount:Number($('cx-amount').value),frequency:$('cx-frequency').value,start:$('cx-start').value,createdAt:new Date().toISOString(),mode:'PAPER'}; if(!plan.amount||plan.amount<1||!plan.start)return; localStorage.setItem('nexahunter.recurring.'+state.symbol,JSON.stringify(plan)); state.plan=plan; renderPlan(); }
+  function renderPlan(){ const p=JSON.parse(localStorage.getItem('nexahunter.recurring.'+state.symbol)||'null'); state.plan=p; $('cx-plan').innerHTML=p?`<strong>$${money(p.amount,2)}</strong> ${p.frequency} starting ${p.start} · <span>Paper plan active</span>`:'No recurring plan for this asset.'; }
+  async function load(){ try{await Promise.all([snapshot(),bars(),metadata()]);renderPlan();}catch{ $('cx-asof').textContent='Market data unavailable'; } }
+  window.NexaHunterCrypto={select(symbol){state.symbol=String(symbol||'BTC').replace('/USD','').toUpperCase();load();},refresh:load};
+  inject(); load();
+})();
