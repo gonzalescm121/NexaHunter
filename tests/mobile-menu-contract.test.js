@@ -4,18 +4,13 @@ import fs from 'node:fs';
 
 const read = file => fs.readFileSync(file, 'utf8');
 
-test('mobile header exposes an accessible hamburger menu with a concrete toggle path', () => {
+test('mobile header intentionally omits the hamburger menu', () => {
   const html = read('public/index.html');
   const router = read('public/button-router.js');
-  const css = read('public/mobile-final.css');
-  assert.match(html, /id="mobile-menu"/);
-  assert.match(html, /data-action="mobile-menu"/);
-  assert.match(html, /aria-expanded="false"/);
-  assert.match(router, /case\s*'mobile-menu'/);
-  assert.match(router, /NexaHunterToggleMenu=toggleMenu/);
-  assert.match(router, /classList\.toggle\('open'/);
-  assert.match(router, /aria-expanded/);
-  assert.match(css, /\.sidebar\.open/);
+  assert.doesNotMatch(html, /id="mobile-menu"/);
+  assert.doesNotMatch(html, /data-action="mobile-menu"/);
+  assert.doesNotMatch(router, /case\s*'mobile-menu'/);
+  assert.doesNotMatch(router, /NexaHunterToggleMenu=toggleMenu/);
 });
 
 test('account and investing controls remain wired with mobile navigation', () => {
