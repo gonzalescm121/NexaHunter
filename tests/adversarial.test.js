@@ -196,7 +196,8 @@ test("null quantity is rejected", async () => {
     side: "BUY"
   });
 
-  assert.equal(response.status, 400);
+assert.equal(response.status, 400);
+
 });
 
 test("null price is rejected", async () => {
