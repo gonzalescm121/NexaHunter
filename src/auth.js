@@ -4,7 +4,6 @@ const VERIFIER_COOKIE='nexa_oauth_verifier';
 const CF_AUTH='https://dash.cloudflare.com/oauth2/auth';
 const CF_TOKEN='https://dash.cloudflare.com/oauth2/token';
 const CF_USERINFO='https://dash.cloudflare.com/oauth2/userinfo';
-
 function b64url(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function utf8b64url(text){return b64url(new TextEncoder().encode(text));}
 async function sha256(text){return new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)));}
@@ -14,7 +13,7 @@ async function sign(payload,secret){const key=await crypto.subtle.importKey('raw
 async function verify(token,secret){try{const [body,sig]=String(token||'').split('.');if(!body||!sig||!secret)return null;const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['verify']);const normalized=sig.replace(/-/g,'+').replace(/_/g,'/');const ok=await crypto.subtle.verify('HMAC',key,Uint8Array.from(atob(normalized),c=>c.charCodeAt(0)),new TextEncoder().encode(body));if(!ok)return null;const normalizedBody=body.replace(/-/g,'+').replace(/_/g,'/');const payload=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(normalizedBody),c=>c.charCodeAt(0)));return payload.exp>Date.now()/1000?payload:null;}catch{return null;}}
 function cookies(request){const out={};for(const part of (request.headers.get('Cookie')||'').split(';')){const i=part.indexOf('=');if(i>0)out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1).trim());}return out;}
 function cookie(name,value,maxAge){return `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`+(maxAge<=0?'; Expires=Thu, 01 Jan 1970 00:00:00 GMT':'');}
-function redirect(url,headers={}){return new Response(null,{status:302,headers:{Location:url,...headers}});}
+function redirect(url,headers={}){const h=new Headers();h.set('Location',url);for(const [key,value] of Object.entries(headers)){if(key.toLowerCase()==='set-cookie'&&Array.isArray(value)){for(const item of value)h.append('Set-Cookie',item);}else h.set(key,String(value));}return new Response(null,{status:302,headers:h});}
 function origin(request,env){return env.PUBLIC_ORIGIN||new URL(request.url).origin;}
 function requireConfig(env){return env.CLOUDFLARE_OAUTH_CLIENT_ID&&env.SESSION_SECRET;}
 export async function session(request,env){if(!env?.SESSION_SECRET)return null;return verify(cookies(request)[AUTH_COOKIE],env.SESSION_SECRET);}
