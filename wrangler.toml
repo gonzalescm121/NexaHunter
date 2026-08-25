@@ -1,6 +1,6 @@
 name = "nexahunter"
 main = "worker-app.js"
-compatibility_date = "2026-08-23"
+compatibility_date = "2026-08-24"
 
 [assets]
 directory = "./public"
@@ -10,6 +10,14 @@ binding = "ASSETS"
 name = "IDEMPOTENCY"
 class_name = "IdempotencyDurableObject"
 
+[[durable_objects.bindings]]
+name = "PORTFOLIO"
+class_name = "PortfolioDurableObject"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["IdempotencyDurableObject"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["PortfolioDurableObject"]
