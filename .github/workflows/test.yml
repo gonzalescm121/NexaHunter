@@ -51,3 +51,20 @@ jobs:
           test -f src/idempotency.js
           test -f src/market-stream.js
           test -f wrangler.toml
+      - name: Verify deployment configuration
+        run: |
+          grep -q '^main = "worker-app.js"' wrangler.toml
+          grep -q '^directory = "./public"' wrangler.toml
+          grep -q 'name = "ASSETS"' wrangler.toml
+          grep -q 'name = "PORTFOLIO"' wrangler.toml
+          grep -q 'name = "MARKET_STREAM"' wrangler.toml
+          grep -q 'name = "IDEMPOTENCY"' wrangler.toml
+          grep -q 'new_sqlite_classes = \["IdempotencyDurableObject"\]' wrangler.toml
+          grep -q 'new_sqlite_classes = \["PortfolioDurableObject"\]' wrangler.toml
+          grep -q 'new_sqlite_classes = \["MarketStreamDurableObject"\]' wrangler.toml
+      - name: Verify paper-only runtime boundary
+        run: |
+          grep -q "mode:'paper'" worker-app.js
+          grep -q "liveExecution:false" worker-app.js
+          grep -q "ALPACA_API_KEY" worker-app.js
+          grep -q "ALPACA_API_SECRET" worker-app.js
