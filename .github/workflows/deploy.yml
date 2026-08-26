@@ -43,15 +43,16 @@ jobs:
           set -euo pipefail
           test -n "$PUBLIC_ORIGIN"
 
-          # The custom domain is protected by Cloudflare Access, so its 403/redirect
-          # behavior is validated separately. Public market routes are intentionally
-          # exposed by the Worker and are tested through the Worker hostname.
-          root_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/")"
-          case "$root_status" in
-            200|302|403) ;;
-            *) echo "Unexpected protected root status: $root_status"; exit 1 ;;
-          esac
-          curl --fail --silent --show-error -o /dev/null "$PUBLIC_ORIGIN/login"
+          # The custom domain is protected by Cloudflare Access. Without a service
+          # token, protected pages may legitimately return 403 or a redirect before
+          # an interactive Access session exists. Validate that boundary explicitly.
+          for protected_path in / /login; do
+            protected_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN$protected_path")"
+            case "$protected_status" in
+              200|302|403) ;;
+              *) echo "Unexpected protected status for $protected_path: $protected_status"; exit 1 ;;
+            esac
+          done
 
           health="$(curl --fail --silent --show-error "$WORKER_ORIGIN/health")"
           printf '%s' "$health" | grep -q '"status":"ok"'
