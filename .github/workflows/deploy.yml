@@ -48,7 +48,7 @@ jobs:
           # token, protected pages may legitimately return 403 or a redirect before
           # an interactive Access session exists. Validate that boundary explicitly.
           for protected_path in / /login; do
-            protected_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN$protected_path")"
+            protected_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN$protected_path")"
             case "$protected_status" in
               200|302|403) ;;
               *) echo "Unexpected protected status for $protected_path: $protected_status"; exit 1 ;;
@@ -57,25 +57,43 @@ jobs:
 
           access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
 
-          # Use the same Access-protected custom origin for authenticated smoke tests.
-          # Cloudflare Access validates the service token and injects the Access JWT
-          # before the Worker sees the request; the bare workers.dev hostname does not
-          # provide that Access boundary.
-          health="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/health")"
+          # Keep failures strict, but expose the exact protected endpoint and status
+          # so a Cloudflare Access rejection cannot be misdiagnosed as an application
+          # failure. The request still fails hard on every non-2xx response.
+          smoke_get() {
+            local label="$1"
+            local url="$2"
+            local body_file status
+            body_file="$(mktemp)"
+            status="$(curl --silent --show-error --output "$body_file" --write-out '%{http_code}' "${access_headers[@]}" "$url")"
+            if [[ "$status" != 2* ]]; then
+              echo "Production smoke test failed: ${label} returned HTTP ${status}"
+              echo "Endpoint: ${url}"
+              echo "Response body (first 2KB):"
+              head -c 2048 "$body_file" || true
+              echo
+              rm -f "$body_file"
+              return 22
+            fi
+            cat "$body_file"
+            rm -f "$body_file"
+          }
+
+          health="$(smoke_get 'health' "$PUBLIC_ORIGIN/health")"
           printf '%s' "$health" | grep -q '"status":"ok"'
           printf '%s' "$health" | grep -q '"marketDataConfigured":true'
           printf '%s' "$health" | grep -q '"liveExecution":false'
 
-          snapshot="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
+          snapshot="$(smoke_get 'market snapshot' "$PUBLIC_ORIGIN/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
           printf '%s' "$snapshot" | grep -q '"stocks"'
           printf '%s' "$snapshot" | grep -q '"AAPL"'
           printf '%s' "$snapshot" | grep -q '"crypto"'
 
-          bars="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
+          bars="$(smoke_get 'market bars' "$PUBLIC_ORIGIN/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
           printf '%s' "$bars" | grep -q '"symbol":"AAPL"'
           printf '%s' "$bars" | grep -q '"bars"'
 
-          stream_config="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/stream-config")"
+          stream_config="$(smoke_get 'stream configuration' "$PUBLIC_ORIGIN/api/market/stream-config")"
           printf '%s' "$stream_config" | grep -q '"enabled":true'
           printf '%s' "$stream_config" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
 
@@ -83,13 +101,17 @@ jobs:
           # The authenticated service-token headers are sent with the handshake;
           # application-level stream behavior remains covered by the dedicated
           # Worker/WebSocket contract tests in the full suite.
-          ws_status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+          ws_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
             "${access_headers[@]}" \
             -H 'Connection: Upgrade' \
             -H 'Upgrade: websocket' \
             -H 'Sec-WebSocket-Version: 13' \
             -H 'Sec-WebSocket-Key: SGVsbG9Xb3JsZDEyMzQ1Ng==' \
             "$PUBLIC_ORIGIN/api/market/stream")"
-          test "$ws_status" = "101"
+          if [[ "$ws_status" != "101" ]]; then
+            echo "Production smoke test failed: WebSocket upgrade returned HTTP ${ws_status}"
+            echo "Endpoint: $PUBLIC_ORIGIN/api/market/stream"
+            exit 1
+          fi
 
           echo 'Production market API and WebSocket smoke tests passed.'
