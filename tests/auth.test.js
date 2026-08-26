@@ -10,9 +10,9 @@ test('OAuth uses authorization code + PKCE S256',()=>{
   assert.match(auth,/authorization|code_challenge/);
   assert.match(auth,/code_challenge_method:'S256'/);
   assert.match(auth,/code_verifier/);
-  assert.match(auth,/dash\\.cloudflare\\.com\\/oauth2\\/auth/);
-  assert.match(auth,/dash\\.cloudflare\\.com\\/oauth2\\/token/);
-  assert.match(auth,/dash\\.cloudflare\\.com\\/oauth2\\/userinfo/);
+  assert.match(auth,/dash\.cloudflare\.com\/oauth2\/auth/);
+  assert.match(auth,/dash\.cloudflare\.com\/oauth2\/token/);
+  assert.match(auth,/dash\.cloudflare\.com\/oauth2\/userinfo/);
 });
 
 test('OAuth state and session cookies are hardened',()=>{
@@ -24,23 +24,23 @@ test('OAuth state and session cookies are hardened',()=>{
 });
 
 test('API boundary requires an authenticated identity',()=>{
-  assert.match(entry,/authenticatedUser\\(request,env,ctx\\)/);
+  assert.match(entry,/authenticatedUser\(request,env,ctx\)/);
   assert.match(auth,/Authentication required/);
-  assert.match(entry,/\\/api\\/auth\\/me/);
-  assert.match(entry,/ctx\\?\\.access/);
-  assert.match(entry,/accessIdentity\\(request,env\\)/);
+  assert.match(entry,/\/api\/auth\/me/);
+  assert.match(entry,/ctx\?\.access/);
+  assert.match(entry,/accessIdentity\(request,env\)/);
   assert.match(auth,/Cf-Access-Jwt-Assertion/);
   assert.match(auth,/CLOUDFLARE_ACCESS_TEAM_DOMAIN/);
   assert.match(auth,/CLOUDFLARE_ACCESS_AUD/);
-  assert.match(auth,/cdn-cgi\\/access\\/certs/);
+  assert.match(auth,/cdn-cgi\/access\/certs/);
   assert.match(auth,/RSASSA-PKCS1-v1_5/);
-  assert.match(auth,/payload\\.iss!==domain/);
+  assert.match(auth,/payload\.iss!==domain/);
 });
 
 test('paper accounts are isolated by authenticated subject',()=>{
-  assert.match(entry,/idFromName\\(`paper:\\$\\{userId\\}`\\)/);
-  assert.match(entry,/paperPortfolio\\(env,user\\.sub,order\\)/);
-  assert.match(entry,/portfolioSnapshot\\(env,user\\.sub\\)/);
+  assert.match(entry,/idFromName\(`paper:\$\{userId\}`\)/);
+  assert.match(entry,/paperPortfolio\(env,user\.sub,order\)/);
+  assert.match(entry,/portfolioSnapshot\(env,user\.sub\)/);
 });
 
 test('rate limiting is configured',()=>{
