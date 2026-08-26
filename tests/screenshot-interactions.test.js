@@ -19,16 +19,15 @@ test('screenshot interaction controls have live routing and current labels',()=>
   assert.match(fixes,/action==='notifications'/);
   assert.match(fixes,/action==='add-symbol'/);
   assert.match(fixes,/action==='pro'/);
-  assert.match(fixes,/action==='terms'/);
-  assert.match(fixes,/action==='privacy'/);
-  assert.match(fixes,/action==='support'/);
+  assert.match(fixes,/function footerModal\(kind\)/);
+  for(const kind of ['terms','privacy','support'])assert.match(fixes,new RegExp(`${kind}:\\[`));
 });
 
 test('screenshot carousel supports click, keyboard, and touch movement',()=>{
   const fixes=read('public/interaction-fixes.js');
   assert.match(fixes,/d\.addEventListener\('click'/);
   assert.match(fixes,/d\.addEventListener\('keydown'/);
-  assert.match(fixes,/e\.key==='ArrowLeft'\|\|e\.key==='ArrowRight'/);
+  assert.match(fixes,/e\.key!=='ArrowLeft'&&e\.key!=='ArrowRight'/);
   assert.match(fixes,/touchstart/);
   assert.match(fixes,/touchend/);
   assert.match(fixes,/Math\.abs\(endX-startX\)/);
