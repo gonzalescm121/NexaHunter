@@ -31,7 +31,7 @@ test('visible legacy dashboard controls have explicit interaction fallbacks',()=
   for(const label of ['view analysis','view all','gainers','losers','volume','add symbol','my positions','upgrade pro','terms','privacy','support']) assert.match(fixes,new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   assert.match(fixes,/MutationObserver/);
   assert.match(fixes,/carousel-dots/);
-  assert.match(fixes,/openPanel\?\.'NexaAI Analysis|panel\('NexaAI Analysis'\)/);
+  assert.match(fixes,/panel\('NexaAI Analysis'\)/);
   assert.match(fixes,/panel\('Alerts'\)/);
   assert.match(fixes,/panel\('My Positions'\)/);
   assert.match(fixes,/panel\('NexaHunter Pro'\)/);
@@ -71,6 +71,19 @@ test('dashboard panels use connected portfolio and intelligence data instead of 
   assert.match(connected,/function screener\(mode\)/);
   assert.match(connected,/window\.NexaHunter\.openPanel=async name/);
   for(const demo of ['42,891.32','132.84','156.32','28.47','398.21','248.91']) assert.doesNotMatch(panels,new RegExp(demo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+});
+
+test('dashboard interaction panels resolve to connected data or explicit states',()=>{
+  const panels=read('public/panels.js');
+  for(const fn of ['performance','positions','alerts','ai']) assert.match(panels,new RegExp(`async function ${fn}\\(\\)`));
+  assert.match(panels,/jsonGet\('\/api\/portfolio'\)/);
+  assert.match(panels,/jsonGet\('\/api\/intelligence'\)/);
+  assert.match(panels,/No paper positions yet/);
+  assert.match(panels,/No connected alerts are currently triggered/);
+  assert.match(panels,/No live intelligence signal is currently available/);
+  assert.match(panels,/Pro account connection is not configured/);
+  assert.match(panels,/async function openScreener\(mode\)/);
+  assert.match(panels,/Connected market intelligence/);
 });
 
 test('chart uses connected bars and explicit unavailable states',()=>{
