@@ -53,16 +53,18 @@ jobs:
           test -f public/crypto-experience.css
           test -f worker-app.js
           test -f worker-entry.js
+          test -f worker-idempotent-entry.js
           test -f worker.js
           test -f src/auth.js
           test -f src/core.js
           test -f src/portfolio.js
           test -f src/idempotency.js
           test -f src/market-stream.js
+          test -f src/research.js
           test -f wrangler.toml
       - name: Verify deployment configuration
         run: |
-          grep -q '^main = "worker-entry.js"' wrangler.toml
+          grep -Eq '^main = "(worker-entry|worker-idempotent-entry)\.js"' wrangler.toml
           grep -q '^directory = "./public"' wrangler.toml
           grep -q '^binding = "ASSETS"' wrangler.toml
           grep -q 'name = "RATE_LIMITER"' wrangler.toml
