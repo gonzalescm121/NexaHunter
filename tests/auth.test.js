@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const auth=fs.readFileSync('src/auth.js','utf8');
 const entry=fs.readFileSync('worker-entry.js','utf8');
+const login=fs.readFileSync('public/login.html','utf8');
 const wrangler=fs.readFileSync('wrangler.toml','utf8');
 
 test('OAuth uses authorization code + PKCE S256',()=>{
@@ -44,6 +45,12 @@ test('hostname Access configuration has a production fallback and env overrides'
   assert.match(auth,/env\?\.CLOUDFLARE_ACCESS_TEAM_DOMAIN\|\|DEFAULT_ACCESS_DOMAIN/);
   assert.match(auth,/env\?\.CLOUDFLARE_ACCESS_AUD\|\|DEFAULT_ACCESS_AUD/);
   assert.match(entry,/const access=accessConfig\(env\)/);
+});
+
+test('browser sign-in uses the existing native Cloudflare Access application',()=>{
+  assert.match(login,/href="\/cdn-cgi\/access\/login"/);
+  assert.doesNotMatch(login,/href="\/oauth\/cloudflare\/login"/);
+  assert.match(login,/nexahunter-mobile-logo\.svg/);
 });
 
 test('paper accounts are isolated by authenticated subject',()=>{
