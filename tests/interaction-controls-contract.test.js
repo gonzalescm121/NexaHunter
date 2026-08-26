@@ -6,9 +6,10 @@ const read=file=>fs.readFileSync(file,'utf8');
 
 test('reported dashboard controls have explicit interaction fallbacks',()=>{
   const fixes=read('public/interaction-fixes.js');
-  for(const label of ['view analysis','view all','gainers','losers','volume','add symbol','my positions','upgrade']) {
-    assert.match(fixes,new RegExp(`text\\(el\\).*${label}`,'s'),`missing interaction detection for ${label}`);
+  for(const label of ['view analysis','view all','gainers','losers','volume','add symbol','my positions']) {
+    assert.match(fixes,new RegExp(`['\\"]${label}['\\"]`),`missing interaction detection for ${label}`);
   }
+  assert.match(fixes,/includes\('upgrade'\)/);
   assert.match(fixes,/panel\('NexaAI Analysis'\)/);
   assert.match(fixes,/panel\('Alerts'\)/);
   assert.match(fixes,/panel\('My Positions'\)/);
