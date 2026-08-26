@@ -11,7 +11,7 @@ test('AI carousel supports click, keyboard, and touch navigation',()=>{
   assert.match(fixes,/ArrowRight/);
   assert.match(fixes,/touchstart/);
   assert.match(fixes,/touchend/);
-  assert.match(fixes,/aiDot\(next,dots\)/);
+  assert.match(fixes,/aiDot\(next,dots\[next\]\)/);
 });
 
 test('screenshot controls retain explicit interaction fallbacks',()=>{
