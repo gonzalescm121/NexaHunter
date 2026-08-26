@@ -19,6 +19,31 @@ export class PortfolioDurableObject {
     });
   }
 
+  positionDetails() {
+    const rows = this.ctx.storage.sql.exec('SELECT symbol, side, quantity, price FROM orders WHERE status=? AND mode=? ORDER BY timestamp ASC', 'FILLED_PAPER', 'PAPER').toArray();
+    const state = new Map();
+    for (const row of rows) {
+      const symbol = cleanSymbol(row.symbol);
+      const quantity = Number(row.quantity);
+      const price = Number(row.price);
+      if (!symbol || !Number.isFinite(quantity) || !Number.isFinite(price) || quantity <= 0 || price <= 0) continue;
+      const current = state.get(symbol) || { quantity: 0, avgPrice: 0 };
+      if (row.side === 'BUY') {
+        const nextQuantity = current.quantity + quantity;
+        current.avgPrice = nextQuantity > 0 ? ((current.avgPrice * current.quantity) + (price * quantity)) / nextQuantity : 0;
+        current.quantity = nextQuantity;
+      } else if (row.side === 'SELL') {
+        current.quantity = Math.max(0, current.quantity - quantity);
+      }
+      if (current.quantity > 0) state.set(symbol, current);
+      else state.delete(symbol);
+    }
+    return Object.fromEntries([...state.entries()].map(([symbol, value]) => [symbol, {
+      quantity: Number(value.quantity),
+      avgPrice: Number(value.avgPrice)
+    }]));
+  }
+
   snapshot() {
     const account = this.ctx.storage.sql.exec('SELECT cash FROM account WHERE id=1').one();
     const cash = Number(account?.cash ?? INITIAL_CASH);
@@ -26,7 +51,7 @@ export class PortfolioDurableObject {
     const orderRows = this.ctx.storage.sql.exec('SELECT id, symbol, side, quantity, price, status, mode, live_execution AS liveExecution, timestamp FROM orders ORDER BY timestamp DESC LIMIT ?', MAX_ORDERS).toArray();
     const positions = Object.fromEntries(positionRows.map(row => [row.symbol, Number(row.quantity)]));
     const orders = orderRows.map(row => ({ ...row, quantity: Number(row.quantity), liveExecution: Boolean(row.liveExecution) }));
-    return { cash, buyingPower: cash, positions, orders, mode: 'PAPER', liveExecution: false, persistent: true };
+    return { cash, buyingPower: cash, positions, positionDetails: this.positionDetails(), orders, mode: 'PAPER', liveExecution: false, persistent: true };
   }
 
   async fetch(request) {
