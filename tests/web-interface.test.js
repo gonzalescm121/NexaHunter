@@ -39,6 +39,17 @@ test('visible legacy dashboard controls have explicit interaction fallbacks',()=
   assert.match(fixes,/function footerModal\(kind\)/);
 });
 
+test('watchlist panel renders persisted symbols from connected market assets',()=>{
+  const html=read('public/index.html');
+  const js=read('public/app.js');
+  assert.match(html,/id="watchlist-items"/);
+  assert.match(js,/function renderWatchlist\(\)/);
+  assert.match(js,/assets\.filter\(a=>watchlist\.has\(a\[0\]\)\)/);
+  assert.match(js,/renderWatchlist\(\)/);
+  assert.match(js,/data-watch-symbol/);
+  assert.match(js,/No symbols in your watchlist/);
+});
+
 test('market UI never presents stale demo prices as live data',()=>{
   const js=read('public/app.js');
   for(const demo of ['187.32','132.84','248.91','42,891.32','5432.21','17482.91']) assert.doesNotMatch(js,new RegExp(demo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
