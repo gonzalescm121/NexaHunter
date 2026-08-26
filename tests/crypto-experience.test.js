@@ -36,7 +36,8 @@ test('crypto experience uses white text on dark surfaces',()=>{
  assert.match(css,/\.cx-recurring\{[^}]*background:#0a1728/);
 });
 
-test('Cloudflare uses crypto API gateway entrypoint',()=>{
+test('Cloudflare uses the guarded crypto API gateway entrypoint',()=>{
  const cfg=read('wrangler.toml');
- assert.match(cfg,/main\s*=\s*"worker-entry\.js"/);
+ assert.match(cfg,/main\s*=\s*"(?:worker-entry|worker-idempotent-entry)\.js"/);
+ assert.match(cfg,/name\s*=\s*"IDEMPOTENCY"/);
 });
