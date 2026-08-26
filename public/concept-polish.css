@@ -1,0 +1,14 @@
+/* NexaHunter master-concept polish: responsive hierarchy, semantic market colors, and touch-safe controls. */
+:root{--nh-electric:#318eff;--nh-electric-bright:#42a5ff;--nh-navy:#030914;--nh-panel:#071a2d;--nh-border:#173b60;--nh-muted:#7890aa}
+.panel,.ticker-card,.chart-panel{border-color:var(--nh-border)}
+.panel:focus-within,.ticker-card:focus-within,.chart-panel:focus-within{box-shadow:0 0 0 1px #318eff33,0 16px 40px rgba(0,0,0,.34),0 0 24px #126fff12}
+button,a,input,select,textarea{touch-action:manipulation}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--nh-electric-bright);outline-offset:2px}
+.action-link:hover,.link-btn:hover,.add-symbol:hover{color:#fff;background:#0b2d52}
+.chart-candle-up{fill:#29d68c;stroke:#29d68c}.chart-candle-down{fill:#ff5064;stroke:#ff5064}.chart-candle-up line{stroke:#29d68c}.chart-candle-down line{stroke:#ff5064}
+.mobile-bottom-nav{backdrop-filter:blur(16px);background:rgba(3,14,30,.96);border-top:1px solid #173b60}
+.mobile-bottom-nav a,.mobile-bottom-nav button{min-width:44px;min-height:44px;color:#91a8bf}.mobile-bottom-nav a.active,.mobile-bottom-nav button:active{color:var(--nh-electric-bright)}
+@media(max-width:900px){.dashboard{padding-left:12px;padding-right:12px}.market-strip #market-list{gap:8px}.ticker-card{border-radius:10px}.content-grid{gap:0}.chart-panel{border-radius:10px}.right-column{gap:10px}.workspace-panels{gap:10px}.panel{border-radius:10px}.action-link{min-height:40px}.mobile-menu-btn{min-width:44px!important;min-height:44px!important}.sidebar.open{box-shadow:18px 0 45px rgba(0,0,0,.48),0 0 28px #126fff18}}
+@media(max-width:620px){.dashboard{padding-top:8px}.market-strip #market-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ticker-card{min-height:76px}.chart-stage{min-height:260px}.asset-heading{padding-left:10px;padding-right:10px}.workspace-panels .panel{padding:12px}.mobile-bottom-nav{padding-bottom:env(safe-area-inset-bottom)}}
+@media(max-width:390px){.market-strip #market-list{grid-template-columns:1fr}.market-actions .action-link{min-height:38px}.chart-stage{min-height:250px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
