@@ -57,6 +57,22 @@ test('market UI never presents stale demo prices as live data',()=>{
   assert.match(js,/Values shown as — until the connected feed responds/);
 });
 
+test('dashboard panels use connected portfolio and intelligence data instead of demo metrics',()=>{
+  const html=read('public/index.html');
+  const connected=read('public/connected-panels.js');
+  const panels=read('public/panels.js');
+  assert.match(html,/connected-panels\.js/);
+  assert.match(connected,/\/api\/portfolio/);
+  assert.match(connected,/\/api\/intelligence\?symbols=/);
+  assert.match(connected,/function portfolio\(\)/);
+  assert.match(connected,/function performance\(\)/);
+  assert.match(connected,/function alerts\(\)/);
+  assert.match(connected,/function ai\(\)/);
+  assert.match(connected,/function screener\(mode\)/);
+  assert.match(connected,/window\.NexaHunter\.openPanel=async name/);
+  for(const demo of ['42,891.32','132.84','156.32','28.47','398.21','248.91']) assert.doesNotMatch(panels,new RegExp(demo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+});
+
 test('chart uses connected bars and explicit unavailable states',()=>{
   const js=read('public/app.js');
   assert.match(js,/\/api\/market\/bars\?symbol=/);
