@@ -132,3 +132,16 @@ test('mobile interaction targets and drawer remain touch-safe',()=>{
   assert.match(router,/touch-action:manipulation/);
   assert.match(router,/aria-expanded/);
 });
+
+test('master concept polish is loaded and preserves semantic dark-blue/market colors',()=>{
+  const html=read('public/index.html');
+  const polish=read('public/concept-polish.css');
+  assert.match(html,/concept-polish\.css/);
+  assert.match(polish,/--nh-electric:#318eff/);
+  assert.match(polish,/--nh-navy:#030914/);
+  assert.match(polish,/\.chart-candle-up\{fill:#29d68c/);
+  assert.match(polish,/\.chart-candle-down\{fill:#ff5064/);
+  assert.match(polish,/min-width:44px;min-height:44px/);
+  assert.match(polish,/prefers-reduced-motion/);
+  assert.doesNotMatch(polish,/body,body button,body input[^}]*color:#fff!important/);
+});
