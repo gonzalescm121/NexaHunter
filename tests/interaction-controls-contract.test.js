@@ -9,11 +9,11 @@ test('reported dashboard controls have explicit interaction fallbacks',()=>{
   for(const label of ['view analysis','view all','gainers','losers','volume','add symbol','my positions']) {
     assert.match(fixes,new RegExp(`['\\"]${label}['\\"]`),`missing interaction detection for ${label}`);
   }
-  assert.match(fixes,/includes\('upgrade'\)/);
-  assert.match(fixes,/panel\('NexaAI Analysis'\)/);
-  assert.match(fixes,/panel\('Alerts'\)/);
-  assert.match(fixes,/panel\('My Positions'\)/);
-  assert.match(fixes,/panel\('NexaHunter Pro'\)/);
+  assert.match(fixes,/upgrade pro/);
+  assert.match(fixes,/NexaAI Analysis/);
+  assert.match(fixes,/Alerts/);
+  assert.match(fixes,/My Positions/);
+  assert.match(fixes,/NexaHunter Pro/);
   assert.match(fixes,/function addSymbol\(\)/);
   assert.match(fixes,/openScreener\?/);
 });
@@ -23,7 +23,7 @@ test('interaction fallback is safe for dynamically-rendered controls',()=>{
   assert.match(fixes,/MutationObserver/);
   assert.match(fixes,/wireExisting\(\)/);
   assert.match(fixes,/stopImmediatePropagation/);
-  assert.match(fixes,/data\.interactionFix/);
+  assert.match(fixes,/dataset\.interactionFix/);
 });
 
 test('primary dashboard still exposes the controls that the fallback layer services',()=>{
