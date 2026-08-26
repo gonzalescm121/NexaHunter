@@ -1,5 +1,5 @@
 name = "nexahunter"
-main = "worker-entry.js"
+main = "worker-idempotent-entry.js"
 compatibility_date = "2026-08-24"
 
 [assets]
