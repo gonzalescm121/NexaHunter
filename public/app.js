@@ -1,5 +1,5 @@
 const FALLBACK_ASSETS=[['AAPL','Apple Inc.','—','—'],['NVDA','NVIDIA','—','—'],['TSLA','Tesla','—','—'],['AMZN','Amazon','—','—'],['BTC','Bitcoin','—','—'],['AMD','AMD','—','—'],['PLTR','Palantir','—','—'],['CRWD','CrowdStrike','—','—']];
-let assets=[...FALLBACK_ASSETS],selected='AAPL',chartTimeframe='1Min',searchTimer=0;
+let assets=[...FALLBACK_ASSETS],selected='AAPL',chartTimeframe='1Min',searchTimer=0,marketRefreshTimer=0;
 const $=id=>document.getElementById(id);const watchKey='nexahunter.watchlist.v5';
 const esc=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 const money=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -26,11 +26,14 @@ async function refreshClock(){try{const r=await fetch('/api/market/clock',{cache
 function clock(){const c=$('clock');if(c)c.textContent=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}).format(new Date())+' (CT)'}
 async function loadPortfolio(){try{const r=await fetch('/api/portfolio',{cache:'no-store'});if(!r.ok)throw Error();const d=await r.json();if(d.cash!==undefined)$('portfolio-value').textContent='$'+money(d.cash);if(d.buyingPower!==undefined)$('buying-power').textContent='$'+money(d.buyingPower);if(d.positions)$('position-count').textContent=Object.keys(d.positions).length}catch{}}
 function toast(msg){const t=$('toast');if(!t){const n=document.createElement('div');n.id='toast';n.className='toast';document.body.appendChild(n);return toast(msg)}t.textContent=msg;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),2200)}
-function openPanel(name){window.NexaHunter?.openPanel?.(name)}
+function refreshIntervalMs(){const value=Number(localStorage.getItem('nh.refresh')||15);return Math.min(60000,Math.max(5000,Number.isFinite(value)?value*1000:15000))}
+function scheduleMarketRefresh(){clearTimeout(marketRefreshTimer);const delay=refreshIntervalMs();marketRefreshTimer=setTimeout(async()=>{await refreshMarket();scheduleMarketRefresh()},delay)}
+window.NexaHunterSettings={refreshNow:()=>{refreshMarket();scheduleMarketRefresh()}};
 function init(){const search=$('global-search');if(search){search.oninput=e=>{clearTimeout(searchTimer);renderMarkets(e.target.value);searchTimer=setTimeout(()=>{const q=e.target.value.trim();if(q&&/^[A-Z][A-Z0-9./-]{0,9}$/i.test(q)&&!assets.some(a=>a[0].includes(q.toUpperCase())||a[1].toUpperCase().includes(q.toUpperCase())))searchMarketSymbol(q)},450);};search.onkeydown=handleSearchKey}
 window.addEventListener('nexa:watchlist-updated',()=>{renderMarkets($('global-search')?.value||'');renderWatchlist()});
+window.addEventListener('nexa:settings-updated',()=>{scheduleMarketRefresh();refreshMarket()});
 $('analysis-btn')?.addEventListener('click',()=>openPanel('NexaAI Analysis'));$('notification-btn')?.addEventListener('click',()=>openPanel('Alerts'));$('positions-tab')?.addEventListener('click',()=>openPanel('My Positions'));$('open-trade')?.addEventListener('click',()=>openPanel('Trade'));
 document.querySelectorAll('.action-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const name={Explore:'Explore',Trade:'Trade',Backtest:'Backtest',Performance:'Performance'}[a.textContent.trim()];if(name==='Explore')document.querySelector('#screener')?.scrollIntoView({behavior:'smooth',block:'start'});else openPanel(name)}));
 document.querySelectorAll('.time-tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.time-tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');chartTimeframe=({'1D':'1Min','1W':'5Min','1M':'15Min','3M':'1Hour','1Y':'1Day','5Y':'1Day','MAX':'1Day'})[b.textContent]||'1Min';loadBars(selected).catch(()=>showChartState('Live chart data unavailable'))});
-renderMarkets();renderWatchlist();setDetail('AAPL');refreshMarket();refreshClock();loadPortfolio();setInterval(refreshMarket,15000);setInterval(refreshClock,30000);clock()}
+renderMarkets();renderWatchlist();setDetail('AAPL');refreshMarket();refreshClock();loadPortfolio();scheduleMarketRefresh();setInterval(refreshClock,30000);clock()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
