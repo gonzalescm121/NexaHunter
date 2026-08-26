@@ -1,33 +1,31 @@
 (()=>{
-  const money=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-  const esc=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+  const money=v=>Number.isFinite(Number(v))?Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+  const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
   const modal=(title,body,actions)=>window.NexaHunter?.modal?.(title,body,actions);
   async function json(url){const r=await fetch(url,{cache:'no-store'});const d=await r.json();if(!r.ok)throw Error(d.error||`Request failed: ${r.status}`);return d}
   async function portfolio(){
     try{
       const d=await json('/api/portfolio');
       const positions=Object.entries(d.positions||{});
-      const orders=d.orders||[];
-      const value=Number(d.cash);
-      const rows=positions.length?positions.map(([s,q])=>`<div>${esc(s)}</div><div>${esc(q)}</div><div>Paper position</div>`).join(''):'<div class="nh-note" style="grid-column:1/-1">No paper positions yet. Place a paper order to create one.</div>';
-      modal('My Positions',`<div class="nh-table"><div>Symbol</div><div>Quantity</div><div>Status</div>${rows}</div><div class="nh-note">Paper account · ${orders.length} persisted order${orders.length===1?'':'s'} · Buying power $${money(d.buyingPower??d.cash)}</div>`);
+      const orders=Array.isArray(d.orders)?d.orders:[];
+      const rows=positions.length?positions.map(([s,p])=>{const x=p&&typeof p==='object'?p:{quantity:p};const qty=x.quantity??x.qty??'—';return `<div>${esc(s)}</div><div>${esc(qty)}</div><div>Paper position</div>`}).join(''):'<div class="nh-note" style="grid-column:1/-1">No paper positions yet. Place a paper order to create one.</div>';
+      const buying=Number.isFinite(Number(d.buyingPower))?d.buyingPower:d.cash;
+      modal('My Positions',`<div class="nh-table"><div>Symbol</div><div>Quantity</div><div>Status</div>${rows}</div><div class="nh-note">Paper account · ${orders.length} persisted order${orders.length===1?'':'s'} · Buying power $${money(buying)}</div>`);
     }catch{modal('My Positions','<div class="nh-note">Portfolio data is temporarily unavailable. Try again when the connected paper account responds.</div>')}
   }
   async function performance(){
     try{
       const d=await json('/api/portfolio');
-      const orders=d.orders||[];
-      modal('Performance',`<div class="nh-metrics"><b>$${money(d.cash)}<small>Paper Cash</small></b><b>$${money(d.buyingPower??d.cash)}<small>Buying Power</small></b><b>${Object.keys(d.positions||{}).length}<small>Positions</small></b></div><div class="nh-note">Calculated from the connected persistent paper portfolio. ${orders.length} persisted order${orders.length===1?'':'s'}.</div>`);
+      const orders=Array.isArray(d.orders)?d.orders:[];
+      const cash=money(d.cash),buying=money(d.buyingPower??d.cash),count=Object.keys(d.positions||{}).length;
+      modal('Performance',`<div class="nh-metrics"><b>$${cash}<small>Paper Cash</small></b><b>$${buying}<small>Buying Power</small></b><b>${count}<small>Positions</small></b></div><div class="nh-note">Calculated from the connected persistent paper portfolio. ${orders.length} persisted order${orders.length===1?'':'s'}.</div>`);
     }catch{modal('Performance','<div class="nh-note">Performance data is temporarily unavailable.</div>')}
   }
   async function intelligence(){
     try{
       const d=await json('/api/intelligence?symbols=AAPL,NVDA,TSLA,AMZN,AMD,PLTR,CRWD');
-      const strongest=d.strongest;
-      const alerts=d.alerts||[];
-      const rows=(d.movers||[]).slice(0,8).map(x=>`<div class="nh-screener-row"><b>${esc(x.symbol)}</b><span>${x.signal.price===null?'—':'$'+money(x.signal.price)}</span><em class="${(x.signal.changePercent||0)>=0?'gain':'negative'}">${Number.isFinite(x.signal.changePercent)?((x.signal.changePercent>=0?'+':'')+x.signal.changePercent.toFixed(2)+'%'):'—'}</em></div>`).join('');
-      return {d,strongest,alerts,rows};
-    }catch{return {d:null,strongest:null,alerts:[],rows:''}}
+      return {d,strongest:d.strongest,alerts:Array.isArray(d.alerts)?d.alerts:[],movers:Array.isArray(d.movers)?d.movers:[]};
+    }catch{return {d:null,strongest:null,alerts:[],movers:[]}}
   }
   async function alerts(){
     const {alerts:items}=await intelligence();
@@ -36,12 +34,25 @@
   async function ai(){
     const {strongest}=await intelligence();
     if(!strongest){modal('NexaAI Analysis','<div class="nh-note">Live intelligence is temporarily unavailable.</div>');return}
-    const s=strongest.signal;
-    modal('NexaAI Analysis',`<strong>${esc(strongest.symbol)} — ${esc(s.label)}</strong><div class="nh-metrics"><b>${esc(s.confidence)}%<small>AI confidence</small></b><b>${s.price===null?'—':'$'+money(s.price)}<small>Live price</small></b><b>${Number.isFinite(s.changePercent)?((s.changePercent>=0?'+':'')+s.changePercent.toFixed(2)+'%'):'—'}<small>Daily change</small></b></div><div class="nh-note">Signal is calculated from connected market snapshot momentum and volume. It is analytical information, not financial advice.</div>`);
+    const s=strongest.signal||{};
+    modal('NexaAI Analysis',`<strong>${esc(strongest.symbol)} — ${esc(s.label||'Signal')}</strong><div class="nh-metrics"><b>${Number.isFinite(Number(s.confidence))?esc(s.confidence)+'%':'—'}<small>AI confidence</small></b><b>${s.price===null?'—':'$'+money(s.price)}<small>Live price</small></b><b>${Number.isFinite(Number(s.changePercent))?((s.changePercent>=0?'+':'')+Number(s.changePercent).toFixed(2)+'%'):'—'}<small>Daily change</small></b></div><div class="nh-note">Signal is calculated from connected market snapshot momentum and volume. It is analytical information, not financial advice.</div>`);
   }
-  async function screener(mode){
-    const {rows}=await intelligence();
-    modal('Market Screener — '+esc(mode),rows||'<div class="nh-note">Live screener data is temporarily unavailable.</div>');
+  async function screener(mode='gainers'){
+    const {movers}=await intelligence();
+    const normalized=String(mode).toLowerCase();
+    const rows=[...movers].filter(x=>x&&x.signal).sort((a,b)=>{
+      if(normalized==='volume')return Number(b.signal.volume??b.volume??0)-Number(a.signal.volume??a.volume??0);
+      return Number(b.signal.changePercent??-Infinity)-Number(a.signal.changePercent??-Infinity);
+    });
+    if(normalized==='losers')rows.reverse();
+    const usable=rows.filter(x=>normalized==='volume'?Number.isFinite(Number(x.signal.volume??x.volume)):Number.isFinite(Number(x.signal.changePercent)));
+    const body=usable.length?usable.slice(0,8).map(x=>{
+      const s=x.signal||{}, change=Number(s.changePercent), volume=Number(s.volume??x.volume);
+      if(normalized==='volume')return `<div class="nh-screener-row"><b>${esc(x.symbol)}</b><span>Volume</span><em>${Number.isFinite(volume)?volume.toLocaleString():'—'}</em></div>`;
+      return `<div class="nh-screener-row"><b>${esc(x.symbol)}</b><span>${s.price===null?'—':'$'+money(s.price)}</span><em class="${change>=0?'gain':'negative'}">${Number.isFinite(change)?((change>=0?'+':'')+change.toFixed(2)+'%'):'—'}</em></div>`;
+    }).join(''):'<div class="nh-note">Connected screener data is unavailable for this category right now.</div>';
+    const label=normalized==='volume'?'Volume':normalized==='losers'?'Losers':'Gainers';
+    modal('Market Screener — '+label,body,'<button type="button" class="blue-btn" id="nh-screener-close">Close</button>')?.querySelector('#nh-screener-close')?.addEventListener('click',()=>document.querySelector('#nh-modal')?.remove());
   }
   function trade(){
     const body='<div class="nh-grid2"><label>Symbol<input id="nh-symbol" value="AAPL" maxlength="10"></label><label>Side<select id="nh-side"><option>BUY</option><option>SELL</option></select></label><label>Quantity<input id="nh-qty" type="number" min="1" step="1" value="1"></label><label>Limit Price<input id="nh-price" type="number" min="0.01" step="0.01" placeholder="Live price required"></label></div><div class="nh-note">Paper trading only. Enter a live price returned by the market feed. No live brokerage order will be submitted.</div><div id="nh-trade-result" class="nh-result" hidden></div>';
@@ -51,15 +62,7 @@
   function override(){
     if(!window.NexaHunter)return;
     const original=window.NexaHunter.openPanel;
-    window.NexaHunter.openPanel=async name=>{
-      if(name==='My Positions')return portfolio();
-      if(name==='Performance')return performance();
-      if(name==='Alerts')return alerts();
-      if(name==='NexaAI Analysis')return ai();
-      if(name==='NexaHunter Pro')return original(name);
-      if(name==='Trade')return trade();
-      return original(name);
-    };
+    window.NexaHunter.openPanel=async name=>{if(name==='My Positions')return portfolio();if(name==='Performance')return performance();if(name==='Alerts')return alerts();if(name==='NexaAI Analysis')return ai();if(name==='NexaHunter Pro')return original(name);if(name==='Trade')return trade();return original(name)};
     window.NexaHunter.openScreener=mode=>screener(mode);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(override,0),{once:true});else setTimeout(override,0);
