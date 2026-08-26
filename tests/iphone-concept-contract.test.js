@@ -52,3 +52,13 @@ test('hamburger exposes the core mobile account menu actions',()=>{
     assert.match(router,new RegExp(`case'${action}'`),`missing route ${action}`);
   }
 });
+
+test('Add Symbol persists a connected symbol into the watchlist and refreshes the UI',()=>{
+  const fixes=read('public/interaction-fixes.js');
+  const app=read('public/app.js');
+  assert.match(fixes,/nexahunter\.watchlist\.v5/);
+  assert.match(fixes,/set\.add\(symbol\)/);
+  assert.match(fixes,/nexa:watchlist-updated/);
+  assert.match(app,/addToWatchlist|nexa:watchlist-updated/);
+  assert.match(app,/window\.addEventListener\('nexa:watchlist-updated'/);
+});
