@@ -4,14 +4,31 @@
   const text=e=>(e?.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
   const toast=m=>{if(typeof window.toast==='function')return window.toast(m);let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t)}t.textContent=m;t.classList.add('show');clearTimeout(window.__nhInteractionToast);window.__nhInteractionToast=setTimeout(()=>t.classList.remove('show'),2200)};
   const panel=n=>window.NexaHunter?.openPanel?.(n);
+  const watchKey='nexahunter.watchlist.v5';
+  function addToWatchlist(symbol){
+    try{
+      const raw=JSON.parse(localStorage.getItem(watchKey));
+      const set=new Set(Array.isArray(raw)?raw:[]);
+      set.add(symbol);
+      localStorage.setItem(watchKey,JSON.stringify([...set]));
+      document.querySelectorAll('[data-watch-symbol]').forEach(el=>el.closest('.watchlist-row'));
+      const search=$('#global-search');
+      if(search)window.dispatchEvent(new Event('nexa:watchlist-updated'));
+    }catch{}
+  }
   function addSymbol(){
-    const m=window.NexaHunter?.modal?.('Add Symbol','<label>Symbol<input id="nh-add-symbol" maxlength="10" placeholder="AAPL, NVDA, BTC"></label><div class="nh-note">Searches the connected market-data feed. The symbol is added to the Markets/Watchlist view only after a live result is found.</div>','<button type="button" class="blue-btn" id="nh-add-symbol-submit">Add Symbol</button>');
+    const m=window.NexaHunter?.modal?.('Add Symbol','<label>Symbol<input id="nh-add-symbol" maxlength="10" placeholder="AAPL, NVDA, BTC"></label><div class="nh-note">Searches the connected market-data feed. A live result is added to Markets and your Watchlist.</div>','<button type="button" class="blue-btn" id="nh-add-symbol-submit">Add Symbol</button>');
     if(!m)return;
     const input=m.querySelector('#nh-add-symbol'); input?.focus();
     m.querySelector('#nh-add-symbol-submit').onclick=async()=>{
       const value=input.value.trim().toUpperCase(); if(!value)return toast('Enter a symbol');
       m.querySelector('#nh-add-symbol-submit').disabled=true;
-      if(typeof window.searchMarketSymbol==='function'){const found=await window.searchMarketSymbol(value);if(found)m.remove();else m.querySelector('#nh-add-symbol-submit').disabled=false;return}
+      if(typeof window.searchMarketSymbol==='function'){
+        const found=await window.searchMarketSymbol(value);
+        if(found){addToWatchlist(value.replace('/USD',''));m.remove();toast(`${value.replace('/USD','')} added to Watchlist`)}
+        else m.querySelector('#nh-add-symbol-submit').disabled=false;
+        return;
+      }
       const search=$('#global-search'); if(search){search.value=value;search.dispatchEvent(new Event('input',{bubbles:true}));search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));m.remove();return;}
       toast(`Connected market search is unavailable for ${value}`);m.querySelector('#nh-add-symbol-submit').disabled=false;
     };
