@@ -105,3 +105,39 @@ test('chart uses connected bars and explicit unavailable states',()=>{
   assert.match(js,/Live chart data unavailable/);
   assert.doesNotMatch(js,/Math\.sin\(|Math\.cos\(|Math\.random\(/);
 });
+
+test('gainers losers and volume are semantically different connected views',()=>{
+  const connected=read('public/connected-panels.js');
+  assert.match(connected,/function screener\(mode='gainers'\)/);
+  assert.match(connected,/normalized==='volume'/);
+  assert.match(connected,/normalized==='losers'/);
+  assert.match(connected,/signal\.volume/);
+  assert.match(connected,/signal\.changePercent/);
+  assert.match(connected,/Market Screener — '\+label/);
+  assert.match(connected,/Connected screener data is unavailable/);
+  assert.doesNotMatch(connected,/const \{rows\}=await intelligence\(\);/);
+});
+
+test('connected dashboard values fail to an explicit state instead of NaN',()=>{
+  const connected=read('public/connected-panels.js');
+  assert.match(connected,/Number\.isFinite\(Number\(v\)\)/);
+  assert.match(connected,/:'—'/);
+  assert.match(connected,/Portfolio data is temporarily unavailable/);
+  assert.match(connected,/Performance data is temporarily unavailable/);
+});
+
+test('mobile interaction targets and drawer remain touch-safe',()=>{
+  const css=read('public/mobile-final.css');
+  const router=read('public/button-router.js');
+  assert.match(css,/min-width:44px;min-height:44px/);
+  assert.match(css,/touch-action:manipulation/);
+  assert.match(css,/\.sidebar\.open\{left:0\}/);
+  assert.match(css,/\.mobile-nav-open\{overflow:hidden\}/);
+  assert.match(router,/aria-expanded/);
+  assert.match(router,/Close menu/);
+  assert.match(router,/Profile/);
+  assert.match(router,/Settings/);
+  assert.match(router,/Favorites/);
+  assert.match(router,/Watchlist/);
+  assert.match(router,/Current investments/);
+});
