@@ -36,7 +36,6 @@ jobs:
       - name: Production smoke test
         env:
           PUBLIC_ORIGIN: ${{ secrets.NEXAHUNTER_PUBLIC_ORIGIN }}
-          WORKER_ORIGIN: https://nexahunter.gonzalescm121.workers.dev
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
@@ -58,21 +57,25 @@ jobs:
 
           access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
 
-          health="$(curl --fail --silent --show-error "${access_headers[@]}" "$WORKER_ORIGIN/health")"
+          # Use the same Access-protected custom origin for authenticated smoke tests.
+          # Cloudflare Access validates the service token and injects the Access JWT
+          # before the Worker sees the request; the bare workers.dev hostname does not
+          # provide that Access boundary.
+          health="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/health")"
           printf '%s' "$health" | grep -q '"status":"ok"'
           printf '%s' "$health" | grep -q '"marketDataConfigured":true'
           printf '%s' "$health" | grep -q '"liveExecution":false'
 
-          snapshot="$(curl --fail --silent --show-error "${access_headers[@]}" "$WORKER_ORIGIN/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
+          snapshot="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
           printf '%s' "$snapshot" | grep -q '"stocks"'
           printf '%s' "$snapshot" | grep -q '"AAPL"'
           printf '%s' "$snapshot" | grep -q '"crypto"'
 
-          bars="$(curl --fail --silent --show-error "${access_headers[@]}" "$WORKER_ORIGIN/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
+          bars="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
           printf '%s' "$bars" | grep -q '"symbol":"AAPL"'
           printf '%s' "$bars" | grep -q '"bars"'
 
-          stream_config="$(curl --fail --silent --show-error "${access_headers[@]}" "$WORKER_ORIGIN/api/market/stream-config")"
+          stream_config="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/stream-config")"
           printf '%s' "$stream_config" | grep -q '"enabled":true'
           printf '%s' "$stream_config" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
 
@@ -86,7 +89,7 @@ jobs:
             -H 'Upgrade: websocket' \
             -H 'Sec-WebSocket-Version: 13' \
             -H 'Sec-WebSocket-Key: SGVsbG9Xb3JsZDEyMzQ1Ng==' \
-            "$WORKER_ORIGIN/api/market/stream")"
+            "$PUBLIC_ORIGIN/api/market/stream")"
           test "$ws_status" = "101"
 
           echo 'Production market API and WebSocket smoke tests passed.'
