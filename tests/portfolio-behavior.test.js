@@ -29,3 +29,10 @@ test('live execution is hard-disabled',()=>{
   assert.match(source,/liveExecution: false/);
   assert.match(source,/INSERT INTO orders\(id,symbol,side,quantity,price,status,mode,live_execution,timestamp\) VALUES\(\?,\?,\?,\?,\?,\?,\?,\?,\?\)/);
 });
+test('paper portfolio exposes cost basis details without changing legacy position quantities',()=>{
+  assert.match(source,/positionDetails\(\)/);
+  assert.match(source,/positionDetails: this\.positionDetails\(\)/);
+  assert.match(source,/avgPrice/);
+  assert.match(source,/ORDER BY timestamp ASC/);
+  assert.match(source,/positions = Object\.fromEntries/);
+});
