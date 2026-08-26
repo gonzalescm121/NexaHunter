@@ -1,0 +1,16 @@
+.chart-stage{position:relative;overflow:hidden}
+.chart-stage svg{touch-action:none}
+.chart-grid-line{stroke:rgba(148,163,184,.16);stroke-width:1;vector-effect:non-scaling-stroke}
+.chart-axis-label,.chart-time-label{fill:#94a3b8;font-size:13px;font-weight:600;font-family:Inter,system-ui,sans-serif;pointer-events:none}
+.chart-time-label{text-anchor:middle;font-size:12px}
+.chart-candle-up{fill:#34d399;stroke:#34d399;vector-effect:non-scaling-stroke}
+.chart-candle-down{fill:#fb5b6b;stroke:#fb5b6b;vector-effect:non-scaling-stroke}
+.chart-close-line{stroke:#60a5fa;stroke-width:1;opacity:.22;vector-effect:non-scaling-stroke}
+.chart-current-line{stroke:#60a5fa;stroke-width:1;stroke-dasharray:5 5;opacity:.6;vector-effect:non-scaling-stroke}
+.chart-crosshair{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:3 4;opacity:.9;vector-effect:non-scaling-stroke}
+.chart-hover-price-line{fill:#60a5fa;opacity:.22}
+.chart-hover-card{position:absolute;z-index:20;min-width:150px;padding:10px 12px;border:1px solid rgba(96,165,250,.45);border-radius:10px;background:rgba(2,11,31,.94);box-shadow:0 12px 30px rgba(0,0,0,.35);color:#e5edf8;font:12px/1.35 Inter,system-ui,sans-serif;pointer-events:none;transform:translateX(-50%);backdrop-filter:blur(8px)}
+.chart-hover-card strong{display:block;margin-bottom:6px;color:#fff;font-size:12px}
+.chart-hover-card div{display:flex;justify-content:space-between;gap:18px}
+.chart-hover-card span{color:#94a3b8}.chart-hover-card b{color:#f8fafc;font-variant-numeric:tabular-nums}
+@media(max-width:600px){.chart-axis-label{font-size:12px}.chart-time-label{font-size:10px}.chart-hover-card{min-width:140px;font-size:11px}}
