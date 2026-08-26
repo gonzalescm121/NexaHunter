@@ -2,79 +2,54 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const read = file => fs.readFileSync(file, 'utf8');
-const has = (text, needle) => assert.equal(text.includes(needle), true, `Missing expected source contract: ${needle}`);
+const read=file=>fs.readFileSync(file,'utf8');
 
-test('screenshot controls have production wiring and connected panel targets', () => {
-  const html = read('public/index.html');
-  const fixes = read('public/interaction-fixes.js');
-  const panels = read('public/panels.js');
-
-  has(html, 'src="/interaction-fixes.js"');
-
-  for (const label of [
-    'View Analysis',
-    'View All',
-    'Gainers',
-    'Losers',
-    'Volume',
-    'Add Symbol',
-    'My Positions',
-    'Upgrade Pro',
-    'Terms',
-    'Privacy',
-    'Support'
-  ]) {
-    has(fixes.toLowerCase(), label.toLowerCase());
+test('screenshot interaction controls have live routing and current labels',()=>{
+  const html=read('public/index.html');
+  const router=read('public/button-router.js');
+  const fixes=read('public/interaction-fixes.js');
+  assert.match(html,/id="positions-tab"[^>]*data-action="positions"/);
+  assert.match(html,/>View investments<\/button>/);
+  assert.match(router,/case'positions'/);
+  assert.match(router,/window\.NexaHunterInvesting\?\.open/);
+  for(const label of ['View Analysis','View All','Gainers','Losers','Volume','Add Symbol','Upgrade Pro','Terms','Privacy','Support']){
+    assert.match(fixes,new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'));
   }
-
-  for (const target of [
-    'NexaAI Analysis',
-    'Alerts',
-    'My Positions',
-    'NexaHunter Pro'
-  ]) {
-    has(fixes, target);
-  }
-
-  for (const fn of [
-    'addSymbol',
-    'footerModal',
-    'wireDots',
-    'aiDot'
-  ]) {
-    has(fixes, `function ${fn}(`);
-  }
-
-  for (const fn of [
-    'openPanel',
-    'alerts',
-    'ai',
-    'pro',
-    'openScreener'
-  ]) {
-    has(panels, `function ${fn}(`);
-  }
+  assert.match(fixes,/action==='analysis'/);
+  assert.match(fixes,/action==='notifications'/);
+  assert.match(fixes,/action==='add-symbol'/);
+  assert.match(fixes,/action==='pro'/);
+  assert.match(fixes,/action==='terms'/);
+  assert.match(fixes,/action==='privacy'/);
+  assert.match(fixes,/action==='support'/);
 });
 
-test('screenshot controls preserve safe connected-data and paper-only behavior', () => {
-  const fixes = read('public/interaction-fixes.js');
-  const panels = read('public/panels.js');
-
-  has(fixes, '/api/intelligence');
-  has(fixes.toLowerCase(), 'connected market-data feed');
-  has(panels, '/api/paper-orders');
-  has(panels, 'Live execution: false');
-  has(panels, 'No live brokerage order will be submitted');
+test('screenshot carousel supports click, keyboard, and touch movement',()=>{
+  const fixes=read('public/interaction-fixes.js');
+  assert.match(fixes,/d\.addEventListener\('click'/);
+  assert.match(fixes,/d\.addEventListener\('keydown'/);
+  assert.match(fixes,/e\.key==='ArrowLeft'\|\|e\.key==='ArrowRight'/);
+  assert.match(fixes,/touchstart/);
+  assert.match(fixes,/touchend/);
+  assert.match(fixes,/Math\.abs\(endX-startX\)/);
 });
 
-test('AI carousel has click, keyboard and touch interaction contracts', () => {
-  const fixes = read('public/interaction-fixes.js');
+test('screenshot controls fail to explicit connected states instead of demo content',()=>{
+  const connected=read('public/connected-panels.js');
+  assert.match(connected,/async function alerts\(\)/);
+  assert.match(connected,/async function ai\(\)/);
+  assert.match(connected,/async function screener\(mode='gainers'\)/);
+  assert.match(connected,/\/api\/intelligence\?symbols=/);
+  assert.match(connected,/Connected screener data is unavailable/);
+  assert.match(connected,/Live intelligence is temporarily unavailable/);
+});
 
-  has(fixes, "addEventListener('click'");
-  has(fixes, "addEventListener('keydown'");
-  has(fixes, 'ArrowLeft');
-  has(fixes, 'ArrowRight');
-  has(fixes, 'touchstart');
-  has(fixes, 'touchend');
+test('paper trading interaction remains explicitly simulated',()=>{
+  const html=read('public/index.html');
+  const connected=read('public/connected-panels.js');
+  assert.match(html,/Paper trading only/);
+  assert.match(html,/No live execution is available/);
+  assert.match(connected,/Paper trading only/);
+  assert.match(connected,/Live execution: false/);
+  assert.match(connected,/\/api\/paper-orders/);
 });
