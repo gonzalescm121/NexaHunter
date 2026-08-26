@@ -32,9 +32,18 @@ test('API boundary requires an authenticated identity',()=>{
   assert.match(auth,/Cf-Access-Jwt-Assertion/);
   assert.match(auth,/CLOUDFLARE_ACCESS_TEAM_DOMAIN/);
   assert.match(auth,/CLOUDFLARE_ACCESS_AUD/);
+  assert.match(auth,/DEFAULT_ACCESS_DOMAIN/);
+  assert.match(auth,/DEFAULT_ACCESS_AUD/);
   assert.match(auth,/cdn-cgi\/access\/certs/);
   assert.match(auth,/RSASSA-PKCS1-v1_5/);
   assert.match(auth,/payload\.iss!==domain/);
+});
+
+test('hostname Access configuration has a production fallback and env overrides',()=>{
+  assert.match(auth,/export function accessConfig\(env=\{\}\)/);
+  assert.match(auth,/env\?\.CLOUDFLARE_ACCESS_TEAM_DOMAIN\|\|DEFAULT_ACCESS_DOMAIN/);
+  assert.match(auth,/env\?\.CLOUDFLARE_ACCESS_AUD\|\|DEFAULT_ACCESS_AUD/);
+  assert.match(entry,/const access=accessConfig\(env\)/);
 });
 
 test('paper accounts are isolated by authenticated subject',()=>{
