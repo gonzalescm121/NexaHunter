@@ -18,7 +18,10 @@ test('secondary crypto chart polish is wired and renders a value scale',()=>{
 
 test('secondary crypto chart uses a fine line and visible current value',()=>{
   const js=read('public/crypto-chart-polish.js');
+  const css=read('public/crypto-experience.css');
   assert.match(js,/stroke-width:1\.35/);
   assert.match(js,/ui\.current\.textContent=money\(last\)/);
   assert.match(js,/scale\.innerHTML=''/);
+  assert.match(css,/\.cx-chart-wrap path\{[^}]*stroke-width:1\.35/);
+  assert.doesNotMatch(css,/\.cx-chart-wrap path\{[^}]*stroke-width:3\.2/);
 });
