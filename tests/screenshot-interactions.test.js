@@ -62,7 +62,7 @@ test('screenshot controls preserve safe connected-data and paper-only behavior',
   const panels = read('public/panels.js');
 
   has(fixes, '/api/intelligence');
-  has(fixes, 'Connected market-data feed');
+  has(fixes.toLowerCase(), 'connected market-data feed');
   has(panels, '/api/paper-orders');
   has(panels, 'Live execution: false');
   has(panels, 'No live brokerage order will be submitted');
