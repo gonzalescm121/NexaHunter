@@ -29,35 +29,56 @@ jobs:
       - name: Validate before deployment
         run: npm run syntax && npm test
       - name: Deploy Worker and Assets
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.126.0 deploy
       - name: Production smoke test
         env:
           PUBLIC_ORIGIN: ${{ secrets.NEXAHUNTER_PUBLIC_ORIGIN }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
           test -n "$PUBLIC_ORIGIN"
           health="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/health")"
           printf '%s' "$health" | grep -q '"status":"ok"'
           printf '%s' "$health" | grep -q '"marketDataConfigured":true'
-          printf '%s' "$health" | grep -q '"publicMarketApi":true'
+          printf '%s' "$health" | grep -q '"accessAware":true'
+          printf '%s' "$health" | grep -q '"liveExecution":false'
           curl --fail --silent --show-error -o /dev/null "$PUBLIC_ORIGIN/login"
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/")" = "302"
 
-          snapshot="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
-          printf '%s' "$snapshot" | grep -q '"stocks"'
-          printf '%s' "$snapshot" | grep -q '"AAPL"'
-          printf '%s' "$snapshot" | grep -q '"crypto"'
+          root_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/")"
+          case "$root_status" in
+            200|302|403) ;;
+            *) echo "Unexpected root status: $root_status"; exit 1 ;;
+          esac
 
-          bars="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
-          printf '%s' "$bars" | grep -q '"symbol":"AAPL"'
-          printf '%s' "$bars" | grep -q '"bars"'
+          if [ -n "$CF_ACCESS_CLIENT_ID" ] && [ -n "$CF_ACCESS_CLIENT_SECRET" ]; then
+            access_headers=(
+              -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID"
+              -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET"
+            )
+            snapshot="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
+            printf '%s' "$snapshot" | grep -q '"stocks"'
+            printf '%s' "$snapshot" | grep -q '"AAPL"'
+            printf '%s' "$snapshot" | grep -q '"crypto"'
 
-          stream_config="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/api/market/stream-config")"
-          printf '%s' "$stream_config" | grep -q '"enabled":true'
-          printf '%s' "$stream_config" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
+            bars="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
+            printf '%s' "$bars" | grep -q '"symbol":"AAPL"'
+            printf '%s' "$bars" | grep -q '"bars"'
 
-          echo 'Production market API smoke tests passed.'
+            stream_config="$(curl --fail --silent --show-error "${access_headers[@]}" "$PUBLIC_ORIGIN/api/market/stream-config")"
+            printf '%s' "$stream_config" | grep -q '"enabled":true'
+            printf '%s' "$stream_config" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
+          else
+            for endpoint in api/auth/me api/market/snapshot?symbols=AAPL api/market/bars?symbol=AAPL api/market/stream-config; do
+              status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/$endpoint")"
+              case "$status" in
+                401|302|403) ;;
+                *) echo "Unauthenticated endpoint became unexpectedly accessible: /$endpoint ($status)"; exit 1 ;;
+              esac
+            done
+          fi
+
+          echo 'Production deployment smoke tests passed.'
