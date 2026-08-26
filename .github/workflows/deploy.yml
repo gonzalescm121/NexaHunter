@@ -38,7 +38,26 @@ jobs:
         env:
           PUBLIC_ORIGIN: ${{ secrets.NEXAHUNTER_PUBLIC_ORIGIN }}
         run: |
+          set -euo pipefail
           test -n "$PUBLIC_ORIGIN"
-          curl --fail --silent --show-error "$PUBLIC_ORIGIN/health" | grep -q '"status":"ok"'
+          health="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/health")"
+          printf '%s' "$health" | grep -q '"status":"ok"'
+          printf '%s' "$health" | grep -q '"marketDataConfigured":true'
+          printf '%s' "$health" | grep -q '"publicMarketApi":true'
           curl --fail --silent --show-error -o /dev/null "$PUBLIC_ORIGIN/login"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/")" = "302"
+
+          snapshot="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
+          printf '%s' "$snapshot" | grep -q '"stocks"'
+          printf '%s' "$snapshot" | grep -q '"AAPL"'
+          printf '%s' "$snapshot" | grep -q '"crypto"'
+
+          bars="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
+          printf '%s' "$bars" | grep -q '"symbol":"AAPL"'
+          printf '%s' "$bars" | grep -q '"bars"'
+
+          stream_config="$(curl --fail --silent --show-error "$PUBLIC_ORIGIN/api/market/stream-config")"
+          printf '%s' "$stream_config" | grep -q '"enabled":true'
+          printf '%s' "$stream_config" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
+
+          echo 'Production market API smoke tests passed.'
