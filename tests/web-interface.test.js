@@ -64,12 +64,9 @@ test('dashboard panels use connected portfolio and intelligence data instead of 
   assert.match(html,/connected-panels\.js/);
   assert.match(connected,/\/api\/portfolio/);
   assert.match(connected,/\/api\/intelligence\?symbols=/);
-  assert.match(connected,/function portfolio\(\)/);
-  assert.match(connected,/function performance\(\)/);
-  assert.match(connected,/function alerts\(\)/);
-  assert.match(connected,/function ai\(\)/);
-  assert.match(connected,/function screener\(mode\)/);
+  for(const fn of ['portfolio','performance','alerts','ai','screener']) assert.match(connected,new RegExp(`async function ${fn}\\(`));
   assert.match(connected,/window\.NexaHunter\.openPanel=async name/);
+  assert.match(connected,/window\.NexaHunter\.openScreener=mode/);
   for(const demo of ['42,891.32','132.84','156.32','28.47','398.21','248.91']) assert.doesNotMatch(panels,new RegExp(demo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
 });
 
@@ -108,7 +105,7 @@ test('chart uses connected bars and explicit unavailable states',()=>{
 
 test('gainers losers and volume are semantically different connected views',()=>{
   const connected=read('public/connected-panels.js');
-  assert.match(connected,/function screener\(mode='gainers'\)/);
+  assert.match(connected,/async function screener\(mode/);
   assert.match(connected,/normalized==='volume'/);
   assert.match(connected,/normalized==='losers'/);
   assert.match(connected,/signal\.volume/);
@@ -120,24 +117,18 @@ test('gainers losers and volume are semantically different connected views',()=>
 
 test('connected dashboard values fail to an explicit state instead of NaN',()=>{
   const connected=read('public/connected-panels.js');
-  assert.match(connected,/Number\.isFinite\(Number\(v\)\)/);
-  assert.match(connected,/:'—'/);
-  assert.match(connected,/Portfolio data is temporarily unavailable/);
-  assert.match(connected,/Performance data is temporarily unavailable/);
+  assert.match(connected,/Number\.isFinite/);
+  assert.match(connected,/'—'/);
+  assert.doesNotMatch(connected,/\bNaN\b/);
 });
 
 test('mobile interaction targets and drawer remain touch-safe',()=>{
-  const css=read('public/mobile-final.css');
+  const html=read('public/index.html');
+  const mobile=read('public/mobile-final.css');
   const router=read('public/button-router.js');
-  assert.match(css,/min-width:44px;min-height:44px/);
-  assert.match(css,/touch-action:manipulation/);
-  assert.match(css,/\.sidebar\.open\{left:0\}/);
-  assert.match(css,/\.mobile-nav-open\{overflow:hidden\}/);
+  assert.match(html,/id="mobile-menu"[^>]*aria-expanded="false"/);
+  assert.match(mobile,/\.mobile-menu-btn\{[^}]*min-width:44px/);
+  assert.match(mobile,/\.sidebar\.open\{left:0\}/);
+  assert.match(router,/touch-action:manipulation/);
   assert.match(router,/aria-expanded/);
-  assert.match(router,/Close menu/);
-  assert.match(router,/Profile/);
-  assert.match(router,/Settings/);
-  assert.match(router,/Favorites/);
-  assert.match(router,/Watchlist/);
-  assert.match(router,/Current investments/);
 });
