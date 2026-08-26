@@ -28,6 +28,24 @@ test('live trades continuously update the current candle',()=>{
   assert.match(realtime,/updateLiveBar\(p,Date\.now\(\)\)/);
 });
 
+test('chart exposes numeric price axis and historical hover values',()=>{
+  const realtime=read('public/realtime.js');
+  const css=read('public/realtime-chart.css');
+  assert.match(realtime,/function drawAxis\(/);
+  assert.match(realtime,/chart-axis-label/);
+  assert.match(realtime,/chart-time-label/);
+  assert.match(realtime,/function onChartHover\(/);
+  assert.match(realtime,/function drawHover\(/);
+  assert.match(realtime,/Open/);
+  assert.match(realtime,/High/);
+  assert.match(realtime,/Low/);
+  assert.match(realtime,/Close/);
+  assert.match(realtime,/chart-crosshair/);
+  assert.match(realtime,/chart-hover-card/);
+  assert.match(css,/\.chart-axis-label/);
+  assert.match(css,/\.chart-hover-card/);
+});
+
 test('realtime stream subscribes to stock trades, quotes and bars through the Worker bridge',()=>{
   const stream=read('src/market-stream.js');
   assert.match(stream,/trades:\[\.\.\.this\.symbols\]/);
