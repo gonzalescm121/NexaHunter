@@ -10,8 +10,10 @@
     const input=m.querySelector('#nh-add-symbol'); input?.focus();
     m.querySelector('#nh-add-symbol-submit').onclick=async()=>{
       const value=input.value.trim().toUpperCase(); if(!value)return toast('Enter a symbol');
+      m.querySelector('#nh-add-symbol-submit').disabled=true;
+      if(typeof window.searchMarketSymbol==='function'){const found=await window.searchMarketSymbol(value);if(found)m.remove();else m.querySelector('#nh-add-symbol-submit').disabled=false;return}
       const search=$('#global-search'); if(search){search.value=value;search.dispatchEvent(new Event('input',{bubbles:true}));search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));m.remove();return;}
-      m.querySelector('#nh-add-symbol-submit').disabled=true; toast(`Looking up ${value}…`); m.remove();
+      toast(`Connected market search is unavailable for ${value}`);m.querySelector('#nh-add-symbol-submit').disabled=false;
     };
   }
   function footerModal(kind){
@@ -22,14 +24,21 @@
     }[kind];
     if(content)window.NexaHunter?.modal?.(content[0],`<div class="nh-note">${content[1]}</div>`,'<button type="button" class="blue-btn" id="nh-support-close">Close</button>')?.querySelector('#nh-support-close')?.addEventListener('click',()=>$('#nh-modal')?.remove());
   }
-  function aiDot(index, dots){
+  async function aiDot(index,dots){
     const symbols=['NVDA','AAPL','TSLA']; const names=['NVIDIA Corporation','Apple Inc.','Tesla'];
-    const prices=['—','—','—']; const changes=['—','—','—'];
     const root=dots?.closest('.ai-panel,.panel,.right-column')||document;
     const symbol=$('.ai-symbol strong',root); const company=$('.ai-symbol small',root); const price=$('.ai-price',root); const gain=$('.ai-symbol .gain',root);
-    if(symbol)symbol.textContent=symbols[index]; if(company)company.textContent=names[index]; if(price)price.textContent=prices[index]; if(gain)gain.textContent=changes[index];
+    if(symbol)symbol.textContent=symbols[index]; if(company)company.textContent=names[index]; if(price)price.textContent='—'; if(gain)gain.textContent='—';
     $$('.carousel-dots i,.carousel-dots b',dots?.parentElement||root).forEach((d,i)=>{d.classList.toggle('active',i===index);d.setAttribute('aria-current',i===index?'true':'false')});
     dots?.parentElement?.querySelectorAll?.('[data-slide]')?.forEach(d=>d.hidden=Number(d.dataset.slide)!==index);
+    try{
+      const r=await fetch(`/api/intelligence?symbols=${encodeURIComponent(symbols[index])}`,{cache:'no-store'});const data=await r.json();
+      if(!r.ok)throw Error(data.error||'Market intelligence unavailable');
+      const row=data.signals?.find(x=>x.symbol===symbols[index]);
+      if(!row)throw Error('No connected intelligence signal for '+symbols[index]);
+      if(price)price.textContent=row.signal.price===null?'—':'$'+Number(row.signal.price).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      if(gain)gain.textContent=row.signal.changePercent===null?'—':`${row.signal.changePercent>=0?'+':''}${row.signal.changePercent.toFixed(2)}%`;
+    }catch(e){toast(e.message||'Connected AI data unavailable')}
   }
   function wireDots(){
     $$('.carousel-dots i,.carousel-dots b').forEach((d,i)=>{if(d.dataset.interactionWired)return;d.dataset.interactionWired='true';d.setAttribute('role','button');d.setAttribute('tabindex','0');d.setAttribute('aria-label',`AI analysis ${i+1}`);d.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();aiDot(i,d)});d.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();aiDot(i,d)}})});
