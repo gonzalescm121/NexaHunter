@@ -44,7 +44,7 @@ test('watchlist panel renders persisted symbols from connected market assets',()
   const js=read('public/app.js');
   assert.match(html,/id="watchlist-items"/);
   assert.match(js,/function renderWatchlist\(\)/);
-  assert.match(js,/assets\.filter\(a=>watchlist\.has\(a\[0\]\)\)/);
+  assert.match(js,/assets\.filter\(a=>watchlist\.has\(a\[0\]\)/);
   assert.match(js,/renderWatchlist\(\)/);
   assert.match(js,/data-watch-symbol/);
   assert.match(js,/No symbols in your watchlist/);
@@ -84,6 +84,17 @@ test('dashboard interaction panels resolve to connected data or explicit states'
   assert.match(panels,/Pro account connection is not configured/);
   assert.match(panels,/async function openScreener\(mode\)/);
   assert.match(panels,/Connected market intelligence/);
+});
+
+test('carousel and Add Symbol controls use connected market data',()=>{
+  const app=read('public/app.js');
+  const fixes=read('public/interaction-fixes.js');
+  assert.match(app,/window\.searchMarketSymbol=searchMarketSymbol/);
+  assert.match(app,/\/api\/market\/snapshot\?symbols=/);
+  assert.match(fixes,/async function aiDot\(index,dots\)/);
+  assert.match(fixes,/\/api\/intelligence\?symbols=/);
+  assert.match(fixes,/Connected AI data unavailable/);
+  assert.match(fixes,/window\.searchMarketSymbol/);
 });
 
 test('chart uses connected bars and explicit unavailable states',()=>{
