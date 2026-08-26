@@ -127,8 +127,8 @@ test('request-level paper boundary never enables live execution', async () => {
 // Keep the integration fixture honest about the production implementation it exercises.
 test('integration fixture covers the production request and portfolio boundaries', () => {
   assert.match(worker, /url\.pathname==='\/api\/paper-orders'/);
-  assert.match(worker, /paperPortfolio\(env,user\.sub,order\)/);
-  assert.match(worker, /portfolioSnapshot\(env,user\.sub\)/);
+  assert.match(worker, /portfolioRequest\(env,'\/portfolio','POST',order\)/);
+  assert.match(worker, /portfolioRequest\(env,'\/portfolio','GET'\)/);
   assert.match(portfolio, /status: 'FILLED_PAPER'/);
   assert.match(portfolio, /transactionSync\(\(\) =>/);
 });
