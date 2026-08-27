@@ -3,7 +3,6 @@ import { oauthLogin, oauthCallback, logout, session, accessIdentity, accessConfi
 export { IdempotencyDurableObject, PortfolioDurableObject, MarketStreamDurableObject } from './worker-app.js';
 
 const headers={'content-type':'application/json;charset=UTF-8','cache-control':'no-store','X-Content-Type-Options':'nosniff'};
-const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
 const pair=v=>String(v||'').trim().toUpperCase().includes('/')?String(v).trim().toUpperCase():`${String(v||'').trim().toUpperCase()}/USD`;
 const allowed=['1Min','5Min','15Min','1Hour','1Day'];
 const STOCK_SYMBOL=/^[A-Z][A-Z0-9./-]{0,9}$/;
@@ -38,7 +37,7 @@ if(!user&&!publicMarket&&(u.pathname==='/'||u.pathname==='/index.html'))return R
 if(!user&&!publicMarket&&!isPublicPath(u.pathname)&&u.pathname.startsWith('/api/'))return unauthorized();
 if(!user&&!publicMarket&&!isPublicPath(u.pathname)&&!u.pathname.startsWith('/api/'))return Response.redirect(`${u.origin}/login`,302);
 if(u.pathname.startsWith('/api/')&&!(await rateLimit(request,env,user)))return rateResponse();
-if(u.pathname==='/api/portfolio'&&request.method==='GET'){if(!user)return unauthorized();const response=await portfolioSnapshot(env,user.sub);if(!response)return json({cash:100000,positions:{},orders:[],mode:'PAPER',liveExecution:false,persistent:false});return new Response(await response.text(),{status:response.status,headers:{...Object.fromEntries(response.headers),...headers}});}
+if(u.pathname==='/api/portfolio'&&request.method==='GET'){if(!user)return unauthorized();const response=await portfolioSnapshot(env,user.sub);if(!response)return json({unavailable:true,positions:{},orders:[],mode:'PAPER',liveExecution:false,persistent:false});return new Response(await response.text(),{status:response.status,headers:{...Object.fromEntries(response.headers),...headers}});}
 if(u.pathname==='/api/paper-orders')return user?fractionalPaperOrder(request,env,user):unauthorized();
 if(u.pathname==='/api/market/crypto-bars'&&request.method==='GET')return cryptoBars(request,env);
 if(u.pathname==='/api/crypto/metadata'&&request.method==='GET')return metadata(request);
