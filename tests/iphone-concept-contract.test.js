@@ -20,10 +20,14 @@ test('iPhone concept uses compact wolf logo and white/blue NexaHunter wordmark',
   assert.match(css,/--nh-gold:#F5B942/);
 });
 
-test('iPhone concept keeps red and green market candles',()=>{
+test('iPhone concept keeps semantic market-change and candle colors',()=>{
   const css=read('public/mobile-concept.css');
   assert.match(css,/--nh-green:#19D47B/);
   assert.match(css,/--nh-red:#FF4355/);
+  assert.match(css,/\.gain\{color:var\(--nh-green\)!important\}/);
+  assert.match(css,/\.negative\{color:var\(--nh-red\)!important\}/);
+  assert.match(css,/\.asset-heading \.gain\{color:var\(--nh-green\)!important\}/);
+  assert.match(css,/\.asset-heading \.negative\{color:var\(--nh-red\)!important\}/);
   assert.match(css,/candles rect:nth-child\(odd\)/);
   assert.match(css,/candles rect:nth-child\(even\)/);
 });
