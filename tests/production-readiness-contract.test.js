@@ -26,6 +26,19 @@ test('market read endpoints enforce GET and stream endpoint enforces WebSocket u
   assert.match(worker, /json\(\{error:'WebSocket upgrade required'\},\s*426\)/);
 });
 
+test('non-persistent portfolio fallback never fabricates demo cash', () => {
+  assert.match(worker, /persistent:false/);
+  assert.match(worker, /unavailable:true/);
+  assert.doesNotMatch(worker, /cash:100000/);
+});
+
+test('dashboard ignores non-numeric portfolio values until connected state is available', () => {
+  const app = read('public/app.js');
+  assert.match(app, /const cash=Number\(d\.cash\),buyingPower=Number\(d\.buyingPower\)/);
+  assert.match(app, /Number\.isFinite\(cash\)/);
+  assert.match(app, /Number\.isFinite\(buyingPower\)/);
+});
+
 test('production workflow validates source syntax, full tests and required deployment files', () => {
   assert.match(workflow, /push:\n    branches: \[main\]/);
   assert.match(workflow, /pull_request:\n    branches: \[main\]/);
