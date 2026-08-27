@@ -30,3 +30,8 @@ test('UI contains portfolio, markets and trade navigation',()=>{
   assert.match(html,/id=["']markets["']/);
   assert.match(html,/href=["']#trade["']/);
 });
+test('portfolio UI does not present demo account values before the connected account loads',()=>{
+  assert.match(html,/id=["']portfolio-value["'][^>]*>—<\/strong>/);
+  assert.match(html,/id=["']buying-power["'][^>]*>—<\/strong>/);
+  assert.match(html,/id=["']position-count["'][^>]*>—<\/span>/);
+});
