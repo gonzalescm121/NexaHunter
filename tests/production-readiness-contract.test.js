@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const read = p => fs.readFileSync(p, 'utf8');
 const worker = read('worker-app.js');
+const entry = read('worker-entry.js');
 const workflow = read('.github/workflows/test.yml');
 const wrangler = read('wrangler.toml');
 
@@ -26,10 +27,12 @@ test('market read endpoints enforce GET and stream endpoint enforces WebSocket u
   assert.match(worker, /json\(\{error:'WebSocket upgrade required'\},\s*426\)/);
 });
 
-test('non-persistent portfolio fallback never fabricates demo cash', () => {
-  assert.match(worker, /persistent:false/);
-  assert.match(worker, /unavailable:true/);
-  assert.doesNotMatch(worker, /cash:100000/);
+test('non-persistent portfolio fallback never fabricates demo cash in either Worker entrypoint', () => {
+  for (const source of [worker, entry]) {
+    assert.match(source, /persistent:false/);
+    assert.match(source, /unavailable:true/);
+    assert.doesNotMatch(source, /cash:100000/);
+  }
 });
 
 test('dashboard ignores non-numeric portfolio values until connected state is available', () => {
