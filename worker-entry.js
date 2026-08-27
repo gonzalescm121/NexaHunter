@@ -3,6 +3,7 @@ import { oauthLogin, oauthCallback, logout, session, accessIdentity, accessConfi
 export { IdempotencyDurableObject, PortfolioDurableObject, MarketStreamDurableObject } from './worker-app.js';
 
 const headers={'content-type':'application/json;charset=UTF-8','cache-control':'no-store','X-Content-Type-Options':'nosniff'};
+const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{...headers}});
 const pair=v=>String(v||'').trim().toUpperCase().includes('/')?String(v).trim().toUpperCase():`${String(v||'').trim().toUpperCase()}/USD`;
 const allowed=['1Min','5Min','15Min','1Hour','1Day'];
 const STOCK_SYMBOL=/^[A-Z][A-Z0-9./-]{0,9}$/;
