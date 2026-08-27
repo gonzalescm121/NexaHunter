@@ -55,9 +55,42 @@
     modal('Market Screener — '+label,body,'<button type="button" class="blue-btn" id="nh-screener-close">Close</button>')?.querySelector('#nh-screener-close')?.addEventListener('click',()=>document.querySelector('#nh-modal')?.remove());
   }
   function trade(){
-    const body='<div class="nh-grid2"><label>Symbol<input id="nh-symbol" value="AAPL" maxlength="10"></label><label>Side<select id="nh-side"><option>BUY</option><option>SELL</option></select></label><label>Quantity<input id="nh-qty" type="number" min="1" step="1" value="1"></label><label>Limit Price<input id="nh-price" type="number" min="0.01" step="0.01" placeholder="Live price required"></label></div><div class="nh-note">Paper trading only. Enter a live price returned by the market feed. No live brokerage order will be submitted.</div><div id="nh-trade-result" class="nh-result" hidden></div>';
-    const m=modal('Paper Trade',body,'<button class="blue-btn" id="nh-submit">Place Paper Order</button>');
-    m.querySelector('#nh-submit').onclick=async()=>{const button=m.querySelector('#nh-submit');button.disabled=true;try{const symbol=m.querySelector('#nh-symbol').value.trim().toUpperCase(),price=Number(m.querySelector('#nh-price').value),quantity=Number(m.querySelector('#nh-qty').value);if(!symbol||!Number.isFinite(price)||price<=0||!Number.isFinite(quantity)||quantity<=0)throw Error('Enter a valid symbol, live price and quantity');const order={id:globalThis.crypto?.randomUUID?.()||`paper-${Date.now()}`,symbol,side:m.querySelector('#nh-side').value,quantity,price,assetType:'STOCK'};const r=await fetch('/api/paper-orders',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(order)});const d=await r.json();if(!r.ok||d.accepted===false)throw Error(d.error||'Order rejected');m.querySelector('#nh-trade-result').hidden=false;m.querySelector('#nh-trade-result').innerHTML='<b>FILLED — PAPER</b><br>'+esc(order.side)+' '+esc(order.quantity)+' '+esc(order.symbol)+' @ $'+money(order.price)+'<br><small>Live execution: false</small>';button.textContent='Done';button.disabled=false;button.onclick=()=>m.remove()}catch(e){button.disabled=false;const t=document.querySelector('#toast');if(t){t.textContent=e.message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}}};
+    const body='<div class="nh-grid2"><label>Symbol<input id="nh-symbol" value="AAPL" maxlength="10" autocomplete="off"></label><label>Side<select id="nh-side"><option>BUY</option><option>SELL</option></select></label><label>Quantity<input id="nh-qty" type="number" min="1" step="1" value="1"></label><label>Live Price<input id="nh-price" type="number" min="0.01" step="0.01" placeholder="Loading quote…" readonly></label></div><div id="nh-quote-state" class="nh-note" aria-live="polite">Loading a connected market quote…</div><div class="nh-note">Paper trading only. The order price is taken from the connected market snapshot; no live brokerage order will be submitted.</div><div id="nh-trade-result" class="nh-result" hidden></div>';
+    const m=modal('Paper Trade',body,'<button class="blue-btn" id="nh-submit" disabled>Loading quote…</button>');
+    const symbolInput=m.querySelector('#nh-symbol'),priceInput=m.querySelector('#nh-price'),quoteState=m.querySelector('#nh-quote-state'),submit=m.querySelector('#nh-submit');
+    let quoteRequest=0,liveQuote=null;
+    const loadQuote=async()=>{
+      const requestId=++quoteRequest;
+      const symbol=symbolInput.value.trim().toUpperCase();
+      submit.disabled=true;submit.textContent='Loading quote…';priceInput.value='';priceInput.placeholder='Loading quote…';liveQuote=null;
+      if(!symbol){quoteState.textContent='Enter a symbol to load a connected quote.';return}
+      quoteState.textContent=`Loading connected ${symbol} quote…`;
+      try{
+        const d=await json(`/api/market/snapshot?symbols=${encodeURIComponent(symbol)}`);
+        if(requestId!==quoteRequest)return;
+        const q=d?.stocks?.[symbol];
+        const price=Number(q?.price??q?.last??q?.close);
+        if(!q||!Number.isFinite(price)||price<=0)throw Error(`No live quote available for ${symbol}`);
+        liveQuote={symbol,price};priceInput.value=price.toFixed(2);priceInput.placeholder='';quoteState.textContent=`Connected quote · ${symbol} · $${money(price)}`;submit.disabled=false;submit.textContent='Place Paper Order';
+      }catch(e){
+        if(requestId!==quoteRequest)return;
+        quoteState.textContent=`Quote unavailable: ${e.message}. Order submission is disabled until a connected quote is available.`;submit.disabled=true;submit.textContent='Waiting for quote';
+      }
+    };
+    let debounce;
+    symbolInput.addEventListener('input',()=>{clearTimeout(debounce);debounce=setTimeout(loadQuote,350)});
+    loadQuote();
+    submit.onclick=async()=>{
+      submit.disabled=true;
+      try{
+        const symbol=symbolInput.value.trim().toUpperCase(),quantity=Number(m.querySelector('#nh-qty').value);
+        if(!liveQuote||liveQuote.symbol!==symbol)throw Error('Refresh the connected quote before placing the paper order');
+        if(!Number.isFinite(quantity)||quantity<=0)throw Error('Enter a valid quantity');
+        const order={id:globalThis.crypto?.randomUUID?.()||`paper-${Date.now()}`,symbol,side:m.querySelector('#nh-side').value,quantity,price:liveQuote.price,assetType:'STOCK'};
+        const r=await fetch('/api/paper-orders',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(order)});const d=await r.json();if(!r.ok||d.accepted===false)throw Error(d.error||'Order rejected');
+        m.querySelector('#nh-trade-result').hidden=false;m.querySelector('#nh-trade-result').innerHTML='<b>FILLED — PAPER</b><br>'+esc(order.side)+' '+esc(order.quantity)+' '+esc(order.symbol)+' @ $'+money(order.price)+'<br><small>Live execution: false</small>';submit.textContent='Done';submit.disabled=false;submit.onclick=()=>m.remove();
+      }catch(e){submit.disabled=false;submit.textContent='Place Paper Order';const t=document.querySelector('#toast');if(t){t.textContent=e.message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}}
+    };
   }
   function override(){
     if(!window.NexaHunter)return;
