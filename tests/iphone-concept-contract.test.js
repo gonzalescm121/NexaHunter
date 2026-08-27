@@ -39,6 +39,7 @@ test('mobile concept provides five-button bottom navigation and functional hambu
   for(const action of ['markets','positions','trade','profile']) assert.match(html,new RegExp(`data-action="${action}"`));
   assert.match(css,/\.mobile-bottom-nav/);
   assert.match(css,/grid-template-columns:repeat\(5,1fr\)/);
+  assert.match(css,/@media\(max-width:900px\)[\s\S]*?\.mobile-menu-btn\{display:grid!important/);
   assert.match(router,/case\s*'mobile-menu'/);
   assert.match(router,/function toggleMenu\(\)/);
 });
