@@ -33,4 +33,6 @@ test('primary dashboard still exposes the controls that the fallback layer servi
   }
   assert.match(html,/id=\"positions-tab\"/);
   assert.match(html,/id=\"open-trade\"/);
+  assert.match(html,/id=\"open-analysis\"/);
+  assert.match(html,/NexaAI Copilot/);
 });
