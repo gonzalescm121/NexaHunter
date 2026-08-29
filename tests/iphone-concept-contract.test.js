@@ -67,3 +67,15 @@ test('Add Symbol persists a connected symbol into the watchlist and refreshes th
   assert.match(app,/addToWatchlist|nexa:watchlist-updated/);
   assert.match(app,/window\.addEventListener\('nexa:watchlist-updated'/);
 });
+
+test('dashboard avoids demo watchlist entries and exposes explicit portfolio loading/error state',()=>{
+  const html=read('public/index.html');
+  const app=read('public/app.js');
+  assert.match(html,/id="watchlist-items"/);
+  assert.match(html,/No symbols in your watchlist\. Add one from Markets\./);
+  assert.match(html,/id="portfolio-state"/);
+  assert.match(html,/Loading paper portfolio…/);
+  assert.match(app,/new Set\(Array\.isArray\(v\)\?v:\[\]\)/);
+  assert.match(app,/setPortfolioState\('Loading paper portfolio…','loading'\)/);
+  assert.match(app,/Paper portfolio unavailable\. Values will appear when the persistent account reconnects\./);
+});
