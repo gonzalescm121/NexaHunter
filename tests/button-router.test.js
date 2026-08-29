@@ -9,7 +9,7 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 test('primary dashboard controls declare explicit actions',()=>{
   const html=read('public/index.html');
   for(const action of ['analysis','notifications','explore','trade','backtest','performance','positions','markets','profile','mobile-menu']) assert.match(html,new RegExp(`data-action="${action}"`),`missing data-action ${action}`);
-  for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade','mobile-bottom-nav','mobile-menu']) assert.match(html,new RegExp(`id="${id}"`),`missing control ${id}`);
+  for(const id of ['analysis-btn','notification-btn','positions-tab','open-trade','open-backtest','open-performance','mobile-bottom-nav','mobile-menu']) assert.match(html,new RegExp(`id="${id}"`),`missing control ${id}`);
 });
 
 test('central button router covers every primary action',()=>{
