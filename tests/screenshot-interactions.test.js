@@ -43,6 +43,15 @@ test('screenshot controls fail to explicit connected states instead of demo cont
   assert.match(connected,/Live intelligence is temporarily unavailable/);
 });
 
+test('market status has a rendered live-status target for the connected clock',()=>{
+  const html=read('public/index.html');
+  const app=read('public/app.js');
+  assert.match(html,/id="market-status"[^>]*class="top-status"/);
+  assert.match(html,/id="clock"/);
+  assert.match(app,/document\.querySelector\('\.top-status'\)/);
+  assert.match(app,/fetch\('\/api\/market\/clock'/);
+});
+
 test('paper trading interaction remains explicitly simulated',()=>{
   const html=read('public/index.html');
   const connected=read('public/connected-panels.js');
