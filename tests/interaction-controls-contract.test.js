@@ -41,5 +41,6 @@ test('volume screener has a connected numeric field',()=>{
   const worker=read('worker-app.js');
   const panels=read('public/connected-panels.js');
   assert.match(worker,/changePercent:day,volume:num\(av\),volumeRatio:vol/,'intelligence signal must expose raw volume');
+  assert.match(worker,/volumeRatio:vol/,'intelligence signal must retain volume ratio');
   assert.match(panels,/signal\.volume\?\?b\.volume/,'volume screener must consume raw signal volume');
 });
