@@ -41,25 +41,31 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$PUBLIC_ORIGIN"
-          test -n "$CF_ACCESS_CLIENT_ID"
-          test -n "$CF_ACCESS_CLIENT_SECRET"
 
-          # The custom domain is protected by Cloudflare Access. Without a service
-          # token, protected pages may legitimately return 403 or a redirect before
-          # an interactive Access session exists. Validate that boundary explicitly.
+          # Access service-token credentials are optional for a public origin.
+          # When the configured origin is protected by Cloudflare Access, both
+          # credentials must be supplied so the automated smoke test can reach it.
+          access_headers=()
+          if [[ -n "$CF_ACCESS_CLIENT_ID" && -n "$CF_ACCESS_CLIENT_SECRET" ]]; then
+            access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
+            echo 'Cloudflare Access service-token authentication enabled for smoke tests.'
+          else
+            echo 'No Cloudflare Access service token configured; smoke testing the configured public origin directly.'
+          fi
+
+          # The custom domain may be protected by Cloudflare Access. Without a
+          # service token, the protected UI can legitimately return 403 or a
+          # redirect. API/health smoke tests below remain strict and must return
+          # 2xx; if the configured origin is Access-protected, configure the
+          # service-token secrets above rather than weakening API validation.
           for protected_path in / /login; do
-            protected_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN$protected_path")"
+            protected_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "${access_headers[@]}" "$PUBLIC_ORIGIN$protected_path")"
             case "$protected_status" in
               200|302|403) ;;
               *) echo "Unexpected protected status for $protected_path: $protected_status"; exit 1 ;;
             esac
           done
 
-          access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
-
-          # Keep failures strict, but expose the exact protected endpoint and status
-          # so a Cloudflare Access rejection cannot be misdiagnosed as an application
-          # failure. The request still fails hard on every non-2xx response.
           smoke_get() {
             local label="$1"
             local url="$2"
