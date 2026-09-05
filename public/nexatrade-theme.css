@@ -1,0 +1,127 @@
+/* NEXATRADE AI — High-Tech Dark Mode Trading concept theme
+   Palette: Dark Navy #0A1A2F · Charcoal #1A1F2E · Black #000000
+           Neon Blue #00D2FF · Electric Green #00FF7A · Silver #C0C0C0
+   Loaded last; uses !important to override earlier !important layers.
+   Preserves all locked ids, data-actions, labels, JS namespace, and the
+   nexahunter-mobile-logo.svg contract. */
+
+:root{
+  --bg:#0A1A2F; --panel:#1A1F2E; --panel2:#0A1A2F;
+  --line:#2A3548; --line2:#1A2A40;
+  --text:#E8EDF5; --muted:#8E9BAE;
+  --blue:#00D2FF; --blue2:#38E0FF; --cyan:#00D2FF;
+  --green:#00FF7A; --red:#FF4D5E; --gold:#C0C0C0;
+  --shadow:0 18px 44px rgba(0,0,0,.5);
+  --nh-blue:#00D2FF; --nh-blue-dark:#0A1A2F; --nh-blue-deep:#000000;
+  --nh-white:#FFFFFF; --nh-gold:#C0C0C0; --nh-gold-bright:#E8EDF5; --nh-gold-dark:#8A9BAE;
+  --nh-line:#2A3548; --nh-muted:#8E9BAE; --nh-green:#00FF7A; --nh-red:#FF4D5E;
+  --nh-deep:#000000; --nh-electric:#00D2FF; --nh-electric-bright:#38E0FF;
+  --nh-navy:#0A1A2F; --nh-panel:#1A1F2E; --nh-border:#2A3548;
+}
+
+/* Base canvas — deep dark-navy to black */
+body{
+  background:radial-gradient(circle at 50% -12%,#0A1A2F 0,#061020 38%,#01030a 78%,#000 100%)!important;
+  color:#E8EDF5!important;
+  -webkit-font-smoothing:antialiased;
+}
+.app-shell{background:linear-gradient(90deg,rgba(10,26,47,.98),rgba(15,25,40,.92))!important}
+.sidebar,.topbar{background:rgba(10,18,32,.97)!important;border-color:#2A3548!important}
+
+/* Brand */
+.brand strong,.brand strong span{color:#fff!important}
+.brand small{color:#00D2FF!important;letter-spacing:.14em}
+.wolf-logo{border-color:#00D2FF!important;background:radial-gradient(circle,#00D2FF,#0A1A2F)!important;box-shadow:0 0 18px rgba(0,210,255,.4)!important}
+.top-star{color:#C0C0C0!important}
+
+/* Navigation */
+.nav-item{color:#8E9BAE!important}
+.nav-item:hover{background:rgba(0,210,255,.10)!important;color:#fff!important}
+.nav-item.active{background:linear-gradient(90deg,#00D2FF,#0077A8)!important;color:#021018!important;font-weight:700}
+
+/* Buttons & controls */
+.blue-btn{background:linear-gradient(180deg,#00D2FF,#0088AA)!important;border-color:#00D2FF!important;color:#021018!important;font-weight:700}
+.action-link{background:linear-gradient(180deg,rgba(0,210,255,.14),rgba(0,210,255,.05))!important;border-color:rgba(0,210,255,.5)!important;color:#00D2FF!important}
+.action-link:hover{border-color:#00D2FF!important;box-shadow:0 0 16px rgba(0,210,255,.25)!important}
+.time-tabs button.active{background:rgba(0,210,255,.18)!important;color:#00D2FF!important}
+.chart-actions button{border-color:#2A3548!important;color:#8E9BAE!important}
+.chart-actions button:hover{color:#00D2FF!important;border-color:rgba(0,210,255,.4)!important}
+.add-symbol{color:#00D2FF!important}
+.link-btn{color:#00D2FF!important}
+.mobile-menu-btn{background:#00D2FF!important;border-color:#00D2FF!important;color:#021018!important}
+
+/* Panels & cards */
+.panel,.ticker-card,.chart-panel{background:#1A1F2E!important;border-color:#2A3548!important}
+.panel:hover,.ticker-card:hover{box-shadow:0 18px 44px rgba(0,0,0,.5),0 0 0 1px rgba(0,210,255,.15)!important}
+.panel-title h2{color:#fff!important}
+.search-wrap{background:rgba(10,18,32,.92)!important;border-color:#2A3548!important}
+
+/* Chart — neon green up / red down, neon-blue MA */
+.chart-stage:before{background:repeating-linear-gradient(to bottom,transparent 0,transparent 64px,rgba(42,53,72,.5) 65px),repeating-linear-gradient(to right,transparent 0,transparent 89px,rgba(42,53,72,.4) 90px)!important}
+.grid-lines{stroke:#2A3548!important}
+.chart-candle-up{fill:#00FF7A!important;stroke:#00FF7A!important}
+.chart-candle-down{fill:#FF4D5E!important;stroke:#FF4D5E!important}
+.ma-line{stroke:#00D2FF!important}
+.price-line{stroke:#00FF7A!important}
+.price-tag{background:#00FF7A!important;color:#021018!important}
+
+/* Market rows & sentiment */
+.market-row:hover,.market-row.selected{background:rgba(0,210,255,.10)!important}
+.watch-button.active{color:#00FF7A!important}
+.gain,.green-chart{color:#00FF7A!important}
+.green-chart polyline{stroke:#00FF7A!important}
+.blue-chart polyline{stroke:#00D2FF!important}
+.negative{color:#FF4D5E!important}
+.live-dot{background:#00FF7A!important;box-shadow:0 0 8px rgba(0,255,122,.6)!important}
+
+/* Portfolio */
+.portfolio-value{color:#fff!important}
+.donut{background:conic-gradient(#00D2FF 0 68%,#00FF7A 68% 86%,#5a6b82 86%)!important;box-shadow:inset 0 0 0 9px #0A1A2F!important}
+.portfolio-chart path{stroke:#00D2FF!important}
+
+/* Crypto experience panel */
+.crypto-experience{background:linear-gradient(180deg,#0A1A2F,#01030a)!important;border-color:#2A3548!important}
+.crypto-experience .cx-price,.crypto-experience h2,.crypto-experience h3{color:#fff!important}
+.crypto-experience .cx-actions button:first-child,
+.crypto-experience .cx-recurring button#cx-save-plan,
+.crypto-experience .cx-alert-panel button{background:#00D2FF!important;border-color:#00D2FF!important;color:#021018!important}
+.crypto-experience .cx-actions button:nth-child(2){background:rgba(0,210,255,.12)!important;border-color:rgba(0,210,255,.5)!important;color:#00D2FF!important}
+.crypto-experience .cx-actions button,.crypto-experience .cx-history-head button{background:#0A1A2F!important;border-color:#2A3548!important;color:#fff!important}
+.crypto-experience .cx-chart-wrap{background:#01030a!important;border-color:#2A3548!important}
+.crypto-experience .cx-chart-wrap path{stroke:#00FF7A!important}
+.crypto-experience .cx-chart-wrap circle{fill:#00FF7A!important;stroke:#fff!important}
+.crypto-experience .cx-chart-wrap line{stroke:#3A4A60!important}
+.crypto-experience .cx-timeframes{border-color:#2A3548!important}
+.crypto-experience .cx-timeframes button.active{background:#00D2FF!important;color:#021018!important}
+.crypto-experience .cx-stats,.crypto-experience .cx-history-row{border-color:#2A3548!important}
+.crypto-experience .cx-history-row{background:#0A1A2F!important}
+.crypto-experience .cx-recurring,.crypto-experience .cx-alert-panel{background:#0A1A2F!important;border-color:#2A3548!important}
+.crypto-experience .cx-form input,.crypto-experience .cx-form select,
+.crypto-experience .cx-alert-form input{background:#01030a!important;border-color:#2A3548!important;color:#fff!important}
+.crypto-experience .paper-only-badge{background:#00D2FF!important;color:#021018!important}
+
+/* Mobile bottom nav & menu */
+.cx-bottom-nav{background:rgba(10,18,32,.98)!important;border-top-color:#2A3548!important}
+.cx-bottom-nav button.active{color:#00D2FF!important}
+.mobile-bottom-nav{background:rgba(10,18,32,.98)!important;border-top-color:#2A3548!important}
+.mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#00D2FF!important}
+
+/* Premium / silver accents */
+.pro-card{border-color:rgba(192,192,192,.3)!important}
+.pro-badge{background:rgba(192,192,192,.15)!important;color:#C0C0C0!important;border-color:rgba(192,192,192,.4)!important}
+
+/* Keyboard focus — Neon Blue */
+*:focus-visible{outline:2px solid #00D2FF!important;outline-offset:2px}
+*:focus:not(:focus-visible){outline:none}
+
+/* Selection & scrollbars */
+::selection{background:rgba(0,210,255,.30)!important;color:#fff!important}
+*{scrollbar-color:#2A3548 transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2A3548;border-radius:6px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#3A4A60;background-clip:content-box}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
