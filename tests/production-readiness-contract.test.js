@@ -73,19 +73,21 @@ test('production deployment is manually guarded and validates before deploy', ()
 test('production deployment requires Cloudflare credentials and a public origin', () => {
   assert.match(deployWorkflow, /CLOUDFLARE_API_TOKEN:/);
   assert.match(deployWorkflow, /CLOUDFLARE_ACCOUNT_ID:/);
-  assert.match(deployWorkflow, /NEXAHUNTER_PUBLIC_ORIGIN:/);
+  assert.match(deployWorkflow, /PUBLIC_ORIGIN:\s*\$\{\{ secrets\.NEXAHUNTER_PUBLIC_ORIGIN \}\}/);
+  assert.match(deployWorkflow, /CF_ACCESS_CLIENT_ID:\s*\$\{\{ secrets\.CF_ACCESS_CLIENT_ID \}\}/);
+  assert.match(deployWorkflow, /CF_ACCESS_CLIENT_SECRET:\s*\$\{\{ secrets\.CF_ACCESS_CLIENT_SECRET \}\}/);
   assert.match(deployWorkflow, /test -n \"\$PUBLIC_ORIGIN\"/);
 });
 
 test('production smoke test verifies health, market data, streaming and paper-only execution', () => {
   assert.match(deployWorkflow, /smoke_get 'health'/);
-  assert.match(deployWorkflow, /\"\/health\"/);
-  assert.match(deployWorkflow, /\"status\\\":\"ok\"/);
-  assert.match(deployWorkflow, /\"liveExecution\\\":false/);
+  assert.match(deployWorkflow, /\$PUBLIC_ORIGIN\/health/);
+  assert.match(deployWorkflow, /grep -q '\"status\":\"ok\"'/);
+  assert.match(deployWorkflow, /grep -q '\"liveExecution\":false'/);
   assert.match(deployWorkflow, /api\/market\/snapshot/);
   assert.match(deployWorkflow, /api\/market\/bars/);
   assert.match(deployWorkflow, /api\/market\/stream-config/);
-  assert.match(deployWorkflow, /Upgrade.*websocket/);
+  assert.match(deployWorkflow, /Upgrade: websocket/);
   assert.match(deployWorkflow, /ws_status/);
   assert.match(deployWorkflow, /!= \"101\"/);
 });
