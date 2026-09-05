@@ -36,3 +36,10 @@ test('primary dashboard still exposes the controls that the fallback layer servi
   assert.match(html,/id=\"open-analysis\"/);
   assert.match(html,/NexaAI Copilot/);
 });
+
+test('volume screener has a connected numeric field',()=>{
+  const worker=read('worker-app.js');
+  const panels=read('public/connected-panels.js');
+  assert.match(worker,/changePercent:day,volume:num\(av\),volumeRatio:vol/,'intelligence signal must expose raw volume');
+  assert.match(panels,/signal\.volume\?\?b\.volume/,'volume screener must consume raw signal volume');
+});
