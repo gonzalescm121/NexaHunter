@@ -81,7 +81,8 @@ test('production deployment requires Cloudflare credentials and a public origin'
 
 test('production smoke test verifies health, market data, streaming and paper-only execution', () => {
   assert.match(deployWorkflow, /smoke_get 'health'/);
-  assert.match(deployWorkflow, /\$PUBLIC_ORIGIN\/health/);
+  assert.match(deployWorkflow, /\$smoke_origin\/health/);
+  assert.match(deployWorkflow, /nexahunter\.gonzalescm121\.workers\.dev/);
   assert.match(deployWorkflow, /grep -q '\"status\":\"ok\"'/);
   assert.match(deployWorkflow, /grep -q '\"liveExecution\":false'/);
   assert.match(deployWorkflow, /api\/market\/snapshot/);
