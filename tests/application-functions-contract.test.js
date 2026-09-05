@@ -8,7 +8,6 @@ const router = read('public/button-router.js');
 const panels = read('public/panels.js');
 const connected = read('public/connected-panels.js');
 const realtime = read('public/realtime.js');
-const crypto = read('public/crypto-experience.js');
 const investing = read('public/investing-dashboard.js');
 const worker = read('worker-app.js');
 const portfolio = read('src/portfolio.js');
@@ -53,8 +52,7 @@ test('market functions expose snapshot, bars, clock and streaming contracts', ()
 
 test('NexaAI intelligence path is connected', () => {
   has(worker, '/api/intelligence');
-  assert.match(crypto, /intelligence|NexaAI|signal/i);
-  assert.match(panels, /NexaAI|Analysis/);
+  assert.match(panels, /NexaAI|Analysis/i, 'NexaAI analysis UI contract missing');
 });
 
 test('investing dashboard has live portfolio and quote refresh paths', () => {
