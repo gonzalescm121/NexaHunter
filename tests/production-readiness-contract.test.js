@@ -5,7 +5,9 @@ import fs from 'node:fs';
 const read = p => fs.readFileSync(p, 'utf8');
 const worker = read('worker-app.js');
 const entry = read('worker-entry.js');
+const app = read('public/app.js');
 const workflow = read('.github/workflows/test.yml');
+const deployWorkflow = read('.github/workflows/deploy.yml');
 const wrangler = read('wrangler.toml');
 
 test('health endpoint reports paper-only runtime and dependency readiness', () => {
@@ -36,7 +38,6 @@ test('non-persistent portfolio fallback never fabricates demo cash in either Wor
 });
 
 test('dashboard ignores non-numeric portfolio values until connected state is available', () => {
-  const app = read('public/app.js');
   assert.match(app, /const cash=Number\(d\.cash\),buyingPower=Number\(d\.buyingPower\)/);
   assert.match(app, /Number\.isFinite\(cash\)/);
   assert.match(app, /Number\.isFinite\(buyingPower\)/);
@@ -59,4 +60,32 @@ test('Cloudflare deployment declares required Durable Object bindings', () => {
   assert.match(wrangler, /IdempotencyDurableObject/);
   assert.match(wrangler, /PortfolioDurableObject/);
   assert.match(wrangler, /MarketStreamDurableObject/);
+});
+
+test('production deployment is manually guarded and validates before deploy', () => {
+  assert.match(deployWorkflow, /workflow_dispatch:/);
+  assert.match(deployWorkflow, /confirm:/);
+  assert.match(deployWorkflow, /github\.event\.inputs\.confirm == 'DEPLOY'/);
+  assert.match(deployWorkflow, /npm run syntax && npm test/);
+  assert.match(deployWorkflow, /wrangler@4\.126\.0 deploy/);
+});
+
+test('production deployment requires Cloudflare credentials and a public origin', () => {
+  assert.match(deployWorkflow, /CLOUDFLARE_API_TOKEN:/);
+  assert.match(deployWorkflow, /CLOUDFLARE_ACCOUNT_ID:/);
+  assert.match(deployWorkflow, /NEXAHUNTER_PUBLIC_ORIGIN:/);
+  assert.match(deployWorkflow, /test -n \"\$PUBLIC_ORIGIN\"/);
+});
+
+test('production smoke test verifies health, market data, streaming and paper-only execution', () => {
+  assert.match(deployWorkflow, /smoke_get 'health'/);
+  assert.match(deployWorkflow, /\"\/health\"/);
+  assert.match(deployWorkflow, /\"status\\\":\"ok\"/);
+  assert.match(deployWorkflow, /\"liveExecution\\\":false/);
+  assert.match(deployWorkflow, /api\/market\/snapshot/);
+  assert.match(deployWorkflow, /api\/market\/bars/);
+  assert.match(deployWorkflow, /api\/market\/stream-config/);
+  assert.match(deployWorkflow, /Upgrade.*websocket/);
+  assert.match(deployWorkflow, /ws_status/);
+  assert.match(deployWorkflow, /!= \"101\"/);
 });
