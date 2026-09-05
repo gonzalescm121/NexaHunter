@@ -51,11 +51,11 @@ jobs:
           fi
 
           # Validate the configured custom origin's edge boundary. A protected
-          # custom domain may legitimately return an Access response.
+          # custom domain may legitimately return an Access response or redirect.
           for protected_path in / /login; do
             protected_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "${access_headers[@]}" "$PUBLIC_ORIGIN$protected_path")"
             case "$protected_status" in
-              200|302|401|403) ;;
+              200|301|302|307|308|401|403) ;;
               *) echo "Unexpected protected status for $protected_path: $protected_status"; exit 1 ;;
             esac
           done
@@ -69,7 +69,7 @@ jobs:
           if [[ -z "$CF_ACCESS_CLIENT_ID" || -z "$CF_ACCESS_CLIENT_SECRET" ]]; then
             custom_health_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/health")"
             case "$custom_health_status" in
-              401|403)
+              301|302|307|308|401|403)
                 smoke_origin="https://nexahunter.gonzalescm121.workers.dev"
                 echo "Custom origin is Access-protected without a service token; using deployed Worker hostname for API/WebSocket smoke tests."
                 ;;
