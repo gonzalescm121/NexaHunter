@@ -47,11 +47,11 @@ jobs:
             access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
             echo 'Cloudflare Access service-token authentication enabled for smoke tests.'
           else
-            echo 'No Cloudflare Access service token configured.'
+            echo 'No Cloudflare Access service token configured; detecting whether the custom origin is protected.'
           fi
 
-          # Validate the configured public origin's edge boundary first. A
-          # protected custom domain is allowed to return an Access response.
+          # Validate the configured custom origin's edge boundary. A protected
+          # custom domain may legitimately return an Access response.
           for protected_path in / /login; do
             protected_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "${access_headers[@]}" "$PUBLIC_ORIGIN$protected_path")"
             case "$protected_status" in
@@ -62,17 +62,25 @@ jobs:
 
           smoke_origin="$PUBLIC_ORIGIN"
 
-          # If no Access service token is configured and the custom domain is
-          # Access-protected, use the Worker deployment hostname for the strict
-          # application smoke tests. This still exercises the exact deployed
-          # Worker/version while preserving strict 2xx API checks. The custom
-          # domain boundary was already validated above.
+          # If the custom origin is Access-protected and no service token is
+          # available, run strict application smoke tests against the exact
+          # Worker deployment hostname. This validates the newly deployed
+          # Worker/version without weakening API or WebSocket assertions.
           if [[ -z "$CF_ACCESS_CLIENT_ID" || -z "$CF_ACCESS_CLIENT_SECRET" ]]; then
-            health_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/health")"
-            if [[ "$health_status" == "401" || "$health_status" == "403" ]]; then
-              smoke_origin="https://nexahunter.gonzalescm121.workers.dev"
-              echo "Custom origin is Access-protected without a service token; using deployed Worker hostname for API/WebSocket smoke tests."
-            fi
+            custom_health_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$PUBLIC_ORIGIN/health")"
+            case "$custom_health_status" in
+              401|403)
+                smoke_origin="https://nexahunter.gonzalescm121.workers.dev"
+                echo "Custom origin is Access-protected without a service token; using deployed Worker hostname for API/WebSocket smoke tests."
+                ;;
+              2*)
+                echo 'Custom origin permits direct application smoke testing.'
+                ;;
+              *)
+                echo "Unexpected custom origin health status: $custom_health_status"
+                exit 22
+                ;;
+            esac
           fi
 
           smoke_get() {
