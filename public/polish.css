@@ -1,0 +1,77 @@
+/* NexaHunter — accessibility & visual polish layer
+   Loaded last so equal-specificity rules win over earlier stylesheets.
+   Preserves all existing ids, data-actions, labels, and JS contracts. */
+
+:root { --nh-focus: #38d7ff; }
+
+/* Legible baseline typography (WCAG 2.2 AA) */
+body {
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Eliminate sub-10px text that fails readability */
+.brand small { font-size: 10px; letter-spacing: .12em; }
+.nav-item b { font-size: 10px; padding: 3px 6px; }
+.company { font-size: 10px; }
+.ticker { font-size: 11px; }
+.price, .change { font-size: 11px; }
+.live-label { font-size: 10px; }
+.link-btn { font-size: 11px; }
+.add-symbol { font-size: 11px; }
+.y-axis, .x-axis { font-size: 10px; }
+.asset-heading small { font-size: 10px; }
+.asset-heading > strong { font-size: 19px; }
+.portfolio-stats { font-size: 11px; }
+.portfolio-stats b { font-size: 11px; }
+.donut small { font-size: 10px; }
+.allocation ul { font-size: 11px; }
+.pro-card p { font-size: 10px; line-height: 1.5; }
+.top-status { font-size: 11px; }
+.top-status small { font-size: 10px; }
+.time-tabs button { font-size: 11px; }
+.chart-actions button { font-size: 11px; }
+.panel-title h2 { font-size: 13px; }
+.ticker-card > div { font-size: 11px; }
+.ticker-card > b { font-size: 19px; }
+
+/* Visible keyboard focus — Pulse Cyan, 2px outline (WCAG 2.2 AA) */
+*:focus-visible {
+  outline: 2px solid var(--nh-focus);
+  outline-offset: 2px;
+}
+*:focus:not(:focus-visible) { outline: none; }
+
+/* Smooth, subtle transitions on interactive elements */
+.nav-item, .icon-btn, .blue-btn, .action-link, .time-tabs button,
+.chart-actions button, .watch-button, .market-row, .panel, .ticker-card,
+.link-btn, .add-symbol, .mobile-bottom-nav a, .mobile-bottom-nav button {
+  transition: background-color .18s ease, color .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+/* Refined hover lift for cards */
+.ticker-card:hover, .panel:hover { box-shadow: 0 18px 44px rgba(0,0,0,.4); }
+
+/* Scrollbar polish */
+* { scrollbar-width: thin; scrollbar-color: #1c4777 transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #163357; border-radius: 6px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #1c4777; background-clip: content-box; }
+
+/* Selection */
+::selection { background: rgba(56,215,255,.28); color: #fff; }
+
+/* Improved muted-text contrast toward AA */
+.company, .top-status small, .portfolio-stats, .allocation ul, .pro-card p { color: #8ea2bc; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
