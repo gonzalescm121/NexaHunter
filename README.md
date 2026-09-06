@@ -60,7 +60,7 @@ npm install
 npm test
 ```
 
-The production entry point is `worker-entry.js`. Static web assets are served from `public/` through Cloudflare Workers Assets. Durable Objects and the production rate-limit binding are configured in `wrangler.toml`.
+The production entry point is `worker-idempotent-entry.js`. Static web assets are served from `public/` through Cloudflare Workers Assets. Durable Objects and the production rate-limit binding are configured in `wrangler.toml`.
 
 ## Deployment
 
