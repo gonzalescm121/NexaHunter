@@ -6,6 +6,8 @@ const read = p => fs.readFileSync(p, 'utf8');
 const worker = read('worker-app.js');
 const entry = read('worker-entry.js');
 const app = read('public/app.js');
+const html = read('public/index.html');
+const dashboardCss = read('public/concept-dashboard.css');
 const workflow = read('.github/workflows/test.yml');
 const deployWorkflow = read('.github/workflows/deploy.yml');
 const wrangler = read('wrangler.toml');
@@ -41,6 +43,15 @@ test('dashboard ignores non-numeric portfolio values until connected state is av
   assert.match(app, /const cash=Number\(d\.cash\),buyingPower=Number\(d\.buyingPower\)/);
   assert.match(app, /Number\.isFinite\(cash\)/);
   assert.match(app, /Number\.isFinite\(buyingPower\)/);
+});
+
+test('dashboard visual grid has explicit four-column market rows and stable responsive regions', () => {
+  assert.match(html, /concept-dashboard\.css\?v=20260906-2/);
+  assert.match(dashboardCss, /grid-template-columns:repeat\(8,minmax\(0,1fr\)\)/);
+  assert.match(dashboardCss, /grid-template-columns:22px minmax\(0,1fr\) max-content max-content/);
+  assert.match(dashboardCss, /grid-template-columns:minmax\(0,1fr\) 320px/);
+  assert.match(dashboardCss, /workspace-panels\{display:grid/);
+  assert.match(dashboardCss, /align-items:stretch/);
 });
 
 test('production workflow validates source syntax, full tests and required deployment files', () => {
