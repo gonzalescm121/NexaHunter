@@ -1,134 +1,96 @@
-/* NEXATRADE AI — High-Tech Dark Mode Trading dashboard theme
-   Reference palette:
-     Backgrounds #080a0e / #0e1218 · Cards #131720 · Borders #282e3b
-     Neon Blue #2b75ff · Electric Green #26b066 · Silver #a0a0a0 · Red #ef4444
-   Loaded last; !important overrides earlier !important layers.
-   Preserves all locked ids, data-actions, labels, JS namespace, and the
-   nexahunter-mobile-logo.svg contract. */
-
+/* Monolithic Intelligence — Obsidian + Pulse-Cyan palette refresh
+   Obsidian #07090D / #0E1117 / #161A22 · Pulse-Cyan #22D3EE / #00E5FF
+   Gains #26B066 · Losses #EF4444 · Silver #A0A0A0
+   Loaded last; !important overrides earlier !important layers across all stylesheets. */
 :root{
-  --bg:#080a0e; --panel:#131720; --panel2:#0e1218;
-  --line:#282e3b; --line2:#1c2230;
-  --text:#ffffff; --muted:#a0a0a0;
-  --blue:#2b75ff; --blue2:#4a8fff; --cyan:#2b75ff;
-  --green:#26b066; --red:#ef4444; --gold:#a0a0a0;
-  --shadow:0 18px 44px rgba(0,0,0,.55);
-  --nh-blue:#2b75ff; --nh-blue-dark:#0e1218; --nh-blue-deep:#080a0e;
-  --nh-white:#ffffff; --nh-gold:#a0a0a0; --nh-gold-bright:#e6e8ec; --nh-gold-dark:#6b7280;
-  --nh-line:#282e3b; --nh-muted:#a0a0a0; --nh-green:#26b066; --nh-red:#ef4444;
-  --nh-deep:#080a0e; --nh-electric:#2b75ff; --nh-electric-bright:#4a8fff;
-  --nh-navy:#0e1218; --nh-panel:#131720; --nh-border:#282e3b;
+  --bg:#07090D; --panel:#161A22; --panel2:#0E1117;
+  --line:#232838; --line2:#1A1F2B;
+  --text:#E6EAF0; --muted:#A0A0A0;
+  --blue:#22D3EE; --blue2:#00E5FF; --cyan:#22D3EE;
+  --green:#26B066; --red:#EF4444; --gold:#A0A0A0;
+  --shadow:0 18px 44px rgba(0,0,0,.6);
+  --nh-blue:#22D3EE; --nh-blue-dark:#0E1117; --nh-blue-deep:#07090D;
+  --nh-white:#ffffff; --nh-gold:#A0A0A0; --nh-gold-bright:#E6EAF0; --nh-gold-dark:#6B7280;
+  --nh-line:#232838; --nh-muted:#A0A0A0; --nh-green:#26B066; --nh-red:#EF4444;
+  --nh-deep:#07090D; --nh-electric:#22D3EE; --nh-electric-bright:#00E5FF;
+  --nh-navy:#0E1117; --nh-panel:#161A22; --nh-border:#232838;
 }
-
-/* Base canvas — deep charcoal-black */
-body{
-  background:radial-gradient(circle at 50% -12%,#0e1218 0,#0a0d12 40%,#080a0e 76%,#050608 100%)!important;
-  color:#e6e8ec!important;
-  -webkit-font-smoothing:antialiased;
-}
-.app-shell{background:linear-gradient(90deg,rgba(8,10,14,.98),rgba(14,18,24,.92))!important}
-.sidebar,.topbar{background:rgba(8,10,14,.97)!important;border-color:#282e3b!important}
-
-/* Brand */
+body{background:radial-gradient(circle at 50% -12%,#0E1117 0,#0A0D13 40%,#07090D 76%,#040506 100%)!important;color:#E6EAF0!important;-webkit-font-smoothing:antialiased}
+.app-shell{background:linear-gradient(90deg,rgba(7,9,13,.98),rgba(14,17,23,.92))!important}
+.sidebar,.topbar{background:rgba(7,9,13,.97)!important;border-color:#232838!important}
 .brand strong,.brand strong span{color:#fff!important}
-.brand small{color:#2b75ff!important;letter-spacing:.16em}
-.wolf-logo{border-color:#2b75ff!important;background:radial-gradient(circle,#2b75ff,#0e1218)!important;box-shadow:0 0 18px rgba(43,117,255,.4)!important}
-.top-star{color:#a0a0a0!important}
-
-/* Navigation */
-.nav-item{color:#a0a0a0!important}
-.nav-item:hover{background:rgba(43,117,255,.10)!important;color:#fff!important}
-.nav-item.active{background:linear-gradient(90deg,#2b75ff,#1a4fb0)!important;color:#fff!important;font-weight:700;box-shadow:inset 3px 0 0 #2b75ff}
-
-/* Buttons & controls */
-.blue-btn{background:linear-gradient(180deg,#2b75ff,#1a4fb0)!important;border-color:#2b75ff!important;color:#fff!important;font-weight:700}
-.action-link{background:linear-gradient(180deg,rgba(43,117,255,.14),rgba(43,117,255,.05))!important;border-color:rgba(43,117,255,.5)!important;color:#2b75ff!important}
-.action-link:hover{border-color:#2b75ff!important;box-shadow:0 0 16px rgba(43,117,255,.25)!important}
-.time-tabs button.active{background:rgba(43,117,255,.18)!important;color:#2b75ff!important}
-.chart-actions button{border-color:#282e3b!important;color:#a0a0a0!important}
-.chart-actions button:hover{color:#2b75ff!important;border-color:rgba(43,117,255,.4)!important}
-.add-symbol{color:#2b75ff!important}
-.link-btn{color:#2b75ff!important}
-.mobile-menu-btn{background:#2b75ff!important;border-color:#2b75ff!important;color:#fff!important}
-
-/* Panels & cards — #131720 on #282e3b */
-.panel,.ticker-card,.chart-panel{background:#131720!important;border-color:#282e3b!important}
-.panel:hover,.ticker-card:hover{box-shadow:0 18px 44px rgba(0,0,0,.55),0 0 0 1px rgba(43,117,255,.18)!important}
+.brand small{color:#22D3EE!important;letter-spacing:.16em}
+.wolf-logo{border-color:#22D3EE!important;background:radial-gradient(circle,#22D3EE,#0E1117)!important;box-shadow:0 0 18px rgba(34,211,238,.4)!important}
+.top-star{color:#A0A0A0!important}
+.nav-item{color:#A0A0A0!important}
+.nav-item:hover{background:rgba(34,211,238,.10)!important;color:#fff!important}
+.nav-item.active{background:linear-gradient(90deg,#22D3EE,#0E7D90)!important;color:#04141A!important;font-weight:700;box-shadow:inset 3px 0 0 #22D3EE}
+.blue-btn{background:linear-gradient(180deg,#22D3EE,#0E7D90)!important;border-color:#22D3EE!important;color:#04141A!important;font-weight:700}
+.action-link{background:linear-gradient(180deg,rgba(34,211,238,.14),rgba(34,211,238,.05))!important;border-color:rgba(34,211,238,.5)!important;color:#22D3EE!important}
+.action-link:hover{border-color:#22D3EE!important;box-shadow:0 0 16px rgba(34,211,238,.25)!important}
+.time-tabs button.active{background:rgba(34,211,238,.18)!important;color:#22D3EE!important}
+.chart-actions button{border-color:#232838!important;color:#A0A0A0!important}
+.chart-actions button:hover{color:#22D3EE!important;border-color:rgba(34,211,238,.4)!important}
+.add-symbol{color:#22D3EE!important}
+.link-btn{color:#22D3EE!important}
+.mobile-menu-btn{background:#22D3EE!important;border-color:#22D3EE!important;color:#04141A!important}
+.panel,.ticker-card,.chart-panel{background:#161A22!important;border-color:#232838!important}
+.panel:hover,.ticker-card:hover{box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 0 1px rgba(34,211,238,.18)!important}
 .panel-title h2{color:#fff!important}
-.search-wrap{background:rgba(8,10,14,.92)!important;border-color:#282e3b!important}
-.top-status{background:rgba(38,176,102,.10)!important;border-color:rgba(38,176,102,.35)!important;color:#26b066!important}
-
-/* Chart — wolf watermark + neon green up / red down + neon-blue MA */
-.chart-stage{position:relative;overflow:hidden;background:
-  repeating-linear-gradient(to bottom,transparent 0 64px,rgba(40,46,59,.45) 65px),
-  repeating-linear-gradient(to right,transparent 0 89px,rgba(40,46,59,.35) 90px),
-  #0b0e14!important}
+.search-wrap{background:rgba(7,9,13,.92)!important;border-color:#232838!important}
+.top-status{background:rgba(38,176,102,.10)!important;border-color:rgba(38,176,102,.35)!important;color:#26B066!important}
+.chart-stage{position:relative;overflow:hidden;background:repeating-linear-gradient(to bottom,transparent 0 64px,rgba(35,40,56,.45) 65px),repeating-linear-gradient(to right,transparent 0 89px,rgba(35,40,56,.35) 90px),#0A0D13!important}
 .chart-stage:before{content:"";position:absolute;inset:0;background:url(/assets/nexahunter-wolf.svg) center/30% no-repeat;opacity:.05;pointer-events:none;z-index:0}
 .chart-stage>svg{position:relative;z-index:1}
-.grid-lines{stroke:#282e3b!important}
-.chart-candle-up{fill:#26b066!important;stroke:#26b066!important}
-.chart-candle-down{fill:#ef4444!important;stroke:#ef4444!important}
-.ma-line{stroke:#2b75ff!important}
-.price-line{stroke:#26b066!important}
-.price-tag{background:#26b066!important;color:#080a0e!important}
-
-/* Market rows & sentiment */
-.market-row:hover,.market-row.selected{background:rgba(43,117,255,.10)!important}
-.watch-button.active{color:#26b066!important}
-.gain,.green-chart{color:#26b066!important}
-.green-chart polyline{stroke:#26b066!important}
-.blue-chart polyline{stroke:#2b75ff!important}
-.negative{color:#ef4444!important}
-.live-dot{background:#26b066!important;box-shadow:0 0 8px rgba(38,176,102,.6)!important}
-
-/* Portfolio */
+.grid-lines{stroke:#232838!important}
+.chart-candle-up{fill:#26B066!important;stroke:#26B066!important}
+.chart-candle-down{fill:#EF4444!important;stroke:#EF4444!important}
+.ma-line{stroke:#22D3EE!important}
+.price-line{stroke:#26B066!important}
+.price-tag{background:#26B066!important;color:#07090D!important}
+.market-row:hover,.market-row.selected{background:rgba(34,211,238,.10)!important}
+.watch-button.active{color:#26B066!important}
+.gain,.green-chart{color:#26B066!important}
+.green-chart polyline{stroke:#26B066!important}
+.blue-chart polyline{stroke:#22D3EE!important}
+.negative{color:#EF4444!important}
+.live-dot{background:#26B066!important;box-shadow:0 0 8px rgba(38,176,102,.6)!important}
 .portfolio-value{color:#fff!important}
-.donut{background:conic-gradient(#2b75ff 0 68%,#26b066 68% 86%,#3a4255 86%)!important;box-shadow:inset 0 0 0 9px #131720!important}
-.portfolio-chart path{stroke:#2b75ff!important}
-
-/* Crypto experience panel */
-.crypto-experience{background:linear-gradient(180deg,#0e1218,#080a0e)!important;border-color:#282e3b!important}
+.donut{background:conic-gradient(#22D3EE 0 68%,#26B066 68% 86%,#3A4255 86%)!important;box-shadow:inset 0 0 0 9px #161A22!important}
+.portfolio-chart path{stroke:#22D3EE!important}
+.crypto-experience{background:linear-gradient(180deg,#0E1117,#07090D)!important;border-color:#232838!important}
 .crypto-experience .cx-price,.crypto-experience h2,.crypto-experience h3{color:#fff!important}
-.crypto-experience .cx-actions button:first-child,
-.crypto-experience .cx-recurring button#cx-save-plan,
-.crypto-experience .cx-alert-panel button{background:#2b75ff!important;border-color:#2b75ff!important;color:#fff!important}
-.crypto-experience .cx-actions button:nth-child(2){background:rgba(43,117,255,.12)!important;border-color:rgba(43,117,255,.5)!important;color:#2b75ff!important}
-.crypto-experience .cx-actions button,.crypto-experience .cx-history-head button{background:#131720!important;border-color:#282e3b!important;color:#fff!important}
-.crypto-experience .cx-chart-wrap{background:#080a0e!important;border-color:#282e3b!important}
-.crypto-experience .cx-chart-wrap path{stroke:#26b066!important}
-.crypto-experience .cx-chart-wrap circle{fill:#26b066!important;stroke:#fff!important}
-.crypto-experience .cx-chart-wrap line{stroke:#3a4255!important}
-.crypto-experience .cx-timeframes{border-color:#282e3b!important}
-.crypto-experience .cx-timeframes button.active{background:#2b75ff!important;color:#fff!important}
-.crypto-experience .cx-stats,.crypto-experience .cx-history-row{border-color:#282e3b!important}
-.crypto-experience .cx-history-row{background:#0e1218!important}
-.crypto-experience .cx-recurring,.crypto-experience .cx-alert-panel{background:#0e1218!important;border-color:#282e3b!important}
-.crypto-experience .cx-form input,.crypto-experience .cx-form select,
-.crypto-experience .cx-alert-form input{background:#080a0e!important;border-color:#282e3b!important;color:#fff!important}
-.crypto-experience .paper-only-badge{background:#2b75ff!important;color:#fff!important}
-
-/* Mobile bottom nav & menu */
-.cx-bottom-nav{background:rgba(8,10,14,.98)!important;border-top-color:#282e3b!important}
-.cx-bottom-nav button.active{color:#2b75ff!important}
-.mobile-bottom-nav{background:rgba(8,10,14,.98)!important;border-top-color:#282e3b!important}
-.mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#2b75ff!important}
-
-/* Premium / silver accents */
+.crypto-experience .cx-actions button:first-child,.crypto-experience .cx-recurring button#cx-save-plan,.crypto-experience .cx-alert-panel button{background:#22D3EE!important;border-color:#22D3EE!important;color:#04141A!important}
+.crypto-experience .cx-actions button:nth-child(2){background:rgba(34,211,238,.12)!important;border-color:rgba(34,211,238,.5)!important;color:#22D3EE!important}
+.crypto-experience .cx-actions button,.crypto-experience .cx-history-head button{background:#161A22!important;border-color:#232838!important;color:#fff!important}
+.crypto-experience .cx-chart-wrap{background:#07090D!important;border-color:#232838!important}
+.crypto-experience .cx-chart-wrap path{stroke:#26B066!important}
+.crypto-experience .cx-chart-wrap circle{fill:#26B066!important;stroke:#fff!important}
+.crypto-experience .cx-chart-wrap line{stroke:#3A4255!important}
+.crypto-experience .cx-timeframes{border-color:#232838!important}
+.crypto-experience .cx-timeframes button.active{background:#22D3EE!important;color:#04141A!important}
+.crypto-experience .cx-stats,.crypto-experience .cx-history-row{border-color:#232838!important}
+.crypto-experience .cx-history-row{background:#0E1117!important}
+.crypto-experience .cx-recurring,.crypto-experience .cx-alert-panel{background:#0E1117!important;border-color:#232838!important}
+.crypto-experience .cx-form input,.crypto-experience .cx-form select,.crypto-experience .cx-alert-form input{background:#07090D!important;border-color:#232838!important;color:#fff!important}
+.crypto-experience .paper-only-badge{background:#22D3EE!important;color:#04141A!important}
+.cx-bottom-nav{background:rgba(7,9,13,.98)!important;border-top-color:#232838!important}
+.cx-bottom-nav button.active{color:#22D3EE!important}
+.mobile-bottom-nav{background:rgba(7,9,13,.98)!important;border-top-color:#232838!important}
+.mobile-bottom-nav a.active,.mobile-bottom-nav button.active{color:#22D3EE!important}
 .pro-card{border-color:rgba(160,160,160,.3)!important}
-.pro-badge{background:rgba(160,160,160,.15)!important;color:#a0a0a0!important;border-color:rgba(160,160,160,.4)!important}
-
-/* Keyboard focus — Neon Blue */
-*:focus-visible{outline:2px solid #2b75ff!important;outline-offset:2px}
+.pro-badge{background:rgba(160,160,160,.15)!important;color:#A0A0A0!important;border-color:rgba(160,160,160,.4)!important}
+/* Order History */
+.nh-orders{grid-template-columns:64px 1fr 1fr 1fr 1fr 1.5fr!important;gap:0!important}
+.nh-orders>div{padding:7px 6px;border-bottom:1px solid #232838;font-size:13px}
+.nh-ord-st{color:#A0A0A0;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.nh-ord-tm{color:#6B7280;font-size:11px}
+*:focus-visible{outline:2px solid #22D3EE!important;outline-offset:2px}
 *:focus:not(:focus-visible){outline:none}
-
-/* Selection & scrollbars */
-::selection{background:rgba(43,117,255,.30)!important;color:#fff!important}
-*{scrollbar-color:#282e3b transparent}
+::selection{background:rgba(34,211,238,.30)!important;color:#fff!important}
+*{scrollbar-color:#232838 transparent}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#282e3b;border-radius:6px;border:2px solid transparent;background-clip:content-box}
-::-webkit-scrollbar-thumb:hover{background:#3a4255;background-clip:content-box}
-
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
-}
+::-webkit-scrollbar-thumb{background:#232838;border-radius:6px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#3A4255;background-clip:content-box}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
