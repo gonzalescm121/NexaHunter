@@ -38,13 +38,15 @@ jobs:
           if [[ -n "$CF_ACCESS_CLIENT_ID" && -n "$CF_ACCESS_CLIENT_SECRET" ]]; then
             access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
           fi
+          # The custom domain may intentionally return Access/Bot-protection responses.
+          # Verify routing there, then run strict application/API smoke checks against
+          # the freshly deployed workers.dev origin so edge protection cannot mask app health.
           for path in / /login; do
             status="$(curl --silent --output /dev/null --write-out '%{http_code}' "${access_headers[@]}" "$PUBLIC_ORIGIN$path" || true)"
             case "$status" in 200|301|302|307|308|401|403) ;; *) exit 1;; esac
           done
           smoke_origin="https://nexahunter.gonzalescm121.workers.dev"
-          [[ -n "$CF_ACCESS_CLIENT_ID" && -n "$CF_ACCESS_CLIENT_SECRET" ]] || smoke_origin="$PUBLIC_ORIGIN"
-          get() { local out; out="$(mktemp)"; status="$(curl --silent --show-error --output "$out" --write-out '%{http_code}' --connect-timeout 10 --max-time 30 "${access_headers[@]}" "$1" || true)"; [[ "$status" == 2* ]] || { head -c 2048 "$out" >&2; exit 22; }; cat "$out"; rm -f "$out"; }
+          get() { local out; out="$(mktemp)"; status="$(curl --silent --show-error --output "$out" --write-out '%{http_code}' --connect-timeout 10 --max-time 30 "$1" || true)"; [[ "$status" == 2* ]] || { head -c 2048 "$out" >&2; exit 22; }; cat "$out"; rm -f "$out"; }
           health="$(get "$smoke_origin/health")"
           printf '%s' "$health" | grep -q '"status":"ok"'
           printf '%s' "$health" | grep -q '"marketDataConfigured":true'
@@ -59,6 +61,6 @@ jobs:
           stream="$(get "$smoke_origin/api/market/stream-config")"
           printf '%s' "$stream" | grep -q '"enabled":true'
           printf '%s' "$stream" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
-          ws="$(curl --silent --output /dev/null --write-out '%{http_code}' "${access_headers[@]}" -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: SGVsbG9Xb3JsZDEyMzQ1Ng==' "$smoke_origin/api/market/stream" || true)"
+          ws="$(curl --silent --output /dev/null --write-out '%{http_code}' -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: SGVsbG9Xb3JsZDEyMzQ1Ng==' "$smoke_origin/api/market/stream" || true)"
           test "$ws" = 101
           echo 'Production market API and WebSocket smoke tests passed.'
