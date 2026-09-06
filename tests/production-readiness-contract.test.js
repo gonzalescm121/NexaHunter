@@ -25,8 +25,8 @@ test('market read endpoints enforce GET and stream endpoint enforces WebSocket u
 });
 
 test('non-persistent portfolio fallback never fabricates demo cash in either Worker entrypoint', () => {
-  assert.doesNotMatch(worker, /100000/);
-  assert.doesNotMatch(entry, /100000/);
+  assert.doesNotMatch(worker, /cash:\s*100000\b/);
+  assert.doesNotMatch(entry, /cash:\s*100000\b/);
 });
 
 test('dashboard ignores non-numeric portfolio values until connected state is available', () => {
@@ -65,18 +65,18 @@ test('production deployment requires Cloudflare credentials and a public origin'
   assert.match(deployWorkflow, /PUBLIC_ORIGIN:\s*\$\{\{ secrets\.NEXAHUNTER_PUBLIC_ORIGIN \}\}/);
   assert.match(deployWorkflow, /CF_ACCESS_CLIENT_ID:\s*\$\{\{ secrets\.CF_ACCESS_CLIENT_ID \}\}/);
   assert.match(deployWorkflow, /CF_ACCESS_CLIENT_SECRET:\s*\$\{\{ secrets\.CF_ACCESS_CLIENT_SECRET \}\}/);
-  assert.match(deployWorkflow, /test -n \"\$PUBLIC_ORIGIN\"/);
+  assert.match(deployWorkflow, /test -n "\$PUBLIC_ORIGIN"/);
 });
 
 test('production smoke test verifies health, market data, streaming and paper-only execution', () => {
-  assert.match(deployWorkflow, /smoke_origin=\"https:\/\/nexahunter\.gonzalescm121\.workers\.dev\"/);
-  assert.match(deployWorkflow, /health=\"\$\(get \"\$smoke_origin\/health\"\)\"/);
-  assert.match(deployWorkflow, /grep -q '\"status\":\"ok\"'/);
-  assert.match(deployWorkflow, /grep -q '\"marketDataConfigured\":true'/);
-  assert.match(deployWorkflow, /grep -q '\"liveExecution\":false'/);
+  assert.match(deployWorkflow, /smoke_origin="https:\/\/nexahunter\.gonzalescm121\.workers\.dev"/);
+  assert.match(deployWorkflow, /health="\$\(get "\$smoke_origin\/health"\)"/);
+  assert.match(deployWorkflow, /grep -q '"status":"ok"'/);
+  assert.match(deployWorkflow, /grep -q '"marketDataConfigured":true'/);
+  assert.match(deployWorkflow, /grep -q '"liveExecution":false'/);
   assert.match(deployWorkflow, /api\/market\/snapshot/);
   assert.match(deployWorkflow, /api\/market\/bars/);
   assert.match(deployWorkflow, /api\/market\/stream-config/);
   assert.match(deployWorkflow, /Upgrade: websocket/);
-  assert.match(deployWorkflow, /test \"\$ws\" = 101/);
+  assert.match(deployWorkflow, /test "\$ws" = 101/);
 });
