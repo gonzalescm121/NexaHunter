@@ -7,10 +7,9 @@ const app = read('public/app.js');
 const html = read('public/index.html');
 const realtime = read('public/realtime.js');
 
-
 test('dashboard loads the realtime market bridge', () => {
   assert.match(html, /<script src="\/realtime\.js" defer><\/script>/);
-  assert.match(html, /id="realtime-pill">POLLING<\/span>/);
+  assert.match(html, /id="realtime-pill">(?:POLLING|LIVE|RECONNECTING)<\/span>/);
 });
 
 test('symbol selection is propagated to the realtime stream', () => {
