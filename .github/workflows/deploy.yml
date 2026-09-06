@@ -45,11 +45,13 @@ jobs:
           access_headers=()
           if [[ -n "$CF_ACCESS_CLIENT_ID" && -n "$CF_ACCESS_CLIENT_SECRET" ]]; then
             access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
-            echo 'Cloudflare Access service-token authentication enabled for smoke tests.'
+            echo 'Cloudflare Access service-token authentication enabled for protected-origin checks.'
           else
             echo 'No Cloudflare Access service token configured.'
           fi
 
+          # The public hostname may intentionally be protected by Access/Bot Management.
+          # Verify that it is reachable and returns only an expected protected/public status.
           for protected_path in / /login; do
             protected_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 2 --retry-connrefused "${access_headers[@]}" "$PUBLIC_ORIGIN$protected_path" || true)"
             case "$protected_status" in
@@ -58,11 +60,10 @@ jobs:
             esac
           done
 
-          smoke_origin="$PUBLIC_ORIGIN"
-          if [[ -z "$CF_ACCESS_CLIENT_ID" || -z "$CF_ACCESS_CLIENT_SECRET" ]]; then
-            smoke_origin="https://nexahunter.gonzalescm121.workers.dev"
-            echo 'No Access service token; using deployed Worker hostname for strict API/WebSocket smoke tests.'
-          fi
+          # Validate the deployed Worker directly so a Cloudflare challenge on the custom
+          # public hostname cannot hide an otherwise healthy Worker/API/WebSocket deployment.
+          smoke_origin="https://nexahunter.gonzalescm121.workers.dev"
+          echo 'Using deployed Worker hostname for strict API/WebSocket smoke tests.'
 
           smoke_get() {
             local label="$1"
@@ -74,7 +75,7 @@ jobs:
 
             curl --silent --show-error --output "$body_file" --write-out '%{http_code}' \
               --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 2 --retry-connrefused \
-              "${access_headers[@]}" "$url" >"$status_file" 2>"$error_file" || curl_exit=$?
+              "$url" >"$status_file" 2>"$error_file" || curl_exit=$?
             curl_exit="${curl_exit:-0}"
             status="$(cat "$status_file" 2>/dev/null || true)"
 
@@ -124,7 +125,6 @@ jobs:
           printf '%s' "$stream_config" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
 
           ws_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 2 --retry-connrefused \
-            "${access_headers[@]}" \
             -H 'Connection: Upgrade' \
             -H 'Upgrade: websocket' \
             -H 'Sec-WebSocket-Version: 13' \
