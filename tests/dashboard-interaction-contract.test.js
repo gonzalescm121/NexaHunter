@@ -19,12 +19,12 @@ test('dashboard loads live chart and volume modules',()=>{
 });
 
 test('dashboard timeframe controls map to API timeframes',()=>{
-  assert.match(app,/data-timeframe/);
-  assert.match(app,/1D.*1Min/);
-  assert.match(app,/1W.*5Min/);
-  assert.match(app,/1M.*15Min/);
-  assert.match(app,/3M.*1Hour/);
-  assert.match(app,/1Y.*1Day/);
+  assert.match(html,/data-timeframe="1D"/);
+  assert.match(html,/data-timeframe="1W"/);
+  assert.match(html,/data-timeframe="1M"/);
+  assert.match(html,/data-timeframe="3M"/);
+  assert.match(html,/data-timeframe="1Y"/);
+  assert.match(app,/\{\'1D\':\'1Min\',\'1W\':\'5Min\',\'1M\':\'15Min\',\'3M\':\'1Hour\',\'1Y\':\'1Day\'/);
 });
 
 test('dashboard action router covers primary interactive controls',()=>{
