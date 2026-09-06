@@ -95,8 +95,28 @@
   function override(){
     if(!window.NexaHunter)return;
     const original=window.NexaHunter.openPanel;
-    window.NexaHunter.openPanel=async name=>{if(name==='My Positions')return portfolio();if(name==='Performance')return performance();if(name==='Alerts')return alerts();if(name==='NexaAI Analysis')return ai();if(name==='NexaHunter Pro')return original(name);if(name==='Trade')return trade();return original(name)};
+    window.NexaHunter.openPanel=async name=>{if(name==='My Positions')return portfolio();if(name==='Performance')return performance();if(name==='Alerts')return alerts();if(name==='NexaAI Analysis')return ai();if(name==='NexaHunter Pro')return original(name);if(name==='Trade')return trade();if(name==='Order History')return orderHistory();return original(name)};
     window.NexaHunter.openScreener=mode=>screener(mode);
+  }
+  async function orderHistory(){
+    modal('Order History','<div class="nh-note">Loading recent transactions…</div>');
+    try{
+      const d=await json('/api/portfolio');
+      const orders=Array.isArray(d.orders)?d.orders:[];
+      if(!orders.length){modal('Order History','<div class="nh-note">No transactions yet. Paper trades will appear here once filled.</div>');return}
+      const cells=(o)=>{
+        const sym=esc(String(o.symbol||'—'));
+        const side=String(o.side||'').toUpperCase();
+        const qty=Number(o.quantity??o.qty??0).toLocaleString(undefined,{maximumFractionDigits:6});
+        const px=Number(o.price??0).toLocaleString(undefined,{style:'currency',currency:'USD'});
+        const st=esc(String(o.status||'filled'));
+        const when=esc(String(o.timestamp||o.created||o.date||''));
+        const sideCls=side==='BUY'?'gain':(side==='SELL'?'negative':'');
+        return `<div class="${sideCls}">${esc(side)||'—'}</div><div>${sym}</div><div>${qty}</div><div>${px}</div><div class="nh-ord-st">${st}</div><div class="nh-ord-tm">${when}</div>`;
+      };
+      const body=`<div class="nh-table nh-orders"><div>Side</div><div>Symbol</div><div>Qty</div><div>Price</div><div>Status</div><div>Time</div>${orders.map(cells).join('')}</div>`;
+      modal('Order History',body);
+    }catch(e){modal('Order History','<div class="nh-note">Unable to load transactions right now.</div>')}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(override,0),{once:true});else setTimeout(override,0);
 })();
