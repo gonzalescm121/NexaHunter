@@ -1,5 +1,4 @@
 name: NexaHunter Deploy
-
 on:
   workflow_dispatch:
     inputs:
@@ -7,27 +6,21 @@ on:
         description: Type DEPLOY to confirm production deployment
         required: true
         default: DEPLOY
-
 permissions:
   contents: read
-
 jobs:
   deploy:
     if: ${{ github.event.inputs.confirm == 'DEPLOY' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           package-manager-cache: false
-      - name: Install dependencies
-        run: npm install
-      - name: Validate before deployment
-        run: npm run syntax && npm test
+      - run: npm install
+      - run: npm run syntax && npm test
       - name: Deploy Worker and Assets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -41,99 +34,31 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$PUBLIC_ORIGIN"
-
           access_headers=()
           if [[ -n "$CF_ACCESS_CLIENT_ID" && -n "$CF_ACCESS_CLIENT_SECRET" ]]; then
             access_headers=(-H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET")
-            echo 'Cloudflare Access service-token authentication enabled for protected-origin checks.'
-          else
-            echo 'No Cloudflare Access service token configured.'
           fi
-
-          # The public hostname may intentionally be protected by Access/Bot Management.
-          # Verify that it is reachable and returns only an expected protected/public status.
-          for protected_path in / /login; do
-            protected_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 2 --retry-connrefused "${access_headers[@]}" "$PUBLIC_ORIGIN$protected_path" || true)"
-            case "$protected_status" in
-              200|301|302|307|308|401|403) ;;
-              *) echo "Unexpected protected status for $protected_path: ${protected_status:-000}"; exit 1 ;;
-            esac
+          for path in / /login; do
+            status="$(curl --silent --output /dev/null --write-out '%{http_code}' "${access_headers[@]}" "$PUBLIC_ORIGIN$path" || true)"
+            case "$status" in 200|301|302|307|308|401|403) ;; *) exit 1;; esac
           done
-
-          # Validate the deployed Worker directly so a Cloudflare challenge on the custom
-          # public hostname cannot hide an otherwise healthy Worker/API/WebSocket deployment.
           smoke_origin="https://nexahunter.gonzalescm121.workers.dev"
-          echo 'Using deployed Worker hostname for strict API/WebSocket smoke tests.'
-
-          smoke_get() {
-            local label="$1"
-            local url="$2"
-            local body_file status_file error_file curl_exit status
-            body_file="$(mktemp)"
-            status_file="$(mktemp)"
-            error_file="$(mktemp)"
-
-            curl --silent --show-error --output "$body_file" --write-out '%{http_code}' \
-              --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 2 --retry-connrefused \
-              "$url" >"$status_file" 2>"$error_file" || curl_exit=$?
-            curl_exit="${curl_exit:-0}"
-            status="$(cat "$status_file" 2>/dev/null || true)"
-
-            if [[ "$curl_exit" -ne 0 ]]; then
-              echo "Production smoke test curl failure: ${label}; curl_exit=${curl_exit}; http_status=${status:-000}; endpoint=${url}" >&2
-              if [[ -s "$error_file" ]]; then
-                echo 'curl stderr:' >&2
-                cat "$error_file" >&2
-              fi
-              echo 'Response body (first 2KB):' >&2
-              head -c 2048 "$body_file" >&2 || true
-              echo >&2
-              rm -f "$body_file" "$status_file" "$error_file"
-              return 22
-            fi
-
-            if [[ "$status" != 2* ]]; then
-              echo "Production smoke test failed: ${label} returned HTTP ${status:-000}" >&2
-              echo "Endpoint: ${url}" >&2
-              echo 'Response body (first 2KB):' >&2
-              head -c 2048 "$body_file" >&2 || true
-              echo >&2
-              rm -f "$body_file" "$status_file" "$error_file"
-              return 22
-            fi
-
-            cat "$body_file"
-            rm -f "$body_file" "$status_file" "$error_file"
-          }
-
-          health="$(smoke_get 'health' "$smoke_origin/health")"
+          [[ -n "$CF_ACCESS_CLIENT_ID" && -n "$CF_ACCESS_CLIENT_SECRET" ]] || smoke_origin="$PUBLIC_ORIGIN"
+          get() { local out; out="$(mktemp)"; status="$(curl --silent --show-error --output "$out" --write-out '%{http_code}' --connect-timeout 10 --max-time 30 "${access_headers[@]}" "$1" || true)"; [[ "$status" == 2* ]] || { head -c 2048 "$out" >&2; exit 22; }; cat "$out"; rm -f "$out"; }
+          health="$(get "$smoke_origin/health")"
           printf '%s' "$health" | grep -q '"status":"ok"'
           printf '%s' "$health" | grep -q '"marketDataConfigured":true'
           printf '%s' "$health" | grep -q '"liveExecution":false'
-
-          snapshot="$(smoke_get 'market snapshot' "$smoke_origin/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
+          snapshot="$(get "$smoke_origin/api/market/snapshot?symbols=AAPL&crypto=BTC%2FUSD")"
           printf '%s' "$snapshot" | grep -q '"stocks"'
           printf '%s' "$snapshot" | grep -q '"AAPL"'
           printf '%s' "$snapshot" | grep -q '"crypto"'
-
-          bars="$(smoke_get 'market bars' "$smoke_origin/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
+          bars="$(get "$smoke_origin/api/market/bars?symbol=AAPL&timeframe=1Min&limit=5")"
           printf '%s' "$bars" | grep -q '"symbol":"AAPL"'
           printf '%s' "$bars" | grep -q '"bars"'
-
-          stream_config="$(smoke_get 'stream configuration' "$smoke_origin/api/market/stream-config")"
-          printf '%s' "$stream_config" | grep -q '"enabled":true'
-          printf '%s' "$stream_config" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
-
-          ws_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --connect-timeout 10 --max-time 30 --retry 3 --retry-delay 2 --retry-connrefused \
-            -H 'Connection: Upgrade' \
-            -H 'Upgrade: websocket' \
-            -H 'Sec-WebSocket-Version: 13' \
-            -H 'Sec-WebSocket-Key: SGVsbG9Xb3JsZDEyMzQ1Ng==' \
-            "$smoke_origin/api/market/stream" || true)"
-          if [[ "$ws_status" != "101" ]]; then
-            echo "Production smoke test failed: WebSocket upgrade returned HTTP ${ws_status:-000}" >&2
-            echo "Endpoint: $smoke_origin/api/market/stream" >&2
-            exit 1
-          fi
-
+          stream="$(get "$smoke_origin/api/market/stream-config")"
+          printf '%s' "$stream" | grep -q '"enabled":true'
+          printf '%s' "$stream" | grep -q 'wss://stream.data.alpaca.markets/v2/iex'
+          ws="$(curl --silent --output /dev/null --write-out '%{http_code}' "${access_headers[@]}" -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: SGVsbG9Xb3JsZDEyMzQ1Ng==' "$smoke_origin/api/market/stream" || true)"
+          test "$ws" = 101
           echo 'Production market API and WebSocket smoke tests passed.'
