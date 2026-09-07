@@ -48,7 +48,7 @@ function makeEnv() {
 
 async function loadWorker() {
   const source = worker.replace(/export default /, 'const workerApp = ')
-    .replace(/export \{ IdempotencyDurableObject \} from '[^']+';\nexport \{ PortfolioDurableObject \} from '[^']+';\nexport \{ MarketStreamDurableObject \} from '[^']+';\s*$/, '');
+    .replace(/^export \{ (?:IdempotencyDurableObject|PortfolioDurableObject|MarketStreamDurableObject) \} from '[^']+';\r?$/gm, '');
   const module = await import(`data:text/javascript;base64,${Buffer.from(`${source}\nexport default workerApp;`).toString('base64')}`);
   return module.default;
 }

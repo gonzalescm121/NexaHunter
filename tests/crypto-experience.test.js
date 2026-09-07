@@ -16,6 +16,8 @@ test('crypto experience provides interactive history and recurring investments',
  for(const term of ['52 wk high','52 wk low','24h volume','Market cap','History','Recurring investment','pointermove','nexahunter.recurring']) assert.match(js,new RegExp(term.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')),`missing ${term}`);
  assert.match(js,/api\/market\/crypto-bars/);
  assert.match(js,/api\/crypto\/metadata/);
+ assert.match(js,/fallbackFromBars/);
+ assert.match(js,/Promise\.allSettled\(\[snapshot\(\),metadata\(\)\]\)/);
 });
 
 test('crypto experience action buttons have concrete event listeners',()=>{
