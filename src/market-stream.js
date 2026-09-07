@@ -125,6 +125,8 @@ export class MarketStreamDurableObject {
         }
         if (message?.T === 'error') {
           this.broadcast({ type:'stream', market, state:'error', code:message.code, message:message.msg });
+          const socket = market === 'stocks' ? this.stockSocket : this.cryptoSocket;
+          try { socket?.close(1011, 'Upstream stream error'); } catch {}
           continue;
         }
         this.broadcast({ type:'market', market, data:message, receivedAt:Date.now() });

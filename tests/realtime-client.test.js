@@ -26,6 +26,7 @@ test('realtime client has fallback and reconnect behavior',()=>{
   assert.match(source,/refreshFallback/);
   assert.match(source,/setTimeout\(\(\)=>\{refreshFallback\(\);connect\(\)\},1500\)/);
   assert.match(source,/setInterval\(refreshFallback,5000\)/);
+  assert.match(source,/msg\.state==='reconnecting'\|\|msg\.state==='error'/);
 });
 
 test('realtime chart rejects malformed OHLC bars',()=>{

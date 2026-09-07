@@ -42,6 +42,7 @@ test('stream handles reconnect and client lifecycle',()=>{
   assert.match(source,/setTimeout\(\(\) => \{ this\.reconnectTimer = null; this\.ensureUpstreams\(\); \}, 1500\)/);
   assert.match(source,/closeUpstreams\(\)/);
   assert.match(source,/this\.clients\.size === 0/);
+  assert.match(source,/socket\?\.close\(1011, 'Upstream stream error'\)/);
 });
 
 test('stream forwards trades, quotes, and bars',()=>{
