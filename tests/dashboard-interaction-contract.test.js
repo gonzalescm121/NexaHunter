@@ -34,4 +34,6 @@ test('dashboard action router covers primary interactive controls',()=>{
 test('concept dashboard exposes wired buy sell watch alert and panel actions',()=>{
   for(const action of ['buy','sell','watch','alert'])assert.match(concept,new RegExp(`data-concept-action=\\"${action}\\"`));
   for(const view of ['positions','pro','movers','add','news'])assert.match(concept,new RegExp(`view==='${view}'`));
+  assert.match(concept,/Sign in to view/);
+  assert.match(concept,/response\.status===401\|\|response\.status===403/);
 });
