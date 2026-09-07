@@ -25,6 +25,7 @@ test('dashboard timeframe controls map to API timeframes',()=>{
   assert.match(html,/data-timeframe="3M"/);
   assert.match(html,/data-timeframe="1Y"/);
   assert.match(app,/\{\'1D\':\'1Min\',\'1W\':\'5Min\',\'1M\':\'15Min\',\'3M\':\'1Hour\',\'1Y\':\'1Day\'/);
+  assert.match(read('worker-app.js'),/'1Min':5/);
 });
 
 test('dashboard action router covers primary interactive controls',()=>{
