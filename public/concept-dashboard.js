@@ -11,3 +11,14 @@ async function loadConceptPortfolio(){try{const d=await fetch('/api/portfolio',{
 function init(){injectTop();injectTrade();injectBottom();loadConceptData();loadConceptPortfolio();window.addEventListener('nexa:symbol',()=>{loadConceptData()})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
+
+/* Keep the command-center chrome truthful and synchronized with the working UI. */
+(()=>{
+const $=(s,r=document)=>r.querySelector(s);const money=v=>Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function account(){const el=$('.concept-account');if(!el)return;el.innerHTML='<span class="concept-avatar" aria-hidden="true">NW</span><span><small>Paper Account</small><strong id="concept-cash">Loading…</strong></span><span aria-hidden="true">⌄</span>';fetch('/api/portfolio',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).then(d=>{if(Number.isFinite(Number(d.cash)))$('#concept-cash').textContent='$'+money(d.cash)}).catch(()=>{$('#concept-cash').textContent='Unavailable'})}
+function status(){const ws=$('.workspace-panels');if(!ws||$('.concept-status',ws.parentElement))return;const bar=document.createElement('section');bar.className='concept-status';bar.innerHTML='<div><span class="live-dot"></span><small>Market status</small><strong id="concept-market-status">Connected</strong></div><div><span class="live-dot"></span><small>Stream</small><strong id="concept-stream-status">Connecting</strong></div><div><small>Last update</small><strong id="concept-last-update">—</strong></div><div><small>Mode</small><strong>Paper trading</strong></div>';ws.after(bar)}
+function tick(){const state=$('#realtime-pill')?.textContent?.trim()||'POLLING';$('#concept-stream-status')?.replaceChildren(document.createTextNode(state));$('#concept-market-status')?.replaceChildren(document.createTextNode(state==='ERROR'?'Reconnecting':'Connected'));$('#concept-last-update')?.replaceChildren(document.createTextNode(new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit',second:'2-digit'})))}
+function syncWatchCount(){try{const count=JSON.parse(localStorage.getItem('nexahunter.watchlist.v5')||'[]').length;document.querySelector('[data-count="watchlist"]')?.replaceChildren(document.createTextNode(String(count)))}catch{}}
+function ready(){account();status();tick();syncWatchCount();document.addEventListener('click',e=>{if(e.target.closest('[data-watch]'))setTimeout(syncWatchCount,0)});window.addEventListener('nexa:watchlist-updated',syncWatchCount);window.addEventListener('nexa:symbol',tick);setInterval(tick,5000);setInterval(account,30000)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready,{once:true});else ready();
+})();
